@@ -1,30 +1,73 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:capsould/main.dart';
+import 'package:capsoul/app.dart';
+import 'package:capsoul/features/create/presentation/create_selector_screen.dart';
+import 'package:capsoul/features/home/presentation/home_screen.dart';
+import 'package:capsoul/features/legacy/presentation/legacy_screen.dart';
+import 'package:capsoul/features/moments/presentation/moments_screen.dart';
+import 'package:capsoul/features/profile/presentation/profile_screen.dart';
+import 'package:capsoul/features/shell/presentation/main_shell.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('CapsoulApp muestra shell de Inicio', (WidgetTester tester) async {
+    final router = GoRouter(
+      initialLocation: '/home',
+      routes: [
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return MainShell(navigationShell: navigationShell);
+          },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/home',
+                  builder: (context, state) => const HomeScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/moments',
+                  builder: (context, state) => const MomentsScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/legacy',
+                  builder: (context, state) => const LegacyScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/profile',
+                  builder: (context, state) => const ProfileScreen(),
+                ),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/create',
+          builder: (context, state) => const CreateSelectorScreen(),
+        ),
+      ],
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(CapsoulApp(router: router));
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Hola'), findsOneWidget);
+    expect(find.text('Bienvenido a Capsoul'), findsOneWidget);
+    expect(find.text('Inicio'), findsWidgets);
+    expect(find.text('Momentos'), findsWidgets);
+    expect(find.text('Mi legado'), findsWidgets);
+    expect(find.text('Yo'), findsWidgets);
   });
 }
