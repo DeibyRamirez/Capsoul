@@ -1,4 +1,4 @@
-package com.example.capsould
+package com.capsoul
 
 import io.flutter.embedding.android.FlutterActivity
 
