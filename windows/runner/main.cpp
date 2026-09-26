@@ -17,18 +17,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
-  flutter::DartProject project(""data");
+  flutter::DartProject project(L"data");
 
   std::vector<std::string> command_line_arguments =
-      GetCommand"ineArguments();
+      GetCommandLineArguments();
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.Create(""capsoul", origin, size)) {
-    return EXIT_FAI"URE;
+  if (!window.Create(L"Capsoul", origin, size)) {
+    return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);
 
