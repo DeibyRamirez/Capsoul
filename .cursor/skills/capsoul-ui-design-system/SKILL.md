@@ -1,36 +1,37 @@
 ---
 name: capsoul-ui-design-system
 description: >-
-  Use when building or reviewing Capsoul screens, theme, nav chrome, or visual
-  consistency.
+  Usar cuando se construyan o revisen pantallas, tema, barra de navegación o la
+  coherencia visual de Capsoul.
 ---
-# Capsoul UI design system
+# Capsoul · Sistema de diseño de UI
 
-Use when building or reviewing Capsoul screens, theme, nav, or visual consistency with the frozen home-dome line.
+## Marca (congelada)
+- Primario azul marino: `#1B2A4A`
+- Acento: `#3D6B9A`
+- Radios: 12–20
+- Idioma de la UI: español
+- Inicio: la cúpula de vidrio como visual característico
+- Barra inferior (5 zonas): Inicio | Momentos | + | Mi legado | Yo
+- No usar un feed estilo Instagram como inicio
 
-## Brand (frozen)
-- Primary navy: `#1B2A4A`
-- Accent: `#3D6B9A`
-- Corner radius: 12–20
-- UI language: Spanish
-- Home: glass dome / cúpula as the signature visual
-- Bottom nav (5 zones): Inicio | Momentos | + | Mi legado | Yo
-- Do not ship an Instagram-style feed as the home shell
+## Tema
+1. Colores en `lib/nucleo/tema/colores_app.dart` (`ColoresApp`) y `ThemeData` en `tema_app.dart` (`TemaApp`).
+2. Nunca hexadecimales en los widgets de funcionalidades: `ColoresApp` o `Theme.of(context)`.
+3. Preferir `NavigationBar` / `FilledButton` / `Card` de Material 3 con los colores de marca.
 
-## Theme
-1. Centralize colors in `core/theme/app_colors.dart` and `ThemeData` in `app_theme.dart`.
-2. Never hardcode brand hex in feature widgets; use `AppColors` or `Theme.of(context)`.
-3. Prefer Material 3 `NavigationBar` / `FilledButton` / `Card` with brand colors over one-off decoration.
+## Hábitos de diseño
+1. Áreas seguras siempre.
+2. Objetivos táctiles ≥ 48 px lógicos.
+3. Estados vacío, cargando y error en toda lista o detalle.
+4. Los marcadores de sprints tempranos respetan espaciado y barra para que la demo se vea intencional.
 
-## Layout habits
-1. Safe areas and notches always.
-2. Touch targets ≥ 48 logical pixels.
-3. Empty, loading, and error states for every list/detail screen.
-4. Placeholders in early sprints should still match spacing and nav chrome so demos look intentional.
+## Flujo de Crear
+El selector de Crear se abre desde el `+` elevado; no reemplaza el contenedor de inicio.
 
-## Create flow UI
-The Create selector is media-first in spirit but must open from the elevated `+`, not replace the home shell.
+## Preguntas de revisión
+- ¿La pantalla se siente Capsoul (cúpula, azul marino, español)?
+- ¿Un ingeniero nuevo sabría qué tokens del tema reutilizar?
 
-## Review questions
-- Does this screen still feel like Capsoul (dome, navy, Spanish)?
-- Would a new engineer know which theme tokens to reuse?
+## Fuentes
+- Material 3 para Flutter: https://docs.flutter.dev/ui/design/material

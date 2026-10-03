@@ -1,39 +1,55 @@
 ---
 name: capsoul-flutter-architecture
 description: >-
-  Use when scaffolding or changing Capsoul Flutter feature layout, routing, or
-  layering.
+  Usar cuando se cree o cambie la estructura de funcionalidades, el
+  enrutamiento o la separación de capas de la app Flutter de Capsoul.
 ---
-# Capsoul Flutter architecture
+# Capsoul · Arquitectura Flutter
 
-Use when scaffolding or changing Capsoul Flutter structure, features, routing, or layering.
+Usar al crear funcionalidades, pantallas, rutas o capas nuevas.
 
-## Goals
-Keep a feature-first layout, thin UI, and clear boundaries so Sprint work stays reviewable against DoD.
+## Objetivo
+Estructura por funcionalidades, UI delgada y límites claros para que el trabajo del sprint sea revisable
+contra la DoD.
 
-## Layout (target)
+## Estructura
 ```
 lib/
-  main.dart
-  app.dart
-  core/theme/
-  core/router/
-  features/<feature>/presentation/
-  features/<feature>/domain/   # when models/use-cases appear
-  features/<feature>/data/     # when Firebase repos appear
+  main.dart                  # obligatorio de Flutter
+  app_capsoul.dart           # AppCapsoul (MaterialApp.router)
+  nucleo/                    # compartido: errores, firebase (solo FCM), supabase, enrutador, tema, componentes
+  funcionalidades/<funcionalidad>/
+    presentacion/            # pantallas y componentes
+    aplicacion/              # proveedores y controladores Riverpod
+    dominio/                 # modelos, interfaces de repositorio, fallos
+    datos/                   # implementaciones con Supabase / Cloudinary
+test/                        # espejo de lib/ + ayudantes/
+supabase/migrations/         # SQL versionado (ver capsoul-supabase-postgres-sql)
 ```
 
-## Rules
-1. One feature folder per product area: `home`, `moments`, `create`, `legacy`, `profile`, `shell`, later `auth`, `capsules`.
-2. Screens live under `presentation/`. Widgets shared by one feature stay in that feature; cross-feature UI goes in `core/` or a shared `widgets/` only when reused twice.
-3. The bottom `+` is not a tab with its own nav state: elevated action that opens Create (selector Video/Audio/Escribir/Foto). Prefer `go_router` + `StatefulShellRoute`; `NavigationBar` + index is OK for early MVP.
-4. No Firebase SDK calls inside widgets. UI talks to controllers/notifiers; those call repositories.
-5. Prefer composition over deep widget inheritance. Extract when a build method is hard to scan in one screenful.
-6. Name files by role: `*_screen.dart`, `*_repository.dart`, `*_model.dart`.
-7. Spanish UI copy only. Keep code identifiers in English.
+## Reglas
+1. Una carpeta por área de producto: `inicio`, `momentos`, `crear`, `legado`, `perfil`, `navegacion`,
+   `autenticacion`, `usuarios`, luego `capsulas`, `herencias`, `retos`.
+2. Pantallas en `presentacion/` (`pantalla_*.dart`); componentes de una sola funcionalidad se quedan en ella;
+   lo reutilizado por dos o más va a `nucleo/componentes/`.
+3. El `+` de la barra no es pestaña: abre `/crear` (Video, Audio, Escribir, Foto) con `context.push`.
+   go_router + `StatefulShellRoute` para conservar el estado de cada pestaña.
+4. Ninguna llamada a Supabase, Cloudinary o Firebase dentro de widgets: la UI habla con controladores y estos
+   con repositorios inyectados por providers.
+5. Composición antes que herencia profunda; extraer cuando un `build` no se lea en una pantalla.
+6. Archivos por rol: `pantalla_*.dart`, `repositorio_*.dart`, `controlador_*.dart`, `proveedores_*.dart`.
+7. **Todo en español**: archivos, carpetas, clases, métodos, variables, rutas (`/inicio`, `/iniciar-sesion`) y
+   textos. Identificadores sin tildes ni ñ (`contrasena`). Solo quedan en inglés las APIs de Flutter y
+   librerías (`build`, `createState`, `dispose`) y los archivos obligatorios/generados.
+8. Configuración sensible por `--dart-define` (`SUPABASE_URL`, `SUPABASE_ANON_KEY`); nunca claves en el repo.
 
-## Checklist before merge
-- Feature folder matches the epic/story
-- Router entries exist for new screens
-- No circular imports across features
-- `flutter analyze` clean for touched files
+## Lista antes de fusionar
+- La carpeta coincide con la épica/historia
+- Hay rutas para las pantallas nuevas y la redirección por sesión sigue funcionando
+- Sin importaciones circulares entre funcionalidades
+- `flutter analyze` limpio
+
+## Fuentes
+- Flutter, "Guide to app architecture": https://docs.flutter.dev/app-architecture/guide
+- go_router, `StatefulShellRoute`: https://pub.dev/documentation/go_router/latest/go_router/StatefulShellRoute-class.html
+- Riverpod: https://riverpod.dev/docs/introduction/why_riverpod

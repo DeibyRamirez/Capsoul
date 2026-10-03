@@ -1,39 +1,40 @@
 ---
 name: capsoul-sprint-dod
 description: >-
-  Use when starting a Capsoul story, splitting sprint work, or checking
-  Definition of Done before demo.
+  Usar cuando se empiece una historia de Capsoul, se divida el trabajo del
+  sprint o se revise la Definition of Done antes de la demo.
 ---
-# Capsoul sprint DoD
-
-Use when starting a Capsoul user story, splitting work, or checking if a sprint item is demoable.
+# Capsoul · Historias y Definition of Done
 
 ## Roles
-- Product Owner (THE CHEIVIZ): value and acceptance
-- Scrum Master / peer (Capsoul bot): prioritizes, clarifies stories, reviews DoD
-- Flutter senior + engineers: implement
+- Product Owner (THE CHEIVIZ): valor, aceptación y **aprobación de cualquier cambio en entornos**
+- Scrum Master / director (agente Capsoul): prioriza, aclara historias, revisa la DoD
+- Flutter senior + ingenieros: implementan
 
-## Story shape
-1. User story with acceptance criteria in Spanish product language
-2. Technical notes only where they unblock (paths, rules, packages)
-3. Out of scope called out (especially phase 2 Legal/marketplace/map)
+## Forma de la historia
+1. Historia de usuario con criterios de aceptación en español de producto
+2. Notas técnicas solo donde desbloquean (tablas, políticas RLS, paquetes)
+3. Fuera de alcance explícito (en especial fase 2: legal, marketplace, mapa)
 
 ## Definition of Done (general)
-- Acceptance criteria met on a real device or emulator
-- `flutter analyze` clean for touched code
-- No broken nav or placeholder crashes
-- Theme/nav still match Capsoul UI skill
-- Security-sensitive paths considered if data is involved
-- Demo notes ready for sprint review
+- Criterios cumplidos en dispositivo o emulador real
+- `flutter analyze` sin issues y `flutter test` en verde
+- `flutter build apk --debug` exitoso si cambian dependencias o archivos nativos
+- Navegación sin rutas rotas ni pantallas que fallen
+- Tema y barra siguen la skill de UI
+- Datos sensibles revisados: RLS en todas las tablas, sin secretos en el cliente
+- Migraciones como archivos versionados; aplicarlas solo con aprobación del PO
+- Código y commits en español
+- Notas de demo listas
 
-## Sprint 1 specific (cimientos)
-1. `flutter create capsoul --org com.capsoul --platforms=android,ios`
-2. Feature folder structure present
-3. Capsoul theme applied
-4. Bottom nav 5 zones; `+` opens Create selector
-5. FlutterFire configure + `firebase_core` init without crash
-6. Tab placeholders; Home greeting mock + dome slot
-Auth UI is Sprint 2 — do not expand S1 into Auth.
+## Sprint 1 (cimientos) — cerrado
+Estructura, tema, barra de 5 zonas con `+` hacia Crear, pantallas base, `firebase_core` inicializado.
 
-## Handoff
-When DoD is met, notify Capsoul for review and unlock of the next sprint focus.
+## Sprint 2 (identidad) — en develop, migrando a Supabase Auth
+Registro, inicio de sesión, recuperar contraseña, sesión persistente, perfil en `usuarios`.
+
+## Entrega
+Cuando la DoD se cumple, avisar a Capsoul para la revisión y el siguiente foco del sprint.
+
+## Fuentes
+- Scrum Guide 2020 (Definition of Done): https://scrumguides.org/scrum-guide.html

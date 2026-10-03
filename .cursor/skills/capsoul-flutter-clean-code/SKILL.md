@@ -1,37 +1,42 @@
 ---
 name: capsoul-flutter-clean-code
 description: >-
-  Use when writing or reviewing Capsoul Dart/Flutter code for principles,
-  patterns, and maintainability.
+  Usar cuando se escriba o revise código Dart/Flutter de Capsoul: principios,
+  patrones, legibilidad, pruebas y mantenibilidad.
 ---
-# Capsoul Flutter clean code
+# Capsoul · Código limpio en Flutter
 
-Use when writing or reviewing Dart/Flutter code for Capsoul: principles, patterns, readability, and maintainability.
+## Principios
+1. Una responsabilidad por clase/archivo (pantalla ≠ repositorio ≠ modelo).
+2. Depender de abstracciones en los límites (interfaces de repositorio) e inyectarlas con providers.
+3. Modelos inmutables (`final`, `copiarCon`, `==`/`hashCode`).
+4. Nulos explícitos; nada de `!` sin una invariante demostrada.
+5. Efectos secundarios en los bordes (Supabase, Cloudinary, plugins); lógica pura en dominio.
 
-## Principles (practical)
-1. Single responsibility per class/file role (screen ≠ repository ≠ model).
-2. Depend on abstractions at feature boundaries (repository interfaces) once data layer exists.
-3. Prefer immutability for models (`freezed`/`equatable` when the team adopts them).
-4. Explicit null handling; no silent `!` without a proven invariant.
-5. Side effects at the edges (Firebase, plugins); pure logic in domain helpers when non-trivial.
+## Patrones de Capsoul
+- Carpetas por funcionalidad y capas presentación / aplicación / dominio / datos
+- Repositorios con Supabase detrás de interfaces; adaptadores delgados para el SDK
+- Navegación dirigida por el enrutador (go_router) y la sesión (`onAuthStateChange`)
+- Estado unidireccional con Riverpod (un solo gestor de estado)
+- Errores explícitos (`try/catch`) traducidos a fallos de dominio con mensaje en español y estados
+  cargando / datos / error / vacío
 
-## Patterns for Capsoul
-- Feature-first folders
-- Repository for Firebase
-- Router-driven navigation
-- Unidirectional UI state (Provider/Riverpod/Bloc — pick one per app and stick to it; do not mix casually)
-- Result/Either or explicit try/catch mapped to UI states: loading / data / error / empty
+## Prácticas de Flutter
+1. Constructores `const` siempre que se pueda.
+2. `Key` estables en listas.
+3. `dispose` de controladores y suscripciones.
+4. No usar `BuildContext` tras un `await` sin comprobar `mounted`.
+5. `build()` simple: calcular fuera.
+6. Pruebas de widgets para la UI crítica y unitarias (mocktail o falsos) para repositorios y mapeos.
 
-## Flutter practices
-1. `const` constructors where possible.
-2. Keys for list items with stable ids.
-3. Dispose controllers/subscriptions.
-4. Avoid `BuildContext` across async gaps without mounted checks.
-5. Keep `build()` dull: compute elsewhere.
-6. Widget tests for critical UI; unit tests for repositories/parsers.
+## Barra de revisión
+- Los nombres dicen la intención, **en español** (sin tildes ni ñ en identificadores)
+- Sin código muerto ni bloques comentados
+- Textos de UI en español
+- Sin claves ni secretos en el código
+- Coherente con las skills de arquitectura, UI y datos
 
-## Code review bar
-- Names say intent
-- No dead code or commented-out blocks in main
-- Spanish user-facing strings; English code
-- Matches Capsoul architecture and theme skills
+## Fuentes
+- Effective Dart: https://dart.dev/effective-dart
+- Flutter, "Testing": https://docs.flutter.dev/testing/overview
+- mocktail: https://pub.dev/packages/mocktail
