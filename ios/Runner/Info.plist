@@ -41,6 +41,10 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Capsoul usa la cámara para tomar fotos y grabar videos que guardas en tus cápsulas.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Capsoul usa el micrófono para grabar notas de voz y el audio de tus videos.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
