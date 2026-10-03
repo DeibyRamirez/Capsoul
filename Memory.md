@@ -67,7 +67,7 @@ lib/
     supabase/configuracion_supabase.dart # ConfiguracionSupabase (String.fromEnvironment) + validación
     supabase/arranque_supabase.dart  # inicializarSupabase() -> null o mensaje de error
     arranque/app_error_arranque.dart # AppErrorArranque(detalle) si falta configuración o Supabase no inicia
-    enrutador/rutas_app.dart         # RutasApp + resolverRedireccionAutenticacion()
+    enrutador/rutas_app.dart         # RutasApp + resolverRedireccionAutenticacion(modoRecuperacion)
     enrutador/enrutador_app.dart     # proveedorEnrutadorApp, StatefulShellRoute (4 ramas) + /crear
     tema/colores_app.dart            # ColoresApp: primario #1B2A4A, acento #3D6B9A
     tema/tema_app.dart               # TemaApp.claro, radios 12-20
@@ -80,7 +80,7 @@ lib/
     inicio/ momentos/ crear/ legado/                       # presentacion/pantalla_*.dart
 test/                                # espejo de lib/ (nucleo/, funcionalidades/) + ayudantes/ (falsos, app_prueba)
 docs/arquitectura.md                 # ARQ-2 v2.0: Supabase + Cloudinary + FCM + Resend (4 diagramas Mermaid)
-docs/modelo_er.{md,mmd,png}          # modelo ER del director, v1.2 con las correcciones aprobadas por el PO
+docs/modelo_er.{md,mmd,png}          # modelo ER del director, v1.3 con las correcciones aprobadas por el PO
 supabase/migrations/                 # 20261002000001_capsoul_modelo_inicial.sql, 20261002000002_capsoul_programar_trabajos.sql
 supabase/pruebas/pruebas_rls_capsoul.sql  # pruebas manuales de RLS (psql)
 env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
@@ -88,21 +88,28 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 ```
 
 - Rutas: `/inicio`, `/momentos`, `/legado`, `/yo`, `/crear` (+ `/crear/video|audio|escribir|foto`),
-  `/iniciar-sesion`, `/registro`, `/recuperar`. Sin sesión solo rutas de autenticación; con sesión, el contenedor.
+  `/iniciar-sesion`, `/registro`, `/recuperar`, `/revisa-tu-correo?correo=…[&reenviar=1]`, `/nueva-contrasena`.
+  Sin sesión solo rutas de autenticación; con sesión, el contenedor; en modo recuperación, solo `/nueva-contrasena`.
 - El botón `+` no es una pestaña: hace push de `/crear` (Video, Audio, Escribir, Foto).
-- Auth: Supabase Auth email/contraseña. Registro con `signUp(data: {'nombre_visible': ...})`; si el proyecto exige
-  confirmar el correo, no hay sesión: la app avisa "Te enviamos un correo para confirmar tu cuenta…" y vuelve a
-  `/iniciar-sesion`. Sesión por `onAuthStateChange`; verificado = `emailConfirmedAt != null`; reenviar con
-  `resend(OtpType.signup)`; recuperar con `resetPasswordForEmail` (confirmación neutra).
+- Auth: Supabase Auth email/contraseña con **confirmación de correo obligatoria** (R3). Registro con
+  `signUp(data: {'nombre_visible': ...}, emailRedirectTo: 'capsoul://auth/confirmar')`; sin sesión hasta confirmar:
+  pantalla "Revisa tu correo" (reenviar con `resend(OtpType.signup)` + enfriamiento de 60 s, volver a iniciar sesión).
+  Login con `email_not_confirmed` → aviso en español + "Reenviar correo de confirmación". Recuperar con
+  `resetPasswordForEmail(redirectTo: 'capsoul://auth/recuperar')`; el evento `passwordRecovery` activa
+  `proveedorModoRecuperacion` → `/nueva-contrasena` (`updateUser(password)`). Deep links con esquema `capsoul`, host
+  `auth` (supabase_flutter + app_links; flujo PKCE: el enlace debe abrirse en el mismo dispositivo). Sin aviso de
+  verificación en Yo: toda sesión tiene el correo confirmado.
 - Tabla `usuarios` (migración oficial): `id` (FK `auth.users`), `nombre_visible` (1..60), `correo`, `foto_public_id`
   (Cloudinary), `perfil_publico`, `ultima_actividad_en`, `creado_en`, `actualizado_en`. La crea el trigger
   `auth_usuarios_1_crear_perfil` desde `raw_user_meta_data->>'nombre_visible'` (o la parte local del correo).
   RLS: solo leo mi propia fila (con correo); amigos y perfiles públicos se leen **sin correo** por la vista
   `public.perfiles_visibles`. Solo edito mi fila y solo `nombre_visible`, `foto_public_id`, `perfil_publico` (GRANT
-  por columna). El trigger `auth_usuarios_3_sincronizar_correo` copia cambios de `auth.users.email`. La app lee/edita
+  por columna). El trigger `auth_usuarios_3_sincronizar_correo` copia cambios de `auth.users.email` y vincula las
+  invitaciones al correo nuevo (`privado.vincular_invitaciones_correo`, misma lógica que al confirmar). La app lee/edita
   solo `nombre_visible` de la fila propia.
 - Medios (D2): `elementos.cloudinary_tipo_entrega` solo `'authenticated'`, sin `url_segura`, `public_id` aleatorio de
-  la Edge Function `firmar-subida`; miniaturas *eager*; URLs firmadas por `firmar-medio`.
+  la Edge Function `firmar-subida`; miniaturas *eager*; URLs firmadas por `firmar-medio` (`private_download_url` con
+  `expires_at` a 1 h); el autor ve sus propios medios antes de `fecha_apertura`.
 - **Dependencia:** el código de Auth/perfil funciona solo cuando la migración oficial esté aplicada en Supabase.
 - `firestore.rules` y `firebase.json` siguen en el repo pero ya no se usan (borrado propuesto al PO).
 - UI en español.
@@ -112,7 +119,7 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 | Sprint | Objetivo | Estado |
 |---|---|---|
 | S1 | Cimientos: estructura, tema, navegación, init Firebase, org, skills | ✅ Terminado (en `develop`, validación de Capsoul en ClickUp y Linear) |
-| S2 | Identidad y autenticación (registro, inicio de sesión, recuperar, sesión, perfil, reglas) | ✅ En `develop` (tip `73fb3e7`) sobre Firebase. 🟡 Migrado a Supabase Auth el 2026-10-02 en el working tree (analyze 0, 76 tests, apk debug); **sin commit**, falta aplicar la migración y probar en emulador |
+| S2 | Identidad y autenticación (registro, inicio de sesión, recuperar, sesión, perfil, reglas) | ✅ En `develop` (tip `73fb3e7`) sobre Firebase. 🟡 Migrado a Supabase Auth (2026-10-02, en `develop`) y R3 confirmación de correo obligatoria + deep links (2026-10-03, commit local; 93 tests); falta aplicar la migración, configurar Auth y probar en dispositivo |
 | MIG | Migración a Supabase + Cloudinary (Firebase solo FCM) | 🟡 Skills, modelo ER/SQL oficiales y Auth listos en archivos; pendiente aprobación del PO para entornos |
 | S4 | Ruta crítica de cápsulas + Security Rules | ⏳ |
 | S8 | Endurecer reglas + FCM | ⏳ |
@@ -121,23 +128,24 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 
 Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 
-- [ ] **Push** a `origin/develop` de los 4 commits locales del 2026-10-02 (solo con autorización del PO).
-- [ ] PO: aplicar `supabase/migrations/20261002000001_capsoul_modelo_inicial.sql` (y, cuando se confirme,
-      `…000002_capsoul_programar_trabajos.sql`, que requiere pg_cron, pg_net y secretos en Vault).
-- [ ] PO: configurar Supabase Auth: proveedor Email activo, decidir **confirmación de correo** (on/off), Site URL y
-      Redirect URLs (deep link para confirmar/recuperar), y obtener la anon/publishable key para `env/dev.json`.
-- [ ] Pantalla para fijar la nueva contraseña al volver del enlace de recuperación (deep link + evento
-      `passwordRecovery`); hoy solo se envía el correo.
+- [ ] **Push** a `origin/develop` de los 3 commits locales del 2026-10-03 (solo con autorización del PO).
+- [ ] PO: revisar y commitear (o pedir cambios) `android/app/src/main/AndroidManifest.xml` e `ios/Runner/Info.plist`
+      (deep link `capsoul://auth`, `flutter_deeplinking_enabled`/`FlutterDeepLinkingEnabled` = false); quedan sin commit.
+- [ ] PO: aplicar `supabase/migrations/20261002000001_capsoul_modelo_inicial.sql` **v1.3** y luego
+      `…000002_capsoul_programar_trabajos.sql` (requiere extensiones `pg_cron` y `pg_net`, y en Vault `project_url` y
+      `llave_cron`).
+- [ ] PO: Supabase Auth → *Confirm email* **ON**; *Site URL* `capsoul://auth/confirmar`; *Redirect URLs*
+      `capsoul://auth/confirmar` y `capsoul://auth/recuperar`; *Secure email change* ON. (Proveedor Email activo y SMTP
+      Resend ya hechos; publishable key ya en `env/dev.json`.)
+- [ ] Director: actualizar RF-05 en Drive si hace falta (no existe en el repo; la copia 02 v1.2 ya pide confirmación
+      obligatoria y la pantalla "Revisa tu correo").
 - [ ] Llamar `registrar_actividad()` (RPC) al abrir la app, para herencias por inactividad.
 - [ ] Cloudinary: preset/subida firmada por Edge Function (sin API secret en el cliente).
 - [ ] Borrar `firestore.rules` y `firebase.json` y desactivar Firebase Auth/Firestore/Storage en la consola (decisión del PO).
-- [ ] Endurecer el EXECUTE por defecto: `alter default privileges ... in schema privado` no puede quitar el EXECUTE
-      global de PUBLIC; proponer `alter default privileges for role postgres revoke execute on functions from public`
-      (afecta todos los esquemas) o revocar explícitamente en cada migración futura.
-- [ ] Vincular invitaciones también cuando un usuario ya confirmado cambia de correo (hoy solo al confirmar).
 - [ ] Edge Functions `firmar-subida`, `firmar-medio` y `enviar-avisos`.
-- [ ] PO: probar el flujo real en emulador/dispositivo (registro, confirmación, inicio de sesión, recuperar, editar
-      nombre, cerrar sesión, sesión persistente).
+- [ ] PO: probar el flujo real en emulador/dispositivo (registro → Revisa tu correo → enlace → contenedor; login sin
+      confirmar → reenviar; recuperar → enlace → nueva contraseña; editar nombre, cerrar sesión, sesión persistente).
+- [ ] Vigilar el límite de Resend (plan gratuito, 100 correos/día) y el rate limit de correos de Supabase Auth.
 - [ ] iOS: falta `ios/Runner/GoogleService-Info.plist` (necesario para FCM).
 - [ ] Actualizar remoto local: `git remote set-url origin https://github.com/DeibyRamirez/Capsoul.git`.
 - [ ] S1-07: instalar packs oficiales de skills (ver `.cursor/skills/README.md`).
@@ -165,6 +173,14 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   se vuelve a leer tras editarlo (sin Realtime). Los códigos de error son los `error_code` de Supabase Auth
   (`invalid_credentials`, `email_not_confirmed`, …) y los SQLSTATE de Postgres (`42501`, `23514`).
 - **2026-10-02** Configuración por `--dart-define-from-file`; si falta, `AppErrorArranque` explica qué variable falta.
+- **2026-10-03** R3: confirmación de correo **obligatoria**; deep links fijos `capsoul://auth/confirmar` y
+  `capsoul://auth/recuperar` (constantes en `ConfiguracionSupabase`, ya no `SUPABASE_URL_REDIRECCION`).
+- **2026-10-03** PO: Supabase plan Free; SMTP con Resend (plan gratuito, 100 correos/día), remitente
+  `no-responder@send.cheiviz.com`; `private_download_url` de Cloudinary con `expires_at` de 1 h; el autor ve sus
+  propios medios antes de `fecha_apertura`.
+- **2026-10-03** SQL 1.3: permisos por defecto globales del rol postgres (`alter default privileges for role postgres
+  revoke execute on functions from public`; la variante `in schema` no quita el EXECUTE de PUBLIC) y vinculación de
+  invitaciones también al cambiar el correo (solo cuentas con `email_confirmed_at`).
 - **2026-09-26** Riverpod como gestor de estado único; repositorios detrás de interfaces abstractas inyectadas por
   proveedores (`proveedorRepositorioAutenticacion`, `proveedorRepositorioUsuarios`) para simularlos en pruebas.
 
@@ -211,3 +227,16 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   pruebas nuevas de correo privado). `docs/modelo_er.*` actualizado (PNG regenerado) y `docs/arquitectura.md` reescrito.
 - **2026-10-02** Con autorización del PO se crearon 4 commits **locales** en `develop` (skills, modelo, auth, memoria),
   **sin push**.
+- **2026-10-03** R3 confirmación de correo obligatoria: pantalla `/revisa-tu-correo` (correo, reenviar con
+  enfriamiento de 60 s, carga y mensajes en español, volver a iniciar sesión); login con `email_not_confirmed` ofrece
+  reenviar; quitado el aviso de verificación de Yo; `emailRedirectTo`/`redirectTo` con `capsoul://auth/confirmar` y
+  `capsoul://auth/recuperar`; pantalla mínima `/nueva-contrasena` para el evento `passwordRecovery`. Deep link en
+  `AndroidManifest.xml` e `Info.plist` editados a mano y **sin commit** (revisión del PO). `env/README.md` y
+  `env/dev.json.example` sin `SUPABASE_URL_REDIRECCION`. `flutter analyze` 0 issues, 93 tests verdes,
+  `flutter build apk --debug` OK.
+- **2026-10-03** SQL 1.3 (permisos por defecto globales + `privado.vincular_invitaciones_correo` usada por los triggers
+  2 y 3) con pruebas RLS nuevas; pglast OK y verificado en un Postgres 17 desechable en el box (borrado después).
+  `docs/modelo_er.md` → 1.3 (D5 cerrado, supuesto 12 confirmado).
+- **2026-10-03** Entorno ya hecho por el PO: Resend configurado como SMTP de Supabase (plan gratuito, 100 correos/día).
+  Con su autorización se crearon 3 commits **locales** (auth, modelo, memoria), **sin push**; nada ejecutado en
+  Supabase, Cloudinary ni Firebase.
