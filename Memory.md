@@ -82,13 +82,19 @@ lib/
     elementos/{aplicacion,datos,dominio,presentacion}      # LimitesMedios, captura foto/video/audio/nota, compresión, firma+subida
     capsulas/{aplicacion,datos,dominio,presentacion}       # crear, mis cápsulas, detalle (candado, cuenta regresiva, apertura)
     inicio/{aplicacion,datos,dominio,presentacion}         # Inicio del mockup con conteos reales (RepositorioResumenInicio)
-    momentos/ crear/ legado/                               # presentacion/pantalla_*.dart
+    recuerdos/{aplicacion,datos,dominio,presentacion}      # banco de recuerdos, URLs firmadas (firmar-medio), reproductores, elegir
+    momentos/{aplicacion,datos,dominio,presentacion}       # crear, listar y ver momentos (portada + rejilla bento)
+    crear/ legado/                                         # presentacion/pantalla_*.dart
 test/                                # espejo de lib/ (nucleo/, funcionalidades/) + ayudantes/ (falsos, app_prueba)
 docs/arquitectura.md                 # ARQ-2 v2.0: Supabase + Cloudinary + FCM + Resend (4 diagramas Mermaid)
 docs/modelo_er.{md,mmd,png}          # modelo ER del director, v1.3 con las correcciones aprobadas por el PO
 supabase/migrations/                 # 20261002000001_capsoul_modelo_inicial.sql, 20261002000002_capsoul_programar_trabajos.sql
-supabase/migrations/20261003000003_capsoul_limites_medios.sql  # límites, 10 elementos, cuota 200 MB (NO aplicada)
-supabase/functions/firmar-subida/       # Edge Function Deno (index.ts + limites.ts + limites_test.ts), NO desplegada
+supabase/migrations/20261003000003_capsoul_limites_medios.sql  # límites, 10 elementos, cuota 200 MB (aplicada)
+supabase/migrations/20261004000004_capsoul_recuerdos_momentos.sql # políticas *_leer, títulos, portada (aplicada)
+supabase/functions/firmar-subida/       # Edge Function Deno, desplegada (v1, verify_jwt)
+supabase/functions/firmar-medio/        # Edge Function Deno: URLs firmadas según RLS, desplegada (v1, verify_jwt)
+supabase/pruebas/pruebas_recuerdos_momentos.sql  # pruebas de la 000004 (psql, Postgres local)
+.vscode/launch.json                  # perfil "Capsoul (dev)" con --dart-define-from-file=env/dev.json
 supabase/pruebas/pruebas_rls_capsoul.sql  # pruebas manuales de RLS (psql)
 supabase/pruebas/pruebas_limites_medios.sql  # pruebas de la 000003 (psql, Postgres local)
 env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
@@ -96,7 +102,8 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 ```
 
 - Rutas: `/inicio`, `/momentos`, `/legado`, `/yo`, `/crear` (+ `/crear/capsula|video|audio|escribir|foto`),
-  `/capsulas` (+ `/capsulas/:id`),
+  `/capsulas` (+ `/capsulas/:id`), `/recuerdos` (+ `/recuerdos/nuevo`, `/recuerdos/:id`, elegir recuerdos),
+  `/momentos/nuevo`, `/momentos/:id`,
   `/iniciar-sesion`, `/registro`, `/recuperar`, `/revisa-tu-correo?correo=…[&reenviar=1]`, `/nueva-contrasena`.
   Sin sesión solo rutas de autenticación; con sesión, el contenedor; en modo recuperación, solo `/nueva-contrasena`.
 - El botón `+` no es una pestaña: hace push de `/crear` (Video, Audio, Escribir, Foto).
@@ -132,7 +139,7 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 | S1 | Cimientos: estructura, tema, navegación, init Firebase, org, skills | ✅ Terminado (en `develop`, validación de Capsoul en ClickUp y Linear) |
 | S2 | Identidad y autenticación (registro, inicio de sesión, recuperar, sesión, perfil, reglas) | ✅ **Cerrado** (2026-10-03) en `develop`: Supabase Auth + R3 confirmación de correo obligatoria + deep links; migración 000001 aplicada, Auth configurado y el PO probó registro e inicio de sesión con correo OK |
 | MIG | Migración a Supabase + Cloudinary (Firebase solo FCM) | 🟡 Modelo 1.3 aplicado y Auth en Supabase; pendiente 000002 (pg_cron), Edge Functions y Cloudinary firmado |
-| S4 | Ruta crítica de cápsulas + Security Rules | 🟡 En rama local `funcionalidad/capsulas` (sin push): elementos base, crear/detalle de cápsula, Inicio del mockup, migración 000003 y Edge Function `firmar-subida` como archivos; falta aprobación del PO para desplegar |
+| S4 | Ruta crítica de cápsulas + Security Rules | 🟡 En rama local `funcionalidad/capsulas` (sin push): elementos base, crear/detalle de cápsula, Inicio, banco de recuerdos, momentos (bento), reproductores; migraciones 000003 y 000004 aplicadas; `firmar-subida` y `firmar-medio` desplegadas; falta revisión del PO y push |
 | S8 | Endurecer reglas + FCM | ⏳ |
 
 ## 6. Pendientes abiertos
@@ -144,13 +151,15 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] Director: actualizar RF-05 en Drive si hace falta (no existe en el repo; la copia 02 v1.2 ya pide confirmación
       obligatoria y la pantalla "Revisa tu correo").
 - [ ] Llamar `registrar_actividad()` (RPC) al abrir la app, para herencias por inactividad.
-- [ ] PO: aprobar y desplegar `firmar-subida` (`supabase functions deploy firmar-subida --project-ref
-      mslcdvcmfuqopfwojxvt`) con secretos `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, y
-      aplicar `20261003000003_capsoul_limites_medios.sql`. Hasta entonces los medios muestran "subida no disponible";
-      las notas de texto ya funcionan con la 000001.
+- [ ] Documentos desactualizados: `docs/modelo_er.md` (y comentarios antiguos) aún dicen que la 000003 está
+      "NO aplicada"; ya está aplicada (igual que la 000004).
 - [ ] PO: revisar la rama `funcionalidad/capsulas` y autorizar push / PR a `develop`.
-- [ ] `firmar-medio` para reproducir fotos/videos/audios (hoy el detalle muestra tarjetas sin reproducir).
-- [ ] Limpiar en Cloudinary los medios huérfanos si falla el guardado tras subir (la app compensa solo en la BD).
+- [ ] Huérfanos en Cloudinary: si falla el insert tras subir, el medio queda en Cloudinary (la app compensa solo en
+      la BD). Falta limpieza en servidor (tarea programada o webhook). Los 4 huérfanos del 2026-10-03 ya se borraron.
+- [ ] Miniatura firmada de `firmar-medio` (`s--…--`, 480 px) **no expira**; el original sí (1 h). Decidir si basta.
+- [ ] iOS: AVPlayer con la URL de la Download API depende del Content-Type; probar video/audio en iPhone.
+- [ ] Momentos: visibilidad siempre `privado` (el enum admite cercanos/amigos); falta UI para compartir.
+- [ ] Un plugin avisa en el build Android sobre "Built-in Kotlin"; revisar al actualizar dependencias.
 - [ ] El tamaño declarado no lo puede imponer la firma de Cloudinary: valorar verificación posterior (webhook
       `notification_url` o revisión en `firmar-medio`).
 - [ ] `miniatura_public_id` queda en null (eager crea la miniatura derivada; falta guardarla/servirla).
@@ -167,7 +176,7 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] iOS: falta `ios/Runner/GoogleService-Info.plist` (necesario para FCM).
 - [ ] Actualizar remoto local: `git remote set-url origin https://github.com/DeibyRamirez/Capsoul.git`.
 - [ ] S1-07: instalar packs oficiales de skills (ver `.cursor/skills/README.md`).
-- [ ] FCM (`firebase_messaging`) · reproductores (video_player/just_audio) · CI.
+- [ ] FCM (`firebase_messaging`) · CI.
 - [ ] Revisar si se abre PR `develop` → `main`.
 
 ## 7. Decisiones (ADR corto)
@@ -208,6 +217,15 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   eager de miniatura (video con `eager_async`), `allowed_formats` firmado.
 - **2026-10-03** Fecha de apertura: solo días futuros (desde mañana), a las 8:00 hora local. Material en español
   (`flutter_localizations`, `es_CO`).
+- **2026-10-03** Inserts con id generado en el cliente (`uuid`) y **sin RETURNING**: el error al guardar venía de
+  que RETURNING exige política SELECT; la 000004 añade las políticas `*_leer` (elementos, momentos, enlaces).
+- **2026-10-03** `firmar-medio`: firma solo lo que RLS deja leer al usuario; original con `private_download_url`
+  (1 h), miniatura con URL de entrega firmada (`c_limit,q_auto,w_480`; video `c_limit,q_auto,so_0,w_480`).
+- **2026-10-03** Banco de recuerdos: los elementos se guardan sueltos y se eligen al crear cápsulas o momentos; el
+  "+" guarda el recuerdo y lleva a `/recuerdos`. Crear cápsula = borrador → enlaces → programada (si falla, se borra
+  solo la cápsula; 23503 → recuerdo que ya no existe).
+- **2026-10-03** Momentos: título 1..80, descripción ≤ 500, 1..60 recuerdos, portada foto/video del propio momento
+  (CAP04 en servidor); rejilla bento de 4 columnas calculada en `distribuirBento` (función pura).
 - **2026-09-26** Riverpod como gestor de estado único; repositorios detrás de interfaces abstractas inyectadas por
   proveedores (`proveedorRepositorioAutenticacion`, `proveedorRepositorioUsuarios`) para simularlos en pruebas.
 
@@ -281,3 +299,13 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   checks, CAP01, CAP02, permisos) y Edge Function `firmar-subida` (`deno check`, `deno lint`, 5 pruebas `deno test`,
   firma verificada con el ejemplo oficial de Cloudinary). `flutter analyze` 0 issues, 159 tests verdes,
   `flutter build apk --debug` OK. Nada desplegado ni ejecutado en Supabase, Cloudinary ni Firebase.
+- **2026-10-03** Plan B aprobado por el PO (rama local `funcionalidad/capsulas`, sin push). (1) Arreglo del error al
+  guardar: ids generados en el cliente sin RETURNING y migración 000004 (políticas `*_leer`, `elementos.titulo` y
+  `fecha_recuerdo`, `momentos.titulo` y `portada_elemento_id`) aplicada por Management API y registrada en
+  `schema_migrations`; verificada con inserts dentro de una transacción con ROLLBACK y 22 pruebas SQL en Postgres
+  desechable. (2) Banco de recuerdos (`/recuerdos`): filtros, guardar, detalle, borrar. (3) Crear cápsula eligiendo
+  recuerdos o capturando uno nuevo. (4) Momentos: crear con filtros rápidos o a mano, portada, listado y detalle bento.
+  (5) `firmar-medio` desplegada (401 sin JWT o con JWT inválido; firmas validadas contra `cloudinary@2.11.0`) y
+  reproductores `video_player` ^2.14.1 / `just_audio` ^0.10.6; `uuid` ^4.6.0; permiso INTERNET en el
+  AndroidManifest principal (a mano). (6) Borrados en Cloudinary (autorizado) los 4 huérfanos de inserts fallidos;
+  `.vscode/launch.json` con "Capsoul (dev)".
