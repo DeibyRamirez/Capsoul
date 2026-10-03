@@ -1,12 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Capa mínima sobre PostgREST para `capsulas`, `elementos` y
-/// `capsula_elementos` (existe para simular la base en pruebas sin imitar
+import '../../recuerdos/datos/mapeo_recuerdos.dart';
+
+/// Capa mínima sobre PostgREST para `capsulas` y `capsula_elementos` (existe para simular la base en pruebas sin imitar
 /// los builders encadenados de `supabase_flutter`).
 abstract interface class AccesoTablasCapsulas {
-  /// Inserta una fila en `elementos` (la fila ya trae su `id`).
-  Future<void> insertarElemento(Map<String, dynamic> fila);
-
   /// Inserta una fila en `capsulas` (la fila ya trae su `id`).
   Future<void> insertarCapsula(Map<String, dynamic> fila);
 
@@ -15,8 +13,6 @@ abstract interface class AccesoTablasCapsulas {
   Future<void> actualizarEstadoCapsula(String id, String estado);
 
   Future<void> eliminarCapsula(String id);
-
-  Future<void> eliminarElementos(List<String> ids);
 
   Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(String autorId);
 
@@ -32,8 +28,7 @@ class AccesoTablasCapsulasSupabase implements AccesoTablasCapsulas {
       'creado_en';
 
   static const String columnasConElementos = '$columnasCapsula, '
-      'capsula_elementos(orden, elementos(id, tipo, contenido_texto, '
-      'cloudinary_public_id, bytes, duracion_segundos))';
+      'capsula_elementos(orden, elementos($columnasRecuerdo))';
 
   static const int limiteLista = 50;
 
@@ -43,11 +38,6 @@ class AccesoTablasCapsulasSupabase implements AccesoTablasCapsulas {
 
   // Sin `.select()`: el id lo genera el cliente y así el INSERT no depende
   // de la política SELECT (RETURNING), que era la causa del 42501.
-  @override
-  Future<void> insertarElemento(Map<String, dynamic> fila) async {
-    await _cliente.from('elementos').insert(fila);
-  }
-
   @override
   Future<void> insertarCapsula(Map<String, dynamic> fila) async {
     await _cliente.from('capsulas').insert(fila);
@@ -67,12 +57,6 @@ class AccesoTablasCapsulasSupabase implements AccesoTablasCapsulas {
   @override
   Future<void> eliminarCapsula(String id) async {
     await _cliente.from('capsulas').delete().eq('id', id);
-  }
-
-  @override
-  Future<void> eliminarElementos(List<String> ids) async {
-    if (ids.isEmpty) return;
-    await _cliente.from('elementos').delete().inFilter('id', ids);
   }
 
   @override

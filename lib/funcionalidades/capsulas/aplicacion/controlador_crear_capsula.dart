@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
-import '../../elementos/dominio/elemento_borrador.dart';
 import '../../elementos/dominio/limites_medios.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
+import '../../recuerdos/dominio/recuerdo.dart';
 import '../dominio/fallo_capsula.dart';
 import '../dominio/nueva_capsula.dart';
 import '../dominio/validador_capsula.dart';
@@ -14,65 +14,77 @@ import 'proveedores_capsulas.dart';
 @immutable
 class EstadoCrearCapsula {
   const EstadoCrearCapsula({
-    this.elementos = const [],
+    this.recuerdos = const [],
     this.fechaApertura,
     this.guardando = false,
-    this.guardados = 0,
     this.error,
   });
 
-  final List<ElementoBorrador> elementos;
+  /// Recuerdos elegidos, en el orden en que se guardarán.
+  final List<Recuerdo> recuerdos;
   final DateTime? fechaApertura;
   final bool guardando;
-
-  /// Elementos ya guardados durante el guardado (para el progreso).
-  final int guardados;
   final FalloApp? error;
 
-  bool get llena => elementos.length >= LimitesMedios.elementosMaxPorCapsula;
+  static const int maximo = LimitesMedios.elementosMaxPorCapsula;
+
+  bool get llena => recuerdos.length >= maximo;
+
+  /// Cuántos recuerdos más se pueden agregar.
+  int get disponibles => maximo - recuerdos.length;
+
+  Set<String> get idsElegidos => {for (final r in recuerdos) r.id};
 
   EstadoCrearCapsula copiarCon({
-    List<ElementoBorrador>? elementos,
+    List<Recuerdo>? recuerdos,
     DateTime? fechaApertura,
     bool? guardando,
-    int? guardados,
     FalloApp? error,
     bool limpiarError = false,
   }) {
     return EstadoCrearCapsula(
-      elementos: elementos ?? this.elementos,
+      recuerdos: recuerdos ?? this.recuerdos,
       fechaApertura: fechaApertura ?? this.fechaApertura,
       guardando: guardando ?? this.guardando,
-      guardados: guardados ?? this.guardados,
       error: limpiarError ? null : (error ?? this.error),
     );
   }
 }
 
-/// Agrega y quita elementos, elige la fecha y guarda la cápsula.
+/// Agrega y quita recuerdos, elige la fecha y guarda la cápsula.
 class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
   @override
   EstadoCrearCapsula build() => const EstadoCrearCapsula();
 
-  /// `false` si la cápsula ya tiene el máximo de elementos.
-  bool agregarElemento(ElementoBorrador elemento) {
-    if (state.llena) {
-      state = state.copiarCon(error: const FalloCapsula.demasiadosElementos());
-      return false;
+  /// Agrega [nuevos] sin duplicados y hasta el máximo. Devuelve cuántos se
+  /// agregaron; si sobraron, deja el fallo de "demasiados" en el estado.
+  int agregarRecuerdos(List<Recuerdo> nuevos) {
+    final ids = state.idsElegidos;
+    final lista = [...state.recuerdos];
+    var sobraron = false;
+    for (final recuerdo in nuevos) {
+      if (!ids.add(recuerdo.id)) continue;
+      if (lista.length >= EstadoCrearCapsula.maximo) {
+        sobraron = true;
+        break;
+      }
+      lista.add(recuerdo);
     }
-    if (state.elementos.any((e) => e.idLocal == elemento.idLocal)) return true;
-    state = state.copiarCon(
-      elementos: [...state.elementos, elemento],
-      limpiarError: true,
-    );
-    return true;
+    final agregados = lista.length - state.recuerdos.length;
+    state = sobraron
+        ? state.copiarCon(
+            recuerdos: lista,
+            error: const FalloCapsula.demasiadosElementos(),
+          )
+        : state.copiarCon(recuerdos: lista, limpiarError: true);
+    return agregados;
   }
 
-  void quitarElemento(String idLocal) {
+  void quitar(String idRecuerdo) {
     state = state.copiarCon(
-      elementos: [
-        for (final elemento in state.elementos)
-          if (elemento.idLocal != idLocal) elemento,
+      recuerdos: [
+        for (final recuerdo in state.recuerdos)
+          if (recuerdo.id != idRecuerdo) recuerdo,
       ],
       limpiarError: true,
     );
@@ -101,21 +113,18 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
       titulo: titulo,
       mensaje: mensaje,
       fechaApertura: fecha,
-      elementos: state.elementos,
+      recuerdos: state.recuerdos,
     );
     final fallo = ValidadorCapsula.validar(nueva, ahora: ahora);
     if (fallo != null) {
       state = state.copiarCon(error: fallo);
       return null;
     }
-    state = state.copiarCon(guardando: true, guardados: 0, limpiarError: true);
+    state = state.copiarCon(guardando: true, limpiarError: true);
     try {
       final id = await ref.read(proveedorRepositorioCapsulas).crearCapsula(
-        nueva,
-        alProgreso: (guardados, _) {
-          if (ref.mounted) state = state.copiarCon(guardados: guardados);
-        },
-      );
+            nueva,
+          );
       if (ref.mounted) {
         state = state.copiarCon(guardando: false);
         ref.invalidate(proveedorMisCapsulas);

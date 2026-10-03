@@ -3,34 +3,29 @@ import 'package:capsoul/funcionalidades/capsulas/datos/repositorio_capsulas_supa
 import 'package:capsoul/funcionalidades/capsulas/dominio/estado_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/fallo_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/nueva_capsula.dart';
-import 'package:capsoul/funcionalidades/elementos/dominio/elemento_borrador.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/fallo_medios.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
+import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../ayudantes/falsos_capsulas.dart';
+import '../../../ayudantes/falsos_recuerdos.dart';
 
 /// Base en memoria que registra cada operación.
 class _AccesoFalso implements AccesoTablasCapsulas {
   final List<String> operaciones = [];
-  final List<Map<String, dynamic>> elementos = [];
   final List<Map<String, dynamic>> capsulas = [];
   final List<Map<String, dynamic>> enlaces = [];
-  final List<String> elementosBorrados = [];
   final List<String> capsulasBorradas = [];
+  Object? falloEnCapsula;
   Object? falloEnEnlaces;
   Map<String, dynamic>? filaLeida;
 
   @override
-  Future<void> insertarElemento(Map<String, dynamic> fila) async {
-    operaciones.add('elemento');
-    elementos.add(fila);
-  }
-
-  @override
   Future<void> insertarCapsula(Map<String, dynamic> fila) async {
     operaciones.add('capsula:${fila['estado']}');
+    final fallo = falloEnCapsula;
+    if (fallo != null) throw fallo;
     capsulas.add(fila);
   }
 
@@ -51,10 +46,6 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   Future<void> eliminarCapsula(String id) async => capsulasBorradas.add(id);
 
   @override
-  Future<void> eliminarElementos(List<String> ids) async =>
-      elementosBorrados.addAll(ids);
-
-  @override
   Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(String autorId) async =>
       [?filaLeida, {'id': 'rota'}];
 
@@ -66,81 +57,48 @@ class _AccesoFalso implements AccesoTablasCapsulas {
 void main() {
   final ahora = DateTime(2026, 10, 3, 10);
   late _AccesoFalso acceso;
-  late RepositorioMediosFalso medios;
   late RepositorioCapsulasSupabase repositorio;
 
-  const nota = ElementoBorrador(
-    idLocal: 'n1',
-    tipo: TipoElemento.texto,
-    texto: 'Te quiero',
-    bytes: 9,
-  );
-  const foto = ElementoBorrador(
-    idLocal: 'f1',
-    tipo: TipoElemento.foto,
-    rutaArchivo: '/tmp/f.jpg',
-    bytes: 1000,
-    ancho: 1600,
-    alto: 1200,
-    formato: 'jpg',
-  );
+  final nota = recuerdoPrueba('r-nota', tipo: TipoElemento.texto);
+  final foto = recuerdoPrueba('r-foto');
 
-  NuevaCapsula nueva(List<ElementoBorrador> elementos) => NuevaCapsula(
+  NuevaCapsula nueva(List<Recuerdo> recuerdos) => NuevaCapsula(
         titulo: '  Para Jacobo ',
         mensaje: '  ',
         fechaApertura: DateTime.utc(2046, 8, 13, 13),
-        elementos: elementos,
+        recuerdos: recuerdos,
       );
 
   setUp(() {
     var siguienteId = 0;
     acceso = _AccesoFalso();
-    medios = RepositorioMediosFalso();
     repositorio = RepositorioCapsulasSupabase(
       acceso: acceso,
-      medios: medios,
       uidActual: () => 'uid-123',
       reloj: () => ahora,
       generarId: () => 'id-${++siguienteId}',
     );
   });
 
-  test('guarda elementos, cápsula en borrador, enlaces y la programa', () async {
-    final progreso = <int>[];
-    final id = await repositorio.crearCapsula(
-      nueva([nota, foto]),
-      alProgreso: (guardados, _) => progreso.add(guardados),
-    );
+  test('cápsula en borrador, enlaces con orden y la programa', () async {
+    final id = await repositorio.crearCapsula(nueva([foto, nota]));
 
-    // Los ids los genera el cliente: nota id-1, foto id-2, cápsula id-3.
-    expect(id, 'id-3');
+    // El id de la cápsula lo genera el cliente.
+    expect(id, 'id-1');
     expect(acceso.operaciones, [
-      'elemento',
-      'elemento',
       'capsula:borrador',
       'enlaces',
       'estado:programada',
     ]);
-    expect(progreso, [0, 1, 2]);
-    expect(acceso.elementos[0], {
-      'id': 'id-1',
-      'propietario_id': 'uid-123',
-      'tipo': 'texto',
-      'contenido_texto': 'Te quiero',
-    });
-    expect(acceso.elementos[1]['cloudinary_public_id'], 'capsoul/aleatorio-1');
-    expect(acceso.elementos[1]['cloudinary_tipo_recurso'], 'image');
-    expect(acceso.elementos[1]['bytes'], 1000);
-    expect(acceso.elementos[1]['id'], 'id-2');
-    expect(acceso.capsulas.single['id'], 'id-3');
+    expect(acceso.capsulas.single['id'], 'id-1');
+    expect(acceso.capsulas.single['autor_id'], 'uid-123');
     expect(acceso.capsulas.single['titulo'], 'Para Jacobo');
     expect(acceso.capsulas.single['mensaje'], isNull);
     expect(acceso.capsulas.single['fecha_apertura'], '2046-08-13T13:00:00.000Z');
     expect(acceso.enlaces, [
-      {'capsula_id': 'id-3', 'elemento_id': 'id-1', 'orden': 0},
-      {'capsula_id': 'id-3', 'elemento_id': 'id-2', 'orden': 1},
+      {'capsula_id': 'id-1', 'elemento_id': 'r-foto', 'orden': 0},
+      {'capsula_id': 'id-1', 'elemento_id': 'r-nota', 'orden': 1},
     ]);
-    expect(medios.subidos, [foto]);
   });
 
   test('valida antes de escribir nada', () async {
@@ -158,7 +116,6 @@ void main() {
   test('sin sesión no guarda', () async {
     final sinSesion = RepositorioCapsulasSupabase(
       acceso: acceso,
-      medios: medios,
       uidActual: () => null,
       reloj: () => ahora,
     );
@@ -166,25 +123,29 @@ void main() {
       sinSesion.crearCapsula(nueva([nota])),
       throwsA(isA<FalloCapsula>()),
     );
+    expect(acceso.operaciones, isEmpty);
   });
 
-  test('si la subida no está disponible, borra lo ya insertado', () async {
-    medios.fallo = const FalloMedios.subidaNoDisponible();
+  test('si la cápsula no se inserta, no hay nada que deshacer', () async {
+    acceso.falloEnCapsula = const PostgrestException(
+      message: 'new row violates row-level security policy for table '
+          '"capsulas"',
+      code: '42501',
+    );
 
     await expectLater(
-      repositorio.crearCapsula(nueva([nota, foto])),
-      throwsA(isA<FalloMedios>().having(
+      repositorio.crearCapsula(nueva([nota])),
+      throwsA(isA<FalloCapsula>().having(
         (f) => f.codigo,
         'codigo',
-        FalloMedios.codigoSubidaNoDisponible,
+        FalloCapsula.codigoPermisoDenegado,
       )),
     );
-    expect(acceso.capsulas, isEmpty);
-    expect(acceso.elementosBorrados, ['id-1']);
+    expect(acceso.capsulasBorradas, isEmpty);
   });
 
-  test('si falla un paso posterior, borra la cápsula y los elementos', () async {
-    acceso.falloEnEnlaces = PostgrestException(
+  test('si fallan los enlaces, borra solo la cápsula', () async {
+    acceso.falloEnEnlaces = const PostgrestException(
       message: 'máximo de elementos',
       code: 'CAP02',
     );
@@ -197,8 +158,7 @@ void main() {
         FalloCapsula.codigoDemasiadosElementos,
       )),
     );
-    expect(acceso.capsulasBorradas, ['id-2']);
-    expect(acceso.elementosBorrados, ['id-1']);
+    expect(acceso.capsulasBorradas, ['id-1']);
   });
 
   group('traducirError', () {
@@ -257,6 +217,12 @@ void main() {
         ).codigo,
         'dato_invalido',
       );
+      expect(
+        RepositorioCapsulasSupabase.traducirError(
+          PostgrestException(message: 'fk', code: '23503'),
+        ).codigo,
+        'recuerdo_no_existe',
+      );
     });
   });
 
@@ -275,7 +241,11 @@ void main() {
           'orden': 1,
           'elementos': {
             'id': 'e2',
+            'propietario_id': 'uid-123',
             'tipo': 'audio',
+            'titulo': 'Canción',
+            'fecha_recuerdo': '2026-09-30',
+            'creado_en': '2026-10-01T02:00:00Z',
             'cloudinary_public_id': 'p2',
             'bytes': 1000,
             'duracion_segundos': 92.4,
@@ -283,7 +253,13 @@ void main() {
         },
         {
           'orden': 0,
-          'elementos': {'id': 'e1', 'tipo': 'texto', 'contenido_texto': 'Nota'},
+          'elementos': {
+            'id': 'e1',
+            'propietario_id': 'uid-123',
+            'tipo': 'texto',
+            'creado_en': '2026-10-01T02:00:00Z',
+            'contenido_texto': 'Nota',
+          },
         },
         {'orden': 2, 'elementos': {'id': 'e3', 'tipo': 'desconocido'}},
       ],
@@ -300,6 +276,8 @@ void main() {
         capsula?.elementos[1].duracion,
         const Duration(milliseconds: 92400),
       );
+      expect(capsula?.elementos[1].nombre, 'Canción');
+      expect(capsula?.elementos[1].fechaRecuerdo, DateTime(2026, 9, 30));
     });
 
     test('descarta filas corruptas al listar', () async {

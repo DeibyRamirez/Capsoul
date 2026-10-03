@@ -166,12 +166,7 @@ GoRouter crearEnrutadorApp({
           GoRoute(
             path: 'capsula',
             name: 'crear-capsula',
-            builder: (context, state) {
-              final extra = state.extra;
-              return PantallaCrearCapsula(
-                elementoInicial: extra is ElementoBorrador ? extra : null,
-              );
-            },
+            builder: (context, state) => const PantallaCrearCapsula(),
           ),
           GoRoute(
             path: 'video',

@@ -1,46 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import '../../elementos/dominio/tipo_elemento.dart';
+import '../../recuerdos/dominio/recuerdo.dart';
 import 'estado_capsula.dart';
-
-/// Elemento ya guardado y unido a una cápsula (fila de `elementos` +
-/// `capsula_elementos.orden`).
-@immutable
-class ElementoCapsula {
-  const ElementoCapsula({
-    required this.id,
-    required this.tipo,
-    this.orden = 0,
-    this.contenidoTexto,
-    this.publicId,
-    this.bytes,
-    this.duracion,
-  });
-
-  final String id;
-  final TipoElemento tipo;
-  final int orden;
-  final String? contenidoTexto;
-  final String? publicId;
-  final int? bytes;
-  final Duration? duracion;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is ElementoCapsula &&
-          other.id == id &&
-          other.tipo == tipo &&
-          other.orden == orden &&
-          other.contenidoTexto == contenidoTexto &&
-          other.publicId == publicId &&
-          other.bytes == bytes &&
-          other.duracion == duracion;
-
-  @override
-  int get hashCode =>
-      Object.hash(id, tipo, orden, contenidoTexto, publicId, bytes, duracion);
-}
 
 /// Cápsula del tiempo (tabla `capsulas`).
 @immutable
@@ -66,8 +27,8 @@ class Capsula {
   final DateTime? liberadaEn;
   final DateTime creadoEn;
 
-  /// Ordenados por `orden`.
-  final List<ElementoCapsula> elementos;
+  /// Recuerdos de la cápsula, ordenados por `capsula_elementos.orden`.
+  final List<Recuerdo> elementos;
 
   @override
   bool operator ==(Object other) =>

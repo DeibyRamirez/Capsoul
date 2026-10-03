@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../ayudantes/app_prueba.dart';
 import '../../../ayudantes/falsos.dart';
 import '../../../ayudantes/falsos_capsulas.dart';
+import '../../../ayudantes/falsos_recuerdos.dart';
 
 Future<void> _abrirNuevaCapsula(WidgetTester tester) async {
   await tester.tap(find.text('Guardar algo hoy'));
@@ -23,8 +24,17 @@ Finder _listaFormulario() => find
     )
     .first;
 
+/// Hace visible [objetivo] dentro del formulario y lo toca.
+Future<void> _tocar(WidgetTester tester, Finder objetivo) async {
+  await tester.scrollUntilVisible(objetivo, 200, scrollable: _listaFormulario());
+  await tester.ensureVisible(objetivo);
+  await tester.pumpAndSettle();
+  await tester.tap(objetivo);
+}
+
 Future<void> _agregarNota(WidgetTester tester, String texto) async {
-  await tester.tap(
+  await _tocar(
+    tester,
     find.descendant(
       of: find.byType(BotonesAgregarElemento),
       matching: find.text('Nota'),
@@ -33,6 +43,12 @@ Future<void> _agregarNota(WidgetTester tester, String texto) async {
   await tester.pumpAndSettle();
   await tester.enterText(find.byKey(const Key('campo-nota')), texto);
   await tester.tap(find.text('Guardar nota'));
+  await tester.pumpAndSettle();
+  // Se guarda en el banco de recuerdos y vuelve a la cápsula.
+  await tester.tap(find.widgetWithText(FilledButton, 'Guardar recuerdo'));
+  await tester.pumpAndSettle();
+  // Deja que se oculte el aviso "Guardado en tus recuerdos.".
+  await tester.pump(const Duration(seconds: 5));
   await tester.pumpAndSettle();
 }
 
@@ -61,8 +77,7 @@ void main() {
       autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
     );
     await _abrirNuevaCapsula(tester);
-    await tester.scrollUntilVisible(find.text('Guardar cápsula'), 200, scrollable: _listaFormulario());
-    await tester.tap(find.text('Guardar cápsula'));
+    await _tocar(tester, find.text('Guardar cápsula'));
     await tester.pump();
 
     expect(find.text('Elige una fecha de apertura en el futuro.'), findsOneWidget);
@@ -80,30 +95,28 @@ void main() {
     await _agregarNota(tester, 'Primera');
     await _agregarNota(tester, 'Te quiero, Jacobo');
     expect(find.text('Recuerdos (2/10)'), findsOneWidget);
-    await tester.tap(find.byTooltip('Quitar').first);
+    await _tocar(tester, find.byTooltip('Quitar').first);
     await tester.pumpAndSettle();
     expect(find.text('Recuerdos (1/10)'), findsOneWidget);
     expect(find.text('Primera'), findsNothing);
 
     await tester.enterText(find.byKey(const Key('campo-titulo')), 'Para Jacobo');
     await tester.enterText(find.byKey(const Key('campo-mensaje')), 'Ábrela grande');
-    await tester.scrollUntilVisible(find.byKey(const Key('campo-fecha')), 200, scrollable: _listaFormulario());
-    await tester.tap(find.byKey(const Key('campo-fecha')));
+    await _tocar(tester, find.byKey(const Key('campo-fecha')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Elegir'));
     await tester.pumpAndSettle();
     expect(find.text('Se abrirá el 3 oct 2027'), findsOneWidget);
 
-    await tester.scrollUntilVisible(find.text('Guardar cápsula'), 200, scrollable: _listaFormulario());
-    await tester.tap(find.text('Guardar cápsula'));
+    await _tocar(tester, find.text('Guardar cápsula'));
     await tester.pumpAndSettle();
 
     final nueva = capsulas.creadas.single;
     expect(nueva.titulo, 'Para Jacobo');
     expect(nueva.mensaje, 'Ábrela grande');
     expect(nueva.fechaApertura, DateTime(2027, 10, 3, 8));
-    expect(nueva.elementos.single.tipo, TipoElemento.texto);
-    expect(nueva.elementos.single.texto, 'Te quiero, Jacobo');
+    expect(nueva.recuerdos.single.tipo, TipoElemento.texto);
+    expect(nueva.recuerdos.single.contenidoTexto, 'Te quiero, Jacobo');
     // Tras guardar abre el detalle.
     expect(find.text('Abrir en'), findsOneWidget);
     expect(find.text('Para Jacobo'), findsOneWidget);
@@ -120,13 +133,11 @@ void main() {
     await _abrirNuevaCapsula(tester);
     await _agregarNota(tester, 'Hola');
     await tester.enterText(find.byKey(const Key('campo-titulo')), 'Para mí');
-    await tester.scrollUntilVisible(find.byKey(const Key('campo-fecha')), 200, scrollable: _listaFormulario());
-    await tester.tap(find.byKey(const Key('campo-fecha')));
+    await _tocar(tester, find.byKey(const Key('campo-fecha')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Elegir'));
     await tester.pumpAndSettle();
-    await tester.scrollUntilVisible(find.text('Guardar cápsula'), 200, scrollable: _listaFormulario());
-    await tester.tap(find.text('Guardar cápsula'));
+    await _tocar(tester, find.text('Guardar cápsula'));
     await tester.pumpAndSettle();
 
     expect(
@@ -134,5 +145,35 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Nueva cápsula'), findsOneWidget);
+  });
+
+  testWidgets('elige recuerdos guardados sin repetir los ya agregados',
+      (tester) async {
+    final capsulas = RepositorioCapsulasFalso();
+    await montarAppCapsoul(
+      tester,
+      autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
+      capsulas: capsulas,
+      recuerdos: RepositorioRecuerdosFalso(iniciales: [
+        recuerdoPrueba('a', titulo: 'Playa'),
+        recuerdoPrueba('b', titulo: 'Cumpleaños'),
+      ]),
+    );
+    await _abrirNuevaCapsula(tester);
+
+    await _tocar(tester, find.byKey(const Key('boton-elegir-recuerdos')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Playa'));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('boton-listo-elegir')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recuerdos (1/10)'), findsOneWidget);
+    expect(find.text('Playa'), findsOneWidget);
+
+    await _tocar(tester, find.byKey(const Key('boton-elegir-recuerdos')));
+    await tester.pumpAndSettle();
+    expect(find.text('Playa'), findsNothing);
+    expect(find.text('Cumpleaños'), findsOneWidget);
   });
 }

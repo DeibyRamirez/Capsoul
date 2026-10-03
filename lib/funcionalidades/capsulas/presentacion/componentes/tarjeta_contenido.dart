@@ -5,11 +5,11 @@ import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../../elementos/dominio/tipo_elemento.dart';
 import '../../../elementos/dominio/validador_medios.dart';
-import '../../dominio/capsula.dart';
+import '../../../recuerdos/dominio/recuerdo.dart';
+import '../../../recuerdos/presentacion/componentes/miniatura_recuerdo_firmada.dart';
 
-/// Tarjeta de un elemento en "Contenido": video (con duración), nota de voz
-/// (con onda), foto o nota. Los medios se muestran como placeholder hasta
-/// que exista la Edge Function `firmar-medio`.
+/// Tarjeta de un recuerdo en "Contenido": video (con duración), nota de voz
+/// (con onda), foto o nota. Fotos y videos muestran la miniatura firmada.
 class TarjetaContenido extends StatelessWidget {
   const TarjetaContenido({
     super.key,
@@ -17,7 +17,7 @@ class TarjetaContenido extends StatelessWidget {
     required this.alTocar,
   });
 
-  final ElementoCapsula elemento;
+  final Recuerdo elemento;
   final VoidCallback alTocar;
 
   @override
@@ -31,7 +31,7 @@ class TarjetaContenido extends StatelessWidget {
     };
     return Semantics(
       button: true,
-      label: elemento.tipo.etiqueta,
+      label: '${elemento.tipo.etiqueta}: ${elemento.nombre}',
       child: InkWell(
         borderRadius: BorderRadius.circular(TemaApp.radioMediano),
         onTap: alTocar,
@@ -50,7 +50,9 @@ class TarjetaContenido extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    elemento.tipo.etiqueta,
+                    elemento.nombre,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: ColoresApp.sobreSuperficie,
@@ -71,17 +73,14 @@ class TarjetaContenido extends StatelessWidget {
 class _Portada extends StatelessWidget {
   const _Portada({required this.elemento});
 
-  final ElementoCapsula elemento;
+  final Recuerdo elemento;
 
   @override
   Widget build(BuildContext context) {
     return switch (elemento.tipo) {
-      TipoElemento.video => const _FondoMarino(
-          child: _IconoCentral(Icons.play_arrow_rounded),
-        ),
-      TipoElemento.foto => const _FondoMarino(
-          child: _IconoCentral(Icons.photo_outlined),
-        ),
+      TipoElemento.video ||
+      TipoElemento.foto =>
+        MiniaturaRecuerdoFirmada(recuerdo: elemento),
       TipoElemento.audio => ColoredBox(
           color: ColoresApp.acento.withValues(alpha: 0.15),
           child: Padding(
@@ -112,44 +111,5 @@ class _Portada extends StatelessWidget {
           ),
         ),
     };
-  }
-}
-
-class _FondoMarino extends StatelessWidget {
-  const _FondoMarino({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [ColoresApp.acento, ColoresApp.primario],
-        ),
-      ),
-      child: Center(child: child),
-    );
-  }
-}
-
-class _IconoCentral extends StatelessWidget {
-  const _IconoCentral(this.icono);
-
-  final IconData icono;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: ColoresApp.sobrePrimario.withValues(alpha: 0.25),
-        border: Border.all(color: ColoresApp.bordeCupula),
-      ),
-      child: Icon(icono, color: ColoresApp.sobrePrimario, size: 30),
-    );
   }
 }

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
-import '../../elementos/dominio/tipo_elemento.dart';
+import '../../../nucleo/enrutador/rutas_app.dart';
+import '../../recuerdos/dominio/recuerdo.dart';
 import '../aplicacion/proveedores_capsulas.dart';
 import '../dominio/apertura_capsula.dart';
 import '../dominio/capsula.dart';
@@ -58,30 +59,9 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
     if (mounted) setState(() => _abierta = true);
   }
 
-  void _alTocarElemento(ElementoCapsula elemento) {
-    if (elemento.tipo == TipoElemento.texto) {
-      showDialog<void>(
-        context: context,
-        builder: (contexto) => AlertDialog(
-          title: const Text('Nota'),
-          content: SingleChildScrollView(
-            child: Text(elemento.contenidoTexto ?? ''),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(contexto).pop(),
-              child: const Text('Cerrar'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-    mostrarAvisoInformativo(
-      context,
-      'La reproducción estará disponible cuando se active la entrega segura '
-      'de medios.',
-    );
+  /// Abre el detalle del recuerdo (foto, video, audio o nota).
+  void _alTocarElemento(Recuerdo recuerdo) {
+    context.push(RutasApp.detalleRecuerdoDe(recuerdo.id));
   }
 
   @override
@@ -179,8 +159,8 @@ class _Titulo extends StatelessWidget {
 class _RejillaContenido extends StatelessWidget {
   const _RejillaContenido({required this.elementos, required this.alTocar});
 
-  final List<ElementoCapsula> elementos;
-  final ValueChanged<ElementoCapsula> alTocar;
+  final List<Recuerdo> elementos;
+  final ValueChanged<Recuerdo> alTocar;
 
   @override
   Widget build(BuildContext context) {

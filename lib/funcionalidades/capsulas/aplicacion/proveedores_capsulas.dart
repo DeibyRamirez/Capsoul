@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
-import '../../elementos/aplicacion/proveedores_elementos.dart';
 import '../datos/acceso_tablas_capsulas.dart';
 import '../datos/repositorio_capsulas_supabase.dart';
 import '../dominio/capsula.dart';
@@ -12,7 +11,6 @@ final proveedorRepositorioCapsulas = Provider<RepositorioCapsulas>((ref) {
   final autenticacion = ref.watch(proveedorRepositorioAutenticacion);
   return RepositorioCapsulasSupabase(
     acceso: AccesoTablasCapsulasSupabase(),
-    medios: ref.watch(proveedorRepositorioMedios),
     uidActual: () => autenticacion.usuarioActual?.uid,
   );
 });

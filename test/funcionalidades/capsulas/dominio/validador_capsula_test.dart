@@ -1,15 +1,10 @@
 import 'package:capsoul/funcionalidades/capsulas/dominio/fallo_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/nueva_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/validador_capsula.dart';
-import 'package:capsoul/funcionalidades/elementos/dominio/elemento_borrador.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-ElementoBorrador _nota(int i) => ElementoBorrador(
-      idLocal: 'n$i',
-      tipo: TipoElemento.texto,
-      texto: 'nota $i',
-    );
+import '../../../ayudantes/falsos_recuerdos.dart';
 
 void main() {
   final ahora = DateTime(2026, 10, 3, 10);
@@ -22,7 +17,10 @@ void main() {
       NuevaCapsula(
         titulo: titulo,
         fechaApertura: fecha ?? DateTime(2046, 8, 13, 8),
-        elementos: [for (var i = 0; i < elementos; i++) _nota(i)],
+        recuerdos: [
+          for (var i = 0; i < elementos; i++)
+            recuerdoPrueba('n$i', tipo: TipoElemento.texto),
+        ],
       );
 
   test('una cápsula completa es válida', () {

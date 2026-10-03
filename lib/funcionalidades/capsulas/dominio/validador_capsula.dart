@@ -38,7 +38,7 @@ abstract final class ValidadorCapsula {
   static FalloCapsula? validar(NuevaCapsula nueva, {required DateTime ahora}) {
     return validarTitulo(nueva.titulo) ??
         validarFecha(nueva.fechaApertura, ahora: ahora) ??
-        validarCantidad(nueva.elementos.length);
+        validarCantidad(nueva.recuerdos.length);
   }
 
   /// Primer día que se puede elegir en el selector de fecha (mañana).

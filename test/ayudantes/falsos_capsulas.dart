@@ -29,10 +29,7 @@ class RepositorioCapsulasFalso implements RepositorioCapsulas {
   FalloApp? siguienteFallo;
 
   @override
-  Future<String> crearCapsula(
-    NuevaCapsula nueva, {
-    void Function(int guardados, int total)? alProgreso,
-  }) async {
+  Future<String> crearCapsula(NuevaCapsula nueva) async {
     final fallo = siguienteFallo;
     if (fallo != null) {
       siguienteFallo = null;
@@ -48,8 +45,8 @@ class RepositorioCapsulasFalso implements RepositorioCapsulas {
       fechaApertura: nueva.fechaApertura,
       estado: EstadoCapsula.programada,
       creadoEn: DateTime(2026, 10, 3),
+      elementos: nueva.recuerdos,
     );
-    alProgreso?.call(nueva.elementos.length, nueva.elementos.length);
     return id;
   }
 

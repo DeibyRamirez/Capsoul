@@ -7,10 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/identificadores/generador_ids.dart';
 import '../../../nucleo/supabase/errores_postgrest.dart';
-import '../../elementos/dominio/elemento_borrador.dart';
 import '../../elementos/dominio/fallo_medios.dart';
-import '../../elementos/dominio/repositorio_medios.dart';
-import '../../elementos/dominio/tipo_elemento.dart';
+import '../../recuerdos/datos/mapeo_recuerdos.dart';
+import '../../recuerdos/dominio/recuerdo.dart';
 import '../dominio/capsula.dart';
 import '../dominio/estado_capsula.dart';
 import '../dominio/fallo_capsula.dart';
@@ -19,17 +18,16 @@ import '../dominio/repositorio_capsulas.dart';
 import '../dominio/validador_capsula.dart';
 import 'acceso_tablas_capsulas.dart';
 
-/// [RepositorioCapsulas] con Supabase (tablas de la migración 000001) y
-/// medios en Cloudinary vía [RepositorioMedios].
+/// [RepositorioCapsulas] con Supabase (migraciones 000001, 000003 y 000004).
 ///
-/// Orden al crear (respeta las políticas RLS): subir medios → insertar
-/// `elementos` → insertar la cápsula en `borrador` → unir en
-/// `capsula_elementos` → pasarla a `programada`. Si algo falla se borran la
-/// cápsula (aún en borrador) y los elementos insertados.
+/// Los recuerdos ya existen en `elementos` (banco de recuerdos). Orden al
+/// crear (respeta las políticas RLS): insertar la cápsula en `borrador` (id
+/// generado en el cliente) → unir los recuerdos en `capsula_elementos` con su
+/// orden → pasarla a `programada`. Si algo falla se borra solo la cápsula
+/// (sus enlaces caen en cascada); los recuerdos no se tocan.
 class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   RepositorioCapsulasSupabase({
     required this._acceso,
-    required this._medios,
     required this._uidActual,
     DateTime Function()? reloj,
     GeneradorIds? generarId,
@@ -41,96 +39,53 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   static const String codigoMaximoElementos = 'CAP02';
 
   final AccesoTablasCapsulas _acceso;
-  final RepositorioMedios _medios;
   final String? Function() _uidActual;
   final DateTime Function() _reloj;
   final GeneradorIds _generarId;
 
   @override
-  Future<String> crearCapsula(
-    NuevaCapsula nueva, {
-    void Function(int guardados, int total)? alProgreso,
-  }) async {
+  Future<String> crearCapsula(NuevaCapsula nueva) async {
     final uid = _uidActual();
     if (uid == null) throw const FalloCapsula.sinSesion();
     final fallo = ValidadorCapsula.validar(nueva, ahora: _reloj());
     if (fallo != null) throw fallo;
 
-    final total = nueva.elementos.length;
-    final idsElementos = <String>[];
-    String? idCapsula;
+    final idCapsula = _generarId();
+    var insertada = false;
     try {
-      alProgreso?.call(0, total);
-      for (final elemento in nueva.elementos) {
-        final fila = await _filaElemento(uid, elemento);
-        await _acceso.insertarElemento(fila);
-        idsElementos.add(fila['id'] as String);
-        alProgreso?.call(idsElementos.length, total);
-      }
       final mensaje = nueva.mensaje?.trim();
-      final nuevoId = _generarId();
       await _acceso.insertarCapsula({
-        'id': nuevoId,
+        'id': idCapsula,
         'autor_id': uid,
         'titulo': nueva.titulo.trim(),
         'mensaje': (mensaje == null || mensaje.isEmpty) ? null : mensaje,
         'fecha_apertura': nueva.fechaApertura.toUtc().toIso8601String(),
         'estado': EstadoCapsula.borrador.valorBd,
       });
-      idCapsula = nuevoId;
-      final capsulaId = nuevoId;
+      insertada = true;
       await _acceso.insertarEnlaces([
-        for (var i = 0; i < idsElementos.length; i++)
-          {'capsula_id': capsulaId, 'elemento_id': idsElementos[i], 'orden': i},
+        for (var i = 0; i < nueva.recuerdos.length; i++)
+          {
+            'capsula_id': idCapsula,
+            'elemento_id': nueva.recuerdos[i].id,
+            'orden': i,
+          },
       ]);
       await _acceso.actualizarEstadoCapsula(
-        capsulaId,
+        idCapsula,
         EstadoCapsula.programada.valorBd,
       );
-      return capsulaId;
+      return idCapsula;
     } catch (error) {
-      await _deshacer(idCapsula, idsElementos);
+      if (insertada) await _deshacer(idCapsula);
       throw traducirError(error);
     }
   }
 
-  Future<Map<String, dynamic>> _filaElemento(
-    String uid,
-    ElementoBorrador elemento,
-  ) async {
-    if (elemento.tipo == TipoElemento.texto) {
-      return {
-        'id': _generarId(),
-        'propietario_id': uid,
-        'tipo': TipoElemento.texto.valorBd,
-        'contenido_texto': elemento.texto,
-      };
-    }
-    final medio = await _medios.subir(elemento);
-    final duracionLocal = elemento.duracion;
-    final duracion = medio.duracionSegundos ??
-        (duracionLocal == null ? null : duracionLocal.inMilliseconds / 1000);
-    return {
-      'id': _generarId(),
-      'propietario_id': uid,
-      'tipo': elemento.tipo.valorBd,
-      'cloudinary_public_id': medio.publicId,
-      'cloudinary_tipo_recurso': medio.tipoRecurso,
-      'cloudinary_version': medio.version,
-      'formato': medio.formato ?? elemento.formato,
-      'bytes': medio.bytes,
-      'ancho': medio.ancho,
-      'alto': medio.alto,
-      'duracion_segundos': duracion,
-    };
-  }
-
-  /// Compensación best effort: los archivos ya subidos a Cloudinary quedan
-  /// huérfanos y los limpiará el servidor (pendiente en Memory.md).
-  Future<void> _deshacer(String? idCapsula, List<String> idsElementos) async {
+  /// Compensación best effort: borra la cápsula incompleta (aún en borrador).
+  Future<void> _deshacer(String idCapsula) async {
     try {
-      if (idCapsula != null) await _acceso.eliminarCapsula(idCapsula);
-      await _acceso.eliminarElementos(idsElementos);
+      await _acceso.eliminarCapsula(idCapsula);
     } catch (error) {
       debugPrint('Capsoul: no se pudo deshacer la cápsula incompleta: $error');
     }
@@ -179,10 +134,10 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     }
     final mensaje = fila['mensaje'];
     final enlaces = fila['capsula_elementos'];
-    final elementos = <ElementoCapsula>[
+    final ordenados = <(int, Recuerdo)>[
       if (enlaces is List)
-        for (final enlace in enlaces) ?elementoDesdeEnlace(enlace),
-    ]..sort((a, b) => a.orden.compareTo(b.orden));
+        for (final enlace in enlaces) ?recuerdoDesdeEnlace(enlace),
+    ]..sort((a, b) => a.$1.compareTo(b.$1));
     return Capsula(
       id: id,
       autorId: autorId,
@@ -192,34 +147,19 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       estado: estado,
       liberadaEn: _fecha(fila['liberada_en']),
       creadoEn: creadoEn,
-      elementos: List.unmodifiable(elementos),
+      elementos: List.unmodifiable([for (final (_, r) in ordenados) r]),
     );
   }
 
+  /// Recuerdo de un enlace `capsula_elementos(orden, elementos(...))` con
+  /// su orden, o `null` si está mal formado.
   @visibleForTesting
-  static ElementoCapsula? elementoDesdeEnlace(Object? enlace) {
+  static (int, Recuerdo)? recuerdoDesdeEnlace(Object? enlace) {
     if (enlace is! Map) return null;
-    final elemento = enlace['elementos'];
-    if (elemento is! Map) return null;
-    final id = elemento['id'];
-    final tipo = TipoElemento.desdeValorBd(elemento['tipo']);
-    if (id is! String || tipo == null) return null;
+    final recuerdo = recuerdoDesdeFila(enlace['elementos']);
+    if (recuerdo == null) return null;
     final orden = enlace['orden'];
-    final texto = elemento['contenido_texto'];
-    final publicId = elemento['cloudinary_public_id'];
-    final bytes = elemento['bytes'];
-    final duracion = elemento['duracion_segundos'];
-    return ElementoCapsula(
-      id: id,
-      tipo: tipo,
-      orden: orden is num ? orden.toInt() : 0,
-      contenidoTexto: texto is String ? texto : null,
-      publicId: publicId is String ? publicId : null,
-      bytes: bytes is num ? bytes.toInt() : null,
-      duracion: duracion is num
-          ? Duration(milliseconds: (duracion * 1000).round())
-          : null,
-    );
+    return (orden is num ? orden.toInt() : 0, recuerdo);
   }
 
   static DateTime? _fecha(Object? valor) =>
@@ -254,7 +194,12 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
         case '23514':
           return const FalloCapsula(
             'dato_invalido',
-            'Algún recuerdo no cumple los límites permitidos.',
+            'Algún dato de la cápsula no cumple los límites permitidos.',
+          );
+        case '23503':
+          return const FalloCapsula(
+            'recuerdo_no_existe',
+            'Uno de los recuerdos ya no existe. Quítalo y vuelve a intentarlo.',
           );
       }
       debugPrint('Capsoul: PostgrestException no esperada: $error');

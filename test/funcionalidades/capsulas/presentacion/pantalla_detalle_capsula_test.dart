@@ -5,6 +5,7 @@ import 'package:capsoul/funcionalidades/capsulas/dominio/capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/estado_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/presentacion/pantalla_detalle_capsula.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
+import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
 import 'package:capsoul/nucleo/tema/tema_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,17 +24,22 @@ Capsula _capsula({DateTime? fechaApertura}) => Capsula(
       estado: EstadoCapsula.programada,
       creadoEn: DateTime(2026, 8, 13),
       fechaApertura: fechaApertura ?? DateTime(2046, 8, 13, 8),
-      elementos: const [
-        ElementoCapsula(
+      elementos: [
+        Recuerdo(
           id: 'e1',
+          propietarioId: 'uid-123',
           tipo: TipoElemento.video,
-          duracion: Duration(minutes: 5, seconds: 30),
+          fechaRecuerdo: DateTime(2026, 8, 13),
+          creadoEn: DateTime(2026, 8, 13),
+          duracion: const Duration(minutes: 5, seconds: 30),
         ),
-        ElementoCapsula(
+        Recuerdo(
           id: 'e2',
+          propietarioId: 'uid-123',
           tipo: TipoElemento.audio,
-          orden: 1,
-          duracion: Duration(minutes: 1, seconds: 32),
+          fechaRecuerdo: DateTime(2026, 8, 13),
+          creadoEn: DateTime(2026, 8, 13),
+          duracion: const Duration(minutes: 1, seconds: 32),
         ),
       ],
     );

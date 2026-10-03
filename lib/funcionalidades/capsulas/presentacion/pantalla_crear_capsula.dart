@@ -7,23 +7,21 @@ import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
-import '../../elementos/dominio/elemento_borrador.dart';
-import '../../elementos/dominio/limites_medios.dart';
 import '../../elementos/dominio/tipo_elemento.dart';
+import '../../recuerdos/dominio/recuerdo.dart';
+import '../../recuerdos/presentacion/componentes/hoja_nuevo_recuerdo.dart';
+import '../../recuerdos/presentacion/pantalla_elegir_recuerdos.dart';
 import '../aplicacion/controlador_crear_capsula.dart';
 import '../aplicacion/proveedores_capsulas.dart';
 import '../dominio/apertura_capsula.dart';
 import '../dominio/validador_capsula.dart';
 import 'componentes/botones_agregar_elemento.dart';
-import 'componentes/tarjeta_elemento_borrador.dart';
+import 'componentes/tarjeta_recuerdo_elegido.dart';
 
-/// Formulario "Nueva cápsula": recuerdos (hasta 10), título, mensaje, fecha
-/// de apertura futura y destinatario (próximamente).
+/// Formulario "Nueva cápsula": recuerdos del banco (hasta 10), título,
+/// mensaje, fecha de apertura futura y destinatario (próximamente).
 class PantallaCrearCapsula extends ConsumerStatefulWidget {
-  const PantallaCrearCapsula({super.key, this.elementoInicial});
-
-  /// Elemento capturado desde el selector de Crear.
-  final ElementoBorrador? elementoInicial;
+  const PantallaCrearCapsula({super.key});
 
   @override
   ConsumerState<PantallaCrearCapsula> createState() =>
@@ -35,17 +33,6 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
   final _mensaje = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    final inicial = widget.elementoInicial;
-    if (inicial != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _controlador.agregarElemento(inicial);
-      });
-    }
-  }
-
-  @override
   void dispose() {
     _titulo.dispose();
     _mensaje.dispose();
@@ -55,16 +42,24 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
   ControladorCrearCapsula get _controlador =>
       ref.read(proveedorControladorCrearCapsula.notifier);
 
-  static String _rutaCaptura(TipoElemento tipo) => switch (tipo) {
-        TipoElemento.foto => RutasApp.crearFoto,
-        TipoElemento.video => RutasApp.crearVideo,
-        TipoElemento.audio => RutasApp.crearAudio,
-        TipoElemento.texto => RutasApp.crearEscribir,
-      };
+  /// Abre el banco de recuerdos en modo selección.
+  Future<void> _elegirDeMisRecuerdos() async {
+    final estado = ref.read(proveedorControladorCrearCapsula);
+    final elegidos = await context.push<List<Recuerdo>>(
+      RutasApp.elegirRecuerdos,
+      extra: ParametrosElegirRecuerdos(
+        titulo: 'Recuerdos para la cápsula',
+        yaElegidos: estado.idsElegidos,
+        maximo: estado.disponibles,
+      ),
+    );
+    if (elegidos != null && mounted) _controlador.agregarRecuerdos(elegidos);
+  }
 
-  Future<void> _agregar(TipoElemento tipo) async {
-    final elemento = await context.push<ElementoBorrador>(_rutaCaptura(tipo));
-    if (elemento != null && mounted) _controlador.agregarElemento(elemento);
+  /// Captura un recuerdo nuevo, lo guarda en el banco y lo agrega.
+  Future<void> _capturarAhora(TipoElemento tipo) async {
+    final recuerdo = await capturarRecuerdo(context, tipo);
+    if (recuerdo != null && mounted) _controlador.agregarRecuerdos([recuerdo]);
   }
 
   Future<void> _elegirFecha() async {
@@ -109,7 +104,8 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
     });
     final estado = ref.watch(proveedorControladorCrearCapsula);
     final fecha = estado.fechaApertura;
-    final total = estado.elementos.length;
+    final total = estado.recuerdos.length;
+    final puedeAgregar = !estado.llena && !estado.guardando;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Nueva cápsula')),
@@ -121,20 +117,32 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
             const _Encabezado(),
             const SizedBox(height: 20),
             _TituloSeccion(
-              'Recuerdos ($total/${LimitesMedios.elementosMaxPorCapsula})',
+              'Recuerdos ($total/${EstadoCrearCapsula.maximo})',
             ),
             const SizedBox(height: 8),
-            for (final elemento in estado.elementos)
-              TarjetaElementoBorrador(
-                key: ValueKey(elemento.idLocal),
-                elemento: elemento,
+            for (final recuerdo in estado.recuerdos)
+              TarjetaRecuerdoElegido(
+                key: ValueKey(recuerdo.id),
+                recuerdo: recuerdo,
                 alQuitar: estado.guardando
                     ? null
-                    : () => _controlador.quitarElemento(elemento.idLocal),
+                    : () => _controlador.quitar(recuerdo.id),
               ),
+            OutlinedButton.icon(
+              key: const Key('boton-elegir-recuerdos'),
+              onPressed: puedeAgregar ? _elegirDeMisRecuerdos : null,
+              icon: const Icon(Icons.photo_library_outlined),
+              label: const Text('Elegir de mis recuerdos'),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Capturar ahora',
+              style: TextStyle(color: ColoresApp.atenuado),
+            ),
+            const SizedBox(height: 8),
             BotonesAgregarElemento(
-              habilitado: !estado.llena && !estado.guardando,
-              alElegir: _agregar,
+              habilitado: puedeAgregar,
+              alElegir: _capturarAhora,
             ),
             const SizedBox(height: 24),
             TextField(
@@ -177,14 +185,6 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
               cargando: estado.guardando,
               alPresionar: _guardar,
             ),
-            if (estado.guardando) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Guardando ${estado.guardados} de $total recuerdos…',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: ColoresApp.atenuado),
-              ),
-            ],
           ],
         ),
       ),
@@ -215,7 +215,7 @@ class _Encabezado extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Agrega fotos, videos, notas de voz o notas.',
+                'Elige recuerdos guardados o captura uno nuevo.',
                 style: estilos.bodyMedium?.copyWith(color: ColoresApp.atenuado),
               ),
             ],
