@@ -48,8 +48,10 @@
   `firebase_core ^4.1.0`, `flutter_riverpod ^3.4.3`, `flutter_lints`.
 - Dev: `mocktail ^1.0.5`.
 - Quitados el 2026-10-02: `firebase_auth`, `cloud_firestore`, `firebase_storage`, `fake_cloud_firestore`.
-- Previstos: firebase_messaging, flutter_local_notifications, camera/image_picker, record, video_player,
-  just_audio, video_compress, flutter_image_compress, subida a Cloudinary firmada por Edge Function.
+- Medios (2026-10-03, rama `funcionalidad/capsulas`): `camera ^0.12.1` (camerax 0.7.5+1, avfoundation 0.10.3+1),
+  `record ^7.1.1`, `flutter_image_compress ^2.5.1`, `http ^1.6.0`, `path_provider ^2.1.6`, `flutter_localizations`
+  (SDK). Se descartó `video_compress` (sin mantenimiento): el video se graba ya comprimido (720p, 2,5 Mbps, audio 64k).
+- Previstos: firebase_messaging, flutter_local_notifications, video_player, just_audio.
   CI con GitHub Actions (+ Codemagic para iOS).
 
 ## 4. Arquitectura actual
@@ -77,17 +79,24 @@ lib/
     usuarios/{aplicacion,datos,dominio}                    # RepositorioUsuarios(+Supabase), AccesoTablaUsuarios
     perfil/{aplicacion,presentacion}                       # ControladorPerfil, PantallaPerfil (pestaña Yo)
     navegacion/presentacion/contenedor_navegacion.dart     # barra: Inicio | Momentos | + | Mi legado | Yo
-    inicio/ momentos/ crear/ legado/                       # presentacion/pantalla_*.dart
+    elementos/{aplicacion,datos,dominio,presentacion}      # LimitesMedios, captura foto/video/audio/nota, compresión, firma+subida
+    capsulas/{aplicacion,datos,dominio,presentacion}       # crear, mis cápsulas, detalle (candado, cuenta regresiva, apertura)
+    inicio/{aplicacion,datos,dominio,presentacion}         # Inicio del mockup con conteos reales (RepositorioResumenInicio)
+    momentos/ crear/ legado/                               # presentacion/pantalla_*.dart
 test/                                # espejo de lib/ (nucleo/, funcionalidades/) + ayudantes/ (falsos, app_prueba)
 docs/arquitectura.md                 # ARQ-2 v2.0: Supabase + Cloudinary + FCM + Resend (4 diagramas Mermaid)
 docs/modelo_er.{md,mmd,png}          # modelo ER del director, v1.3 con las correcciones aprobadas por el PO
 supabase/migrations/                 # 20261002000001_capsoul_modelo_inicial.sql, 20261002000002_capsoul_programar_trabajos.sql
+supabase/migrations/20261003000003_capsoul_limites_medios.sql  # límites, 10 elementos, cuota 200 MB (NO aplicada)
+supabase/functions/firmar-subida/       # Edge Function Deno (index.ts + limites.ts + limites_test.ts), NO desplegada
 supabase/pruebas/pruebas_rls_capsoul.sql  # pruebas manuales de RLS (psql)
+supabase/pruebas/pruebas_limites_medios.sql  # pruebas de la 000003 (psql, Postgres local)
 env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 .cursor/skills/                      # skills del proyecto (capsoul-*)
 ```
 
-- Rutas: `/inicio`, `/momentos`, `/legado`, `/yo`, `/crear` (+ `/crear/video|audio|escribir|foto`),
+- Rutas: `/inicio`, `/momentos`, `/legado`, `/yo`, `/crear` (+ `/crear/capsula|video|audio|escribir|foto`),
+  `/capsulas` (+ `/capsulas/:id`),
   `/iniciar-sesion`, `/registro`, `/recuperar`, `/revisa-tu-correo?correo=…[&reenviar=1]`, `/nueva-contrasena`.
   Sin sesión solo rutas de autenticación; con sesión, el contenedor; en modo recuperación, solo `/nueva-contrasena`.
 - El botón `+` no es una pestaña: hace push de `/crear` (Video, Audio, Escribir, Foto).
@@ -123,7 +132,7 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 | S1 | Cimientos: estructura, tema, navegación, init Firebase, org, skills | ✅ Terminado (en `develop`, validación de Capsoul en ClickUp y Linear) |
 | S2 | Identidad y autenticación (registro, inicio de sesión, recuperar, sesión, perfil, reglas) | ✅ **Cerrado** (2026-10-03) en `develop`: Supabase Auth + R3 confirmación de correo obligatoria + deep links; migración 000001 aplicada, Auth configurado y el PO probó registro e inicio de sesión con correo OK |
 | MIG | Migración a Supabase + Cloudinary (Firebase solo FCM) | 🟡 Modelo 1.3 aplicado y Auth en Supabase; pendiente 000002 (pg_cron), Edge Functions y Cloudinary firmado |
-| S4 | Ruta crítica de cápsulas + Security Rules | ⏳ |
+| S4 | Ruta crítica de cápsulas + Security Rules | 🟡 En rama local `funcionalidad/capsulas` (sin push): elementos base, crear/detalle de cápsula, Inicio del mockup, migración 000003 y Edge Function `firmar-subida` como archivos; falta aprobación del PO para desplegar |
 | S8 | Endurecer reglas + FCM | ⏳ |
 
 ## 6. Pendientes abiertos
@@ -135,7 +144,21 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] Director: actualizar RF-05 en Drive si hace falta (no existe en el repo; la copia 02 v1.2 ya pide confirmación
       obligatoria y la pantalla "Revisa tu correo").
 - [ ] Llamar `registrar_actividad()` (RPC) al abrir la app, para herencias por inactividad.
-- [ ] Cloudinary: preset/subida firmada por Edge Function (sin API secret en el cliente).
+- [ ] PO: aprobar y desplegar `firmar-subida` (`supabase functions deploy firmar-subida --project-ref
+      mslcdvcmfuqopfwojxvt`) con secretos `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, y
+      aplicar `20261003000003_capsoul_limites_medios.sql`. Hasta entonces los medios muestran "subida no disponible";
+      las notas de texto ya funcionan con la 000001.
+- [ ] PO: revisar la rama `funcionalidad/capsulas` y autorizar push / PR a `develop`.
+- [ ] `firmar-medio` para reproducir fotos/videos/audios (hoy el detalle muestra tarjetas sin reproducir).
+- [ ] Limpiar en Cloudinary los medios huérfanos si falla el guardado tras subir (la app compensa solo en la BD).
+- [ ] El tamaño declarado no lo puede imponer la firma de Cloudinary: valorar verificación posterior (webhook
+      `notification_url` o revisión en `firmar-medio`).
+- [ ] `miniatura_public_id` queda en null (eager crea la miniatura derivada; falta guardarla/servirla).
+- [ ] Destinatarios de cápsula (campo visible y deshabilitado, "Próximamente").
+- [ ] PO: el mockup de Inicio muestra la barra "Inicio | Momento | + | Historia | Yo"; se mantuvo la congelada en la
+      skill UI ("Inicio | Momentos | + | Mi legado | Yo"). Decidir.
+- [ ] `pruebas_rls_capsoul.sql` inserta una foto sin `bytes`: con la 000003 esa línea fallará por el check (esperado).
+- [ ] iOS: verificar en Mac la compilación con camera/record (deployment target) y los permisos.
 - [ ] Borrar `firestore.rules` y `firebase.json` y desactivar Firebase Auth/Firestore/Storage en la consola (decisión del PO).
 - [ ] Edge Functions `firmar-subida`, `firmar-medio` y `enviar-avisos`.
 - [ ] PO: probar en dispositivo lo que falta del flujo (login sin confirmar → reenviar; recuperar → enlace → nueva
@@ -144,7 +167,7 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] iOS: falta `ios/Runner/GoogleService-Info.plist` (necesario para FCM).
 - [ ] Actualizar remoto local: `git remote set-url origin https://github.com/DeibyRamirez/Capsoul.git`.
 - [ ] S1-07: instalar packs oficiales de skills (ver `.cursor/skills/README.md`).
-- [ ] FCM (`firebase_messaging`) · paquetes multimedia · CI.
+- [ ] FCM (`firebase_messaging`) · reproductores (video_player/just_audio) · CI.
 - [ ] Revisar si se abre PR `develop` → `main`.
 
 ## 7. Decisiones (ADR corto)
@@ -176,6 +199,15 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - **2026-10-03** SQL 1.3: permisos por defecto globales del rol postgres (`alter default privileges for role postgres
   revoke execute on functions from public`; la variante `in schema` no quita el EXECUTE de PUBLIC) y vinculación de
   invitaciones también al cambiar el correo (solo cuentas con `email_confirmed_at`).
+- **2026-10-03** Límites de medios aprobados por el PO, centralizados en `LimitesMedios` (MB binarios): foto lado
+  mayor ≤ 1600 px, JPEG 75, ≤ 2 MB; video 720p ≤ 60 s ~2,5 Mbps ≤ 20 MB; audio AAC mono 64 kbps ≤ 5 min (tope 3 MB);
+  nota ≤ 5000 caracteres; ≤ 10 elementos por cápsula; cuota 200 MB por usuario validada en servidor (trigger CAP01,
+  máximo de elementos CAP02, checks 23514). Compresión en el teléfono antes de subir.
+- **2026-10-03** Guardado de cápsula: subir medios → insertar `elementos` → cápsula en `borrador` → `capsula_elementos`
+  → `programada`; si falla, se borran cápsula y elementos. `public_id` `capsoul/<uuid>` (sin uid), `type=authenticated`,
+  eager de miniatura (video con `eager_async`), `allowed_formats` firmado.
+- **2026-10-03** Fecha de apertura: solo días futuros (desde mañana), a las 8:00 hora local. Material en español
+  (`flutter_localizations`, `es_CO`).
 - **2026-09-26** Riverpod como gestor de estado único; repositorios detrás de interfaces abstractas inyectadas por
   proveedores (`proveedorRepositorioAutenticacion`, `proveedorRepositorioUsuarios`) para simularlos en pruebas.
 
@@ -240,3 +272,12 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   confirmación obligatoria y SMTP Resend. El PO probó registro e inicio de sesión con correo: OK. Commits
   `configuración(plataforma)` (deep links), `documentación(migraciones)` y `documentación(memoria)`; push a `origin/develop`
   autorizado por el PO.
+- **2026-10-03** S4 en rama local `funcionalidad/capsulas` (desde `develop` 48e14c9, **sin push**): elementos base (foto y
+  video con cámara frontal/trasera, video ≤ 60 s con contador, nota de voz con onda ≤ 5 min, nota ≤ 5000), compresión y
+  límites (`LimitesMedios`), crear cápsula (varios elementos con vista previa, título, mensaje, fecha futura,
+  destinatario "Próximamente"), mis cápsulas, detalle del mockup (candado, cuenta regresiva, el autor ve el contenido,
+  animación de frasco que se ilumina y abre), Inicio del mockup con conteos reales. Permisos de cámara/micrófono a mano
+  en AndroidManifest e Info.plist. Backend como archivos: migración 000003 (probada en Postgres 17 desechable en el box:
+  checks, CAP01, CAP02, permisos) y Edge Function `firmar-subida` (`deno check`, `deno lint`, 5 pruebas `deno test`,
+  firma verificada con el ejemplo oficial de Cloudinary). `flutter analyze` 0 issues, 159 tests verdes,
+  `flutter build apk --debug` OK. Nada desplegado ni ejecutado en Supabase, Cloudinary ni Firebase.
