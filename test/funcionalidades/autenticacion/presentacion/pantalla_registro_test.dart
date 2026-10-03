@@ -56,7 +56,7 @@ void main() {
     await llenarFormulario(tester);
 
     expect(autenticacion.ultimoNombreRegistrado, 'Ana María');
-    expect(find.text('Hola'), findsOneWidget);
+    expect(find.text('Guardar algo hoy'), findsOneWidget);
   });
 
   testWidgets(
@@ -72,7 +72,7 @@ void main() {
     expect(find.text('Revisa tu correo'), findsOneWidget);
     expect(find.text('ana@capsoul.app'), findsOneWidget);
     expect(find.text('Volver a iniciar sesión'), findsOneWidget);
-    expect(find.text('Hola'), findsNothing);
+    expect(find.text('Guardar algo hoy'), findsNothing);
     expect(autenticacion.usuarioActual, isNull);
   });
 }

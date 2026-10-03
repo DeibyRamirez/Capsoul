@@ -56,7 +56,7 @@ void main() {
     autenticacion.compuertaInicioSesion!.complete();
     await tester.pumpAndSettle();
 
-    expect(find.text('Hola'), findsOneWidget);
+    expect(find.text('Guardar algo hoy'), findsOneWidget);
   });
 
   testWidgets('credenciales inválidas muestran SnackBar en español',

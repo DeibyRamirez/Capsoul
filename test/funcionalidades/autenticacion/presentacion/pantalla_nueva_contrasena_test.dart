@@ -24,7 +24,7 @@ void main() {
     await abrirEnlaceRecuperacion(tester);
 
     expect(find.text('Escribe tu nueva contraseña.'), findsOneWidget);
-    expect(find.text('Hola'), findsNothing);
+    expect(find.text('Guardar algo hoy'), findsNothing);
   });
 
   testWidgets('valida que las contraseñas coincidan', (tester) async {
@@ -50,7 +50,7 @@ void main() {
 
     expect(autenticacion.ultimaContrasenaNueva, 'nueva-secreta1');
     expect(find.text(kMensajeContrasenaActualizada), findsOneWidget);
-    expect(find.text('Hola'), findsOneWidget);
+    expect(find.text('Guardar algo hoy'), findsOneWidget);
   });
 
   testWidgets('cancelar cierra la sesión temporal', (tester) async {

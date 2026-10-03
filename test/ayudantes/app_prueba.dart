@@ -1,17 +1,25 @@
 import 'package:capsoul/app_capsoul.dart';
 import 'package:capsoul/funcionalidades/autenticacion/aplicacion/proveedores_autenticacion.dart';
+import 'package:capsoul/funcionalidades/capsulas/aplicacion/proveedores_capsulas.dart';
+import 'package:capsoul/funcionalidades/inicio/aplicacion/proveedores_inicio.dart';
 import 'package:capsoul/funcionalidades/usuarios/aplicacion/proveedores_usuarios.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'falsos.dart';
+import 'falsos_capsulas.dart';
+
+/// Fecha fija para las pruebas (3 oct 2026, 10:00 local).
+final DateTime ahoraPrueba = DateTime(2026, 10, 3, 10);
 
 /// Monta la [AppCapsoul] real (enrutador real) con repositorios falsos.
 Future<void> montarAppCapsoul(
   WidgetTester tester, {
   required RepositorioAutenticacionFalso autenticacion,
   RepositorioUsuariosFalso? usuarios,
+  RepositorioResumenInicioFalso? resumen,
+  RepositorioCapsulasFalso? capsulas,
 }) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 3;
@@ -24,6 +32,13 @@ Future<void> montarAppCapsoul(
         proveedorRepositorioUsuarios.overrideWithValue(
           usuarios ?? RepositorioUsuariosFalso(),
         ),
+        proveedorRepositorioResumenInicio.overrideWithValue(
+          resumen ?? RepositorioResumenInicioFalso(),
+        ),
+        proveedorRepositorioCapsulas.overrideWithValue(
+          capsulas ?? RepositorioCapsulasFalso(),
+        ),
+        proveedorReloj.overrideWithValue(() => ahoraPrueba),
       ],
       child: const AppCapsoul(),
     ),

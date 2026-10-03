@@ -11,8 +11,8 @@ void main() {
       autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
     );
 
-    expect(find.text('Hola'), findsOneWidget);
-    expect(find.text('Bienvenido a Capsoul'), findsOneWidget);
+    expect(find.text('Guardar algo hoy'), findsOneWidget);
+    expect(find.text('cápsoul'), findsOneWidget);
     expect(find.text('Inicio'), findsWidgets);
     expect(find.text('Momentos'), findsWidgets);
     expect(find.text('Mi legado'), findsWidgets);
@@ -29,7 +29,7 @@ void main() {
     expect(find.text('Iniciar sesión'), findsOneWidget);
     expect(find.text('Pequeñas herencias, grandes recuerdos'), findsOneWidget);
     expect(find.text('Inicio'), findsNothing);
-    expect(find.text('Hola'), findsNothing);
+    expect(find.text('Guardar algo hoy'), findsNothing);
   });
 
   testWidgets('el botón + abre el selector de Crear', (tester) async {
@@ -42,6 +42,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Crear'), findsOneWidget);
-    expect(find.text('Graba un recuerdo en video'), findsOneWidget);
+    expect(find.text('Cápsula del tiempo'), findsOneWidget);
+    expect(find.text('Graba un recuerdo en video (hasta 60 s)'), findsOneWidget);
   });
 }
