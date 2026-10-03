@@ -51,7 +51,10 @@
 - Medios (2026-10-03, rama `funcionalidad/capsulas`): `camera ^0.12.1` (camerax 0.7.5+1, avfoundation 0.10.3+1),
   `record ^7.1.1`, `flutter_image_compress ^2.5.1`, `http ^1.6.0`, `path_provider ^2.1.6`, `flutter_localizations`
   (SDK). Se descartó `video_compress` (sin mantenimiento): el video se graba ya comprimido (720p, 2,5 Mbps, audio 64k).
-- Previstos: firebase_messaging, flutter_local_notifications, video_player, just_audio.
+- Recuerdos y medios (2026-10-03): `uuid ^4.6.0`, `video_player ^2.14.1`, `just_audio ^0.10.6`,
+  `flutter_cache_manager ^3.4.5` (Baseflow, 2026-09-19; trae sqflite). Se eligió flutter_cache_manager solo, sin
+  `cached_network_image`: la app busca primero el archivo por clave y únicamente pide la URL si falta.
+- Previstos: firebase_messaging, flutter_local_notifications.
   CI con GitHub Actions (+ Codemagic para iOS).
 
 ## 4. Arquitectura actual
@@ -125,7 +128,13 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
   solo `nombre_visible` de la fila propia.
 - Medios (D2): `elementos.cloudinary_tipo_entrega` solo `'authenticated'`, sin `url_segura`, `public_id` aleatorio de
   la Edge Function `firmar-subida`; miniaturas *eager*; URLs firmadas por `firmar-medio` (`private_download_url` con
-  `expires_at` a 1 h); el autor ve sus propios medios antes de `fecha_apertura`.
+  `expires_at`: original 24 h, miniatura 7 días); el autor ve sus propios medios antes de `fecha_apertura`.
+- Caché de medios en la app: `CargadorMedios` busca el archivo en el dispositivo (`ArchivosMedioDispositivo`,
+  flutter_cache_manager `capsoul_medios`, 400 objetos, 60 días sin uso) con clave `public_id|miniatura` o
+  `public_id|original`; si falta, pide el enlace a `RepositorioUrlsMedioAgrupado`, que reutiliza los vigentes de
+  `CacheEnlacesMedio` (memoria, por `public_id` y variante, margen de 5 min) y agrupa los que faltan en una llamada.
+  Listas, rejillas, bento y selección usan solo la miniatura; el original solo en el detalle (foto, video, audio).
+  Al cerrar sesión o cambiar de cuenta se vacían ambas cachés.
 - Migración `20261002000001` v1.3 **aplicada** el 2026-10-03 en el proyecto `capsoul` (Management API, registrada en
   `supabase_migrations.schema_migrations`). Auth configurado: *Site URL* `capsoul://auth/confirmar`, redirecciones
   `capsoul://auth/confirmar` y `capsoul://auth/recuperar`, confirmación de correo obligatoria, SMTP Resend.
@@ -151,12 +160,14 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] Director: actualizar RF-05 en Drive si hace falta (no existe en el repo; la copia 02 v1.2 ya pide confirmación
       obligatoria y la pantalla "Revisa tu correo").
 - [ ] Llamar `registrar_actividad()` (RPC) al abrir la app, para herencias por inactividad.
-- [ ] Documentos desactualizados: `docs/modelo_er.md` (y comentarios antiguos) aún dicen que la 000003 está
-      "NO aplicada"; ya está aplicada (igual que la 000004).
 - [ ] PO: revisar la rama `funcionalidad/capsulas` y autorizar push / PR a `develop`.
 - [ ] Huérfanos en Cloudinary: si falla el insert tras subir, el medio queda en Cloudinary (la app compensa solo en
       la BD). Falta limpieza en servidor (tarea programada o webhook). Los 4 huérfanos del 2026-10-03 ya se borraron.
-- [ ] Miniatura firmada de `firmar-medio` (`s--…--`, 480 px) **no expira**; el original sí (1 h). Decidir si basta.
+- [ ] Probar con un medio real la miniatura por Download API + `transformation` (foto y, sobre todo, video `so_0`):
+      se verificó con un recurso `upload` de ejemplo (480 px) y la firma contra recursos inexistentes, no con un
+      derivado eager `authenticated`. La Download API no pasa por la CDN (Cloudinary cobra el doble de ancho de
+      banda): la caché del dispositivo lo compensa.
+- [ ] Video y audio se descargan completos antes de reproducir (≤ 20 MB / ≤ 3 MB); valorar streaming + caché.
 - [ ] iOS: AVPlayer con la URL de la Download API depende del Content-Type; probar video/audio en iPhone.
 - [ ] Momentos: visibilidad siempre `privado` (el enum admite cercanos/amigos); falta UI para compartir.
 - [ ] Un plugin avisa en el build Android sobre "Built-in Kotlin"; revisar al actualizar dependencias.
@@ -164,8 +175,6 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
       `notification_url` o revisión en `firmar-medio`).
 - [ ] `miniatura_public_id` queda en null (eager crea la miniatura derivada; falta guardarla/servirla).
 - [ ] Destinatarios de cápsula (campo visible y deshabilitado, "Próximamente").
-- [ ] PO: el mockup de Inicio muestra la barra "Inicio | Momento | + | Historia | Yo"; se mantuvo la congelada en la
-      skill UI ("Inicio | Momentos | + | Mi legado | Yo"). Decidir.
 - [ ] `pruebas_rls_capsoul.sql` inserta una foto sin `bytes`: con la 000003 esa línea fallará por el check (esperado).
 - [ ] iOS: verificar en Mac la compilación con camera/record (deployment target) y los permisos.
 - [ ] Borrar `firestore.rules` y `firebase.json` y desactivar Firebase Auth/Firestore/Storage en la consola (decisión del PO).
@@ -221,6 +230,14 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   que RETURNING exige política SELECT; la 000004 añade las políticas `*_leer` (elementos, momentos, enlaces).
 - **2026-10-03** `firmar-medio`: firma solo lo que RLS deja leer al usuario; original con `private_download_url`
   (1 h), miniatura con URL de entrega firmada (`c_limit,q_auto,w_480`; video `c_limit,q_auto,so_0,w_480`).
+  **Reemplazado** el mismo día (v2, abajo).
+- **2026-10-03** PO: **se mantiene la barra inferior actual** ("Inicio | Momentos | + | Mi legado | Yo", la de la
+  skill UI) en lugar de la del mockup.
+- **2026-10-03** PO: `firmar-medio` v2: original a **24 h** y miniatura a **7 días**, ambas con `private_download_url`
+  firmada (la miniatura con `transformation` del derivado eager y formato jpg) y caducidad propia
+  (`expira_original`, `expira_miniatura`; `expira_en` = original por compatibilidad; `public_id` en la respuesta).
+  En la app, **caché por `public_id`** (no por URL) para ahorrar ancho de banda de Cloudinary: archivos en el
+  dispositivo y enlaces vigentes en memoria reutilizados hasta 5 min antes de caducar.
 - **2026-10-03** Banco de recuerdos: los elementos se guardan sueltos y se eligen al crear cápsulas o momentos; el
   "+" guarda el recuerdo y lleva a `/recuerdos`. Crear cápsula = borrador → enlaces → programada (si falla, se borra
   solo la cápsula; 23503 → recuerdo que ya no existe).
@@ -309,3 +326,8 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   reproductores `video_player` ^2.14.1 / `just_audio` ^0.10.6; `uuid` ^4.6.0; permiso INTERNET en el
   AndroidManifest principal (a mano). (6) Borrados en Cloudinary (autorizado) los 4 huérfanos de inserts fallidos;
   `.vscode/launch.json` con "Capsoul (dev)".
+- **2026-10-03** Caché de medios (aprobado por el PO): `firmar-medio` v2 desplegada (miniatura 7 d, original 24 h,
+  ambas temporales y firmadas; 401 sin JWT, con JWT inválido y con firma alterada). En la app,
+  flutter_cache_manager 3.4.5 con clave `public_id|variante`, `CacheEnlacesMedio` con margen de 5 min y
+  `CargadorMedios` que evita descargas repetidas; listas y rejillas solo con miniatura. Se corrigió
+  `docs/modelo_er.md` (000001, 000003 y 000004 aplicadas) y `docs/arquitectura.md`.
