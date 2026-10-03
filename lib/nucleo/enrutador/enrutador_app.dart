@@ -23,6 +23,10 @@ import '../../funcionalidades/legado/presentacion/pantalla_legado.dart';
 import '../../funcionalidades/momentos/presentacion/pantalla_momentos.dart';
 import '../../funcionalidades/navegacion/presentacion/contenedor_navegacion.dart';
 import '../../funcionalidades/perfil/presentacion/pantalla_perfil.dart';
+import '../../funcionalidades/recuerdos/presentacion/pantalla_detalle_recuerdo.dart';
+import '../../funcionalidades/recuerdos/presentacion/pantalla_elegir_recuerdos.dart';
+import '../../funcionalidades/recuerdos/presentacion/pantalla_guardar_recuerdo.dart';
+import '../../funcionalidades/recuerdos/presentacion/pantalla_recuerdos.dart';
 import 'rutas_app.dart';
 
 /// Enrutador de la app conectado a la sesión. Reevalúa su redirección cada
@@ -202,6 +206,43 @@ GoRouter crearEnrutadorApp({
             name: 'detalle-capsula',
             builder: (context, state) => PantallaDetalleCapsula(
               idCapsula: state.pathParameters['id'] ?? '',
+            ),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: RutasApp.recuerdos,
+        name: 'recuerdos',
+        parentNavigatorKey: claveNavegadorRaiz,
+        builder: (context, state) => const PantallaRecuerdos(),
+        routes: [
+          // Las rutas fijas van antes de `:id`.
+          GoRoute(
+            path: 'guardar',
+            name: 'guardar-recuerdo',
+            redirect: (context, state) =>
+                state.extra is ElementoBorrador ? null : RutasApp.recuerdos,
+            builder: (context, state) => PantallaGuardarRecuerdo(
+              elemento: state.extra! as ElementoBorrador,
+            ),
+          ),
+          GoRoute(
+            path: 'elegir',
+            name: 'elegir-recuerdos',
+            builder: (context, state) {
+              final extra = state.extra;
+              return PantallaElegirRecuerdos(
+                parametros: extra is ParametrosElegirRecuerdos
+                    ? extra
+                    : const ParametrosElegirRecuerdos(),
+              );
+            },
+          ),
+          GoRoute(
+            path: ':id',
+            name: 'detalle-recuerdo',
+            builder: (context, state) => PantallaDetalleRecuerdo(
+              idRecuerdo: state.pathParameters['id'] ?? '',
             ),
           ),
         ],

@@ -1,6 +1,9 @@
 import 'capsula.dart';
 import 'estado_capsula.dart';
 
+// Se movió a núcleo (lo usan también recuerdos y momentos).
+export '../../../nucleo/formato/fechas.dart' show formatearFechaCorta;
+
 /// Cómo se presenta una cápsula a quien la mira.
 enum ModoApertura {
   /// Fecha futura y quien mira no es el autor: candado, sin contenido.
@@ -29,16 +32,6 @@ ModoApertura calcularModoApertura(
       : ModoApertura.bloqueada;
 }
 
-const List<String> _mesesAbreviados = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-];
-
-/// "13 ago 2046" (hora local).
-String formatearFechaCorta(DateTime fecha) {
-  final local = fecha.toLocal();
-  return '${local.day} ${_mesesAbreviados[local.month - 1]} ${local.year}';
-}
 
 /// Años, meses y días completos entre [desde] y [hasta] (calendario).
 ({int anios, int meses, int dias}) diferenciaCalendario(

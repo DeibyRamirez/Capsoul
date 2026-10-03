@@ -99,7 +99,7 @@ class _RejillaSecciones extends StatelessWidget {
           'recuerdos guardados',
         ),
         ilustracion: const IlustracionSeccion(icono: Icons.photo_outlined),
-        alTocar: () => context.go(RutasApp.momentos),
+        alTocar: () => context.push(RutasApp.recuerdos),
       ),
       TarjetaSeccionInicio(
         icono: Icons.flag_outlined,

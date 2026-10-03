@@ -4,19 +4,23 @@ import 'package:go_router/go_router.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
-import '../../elementos/dominio/elemento_borrador.dart';
+import '../../elementos/dominio/tipo_elemento.dart';
+import '../../recuerdos/presentacion/componentes/hoja_nuevo_recuerdo.dart';
 
-/// Selector que abre el botón `+`: una cápsula nueva o un recuerdo suelto
-/// (Video, Audio, Escribir, Foto) que se agrega a una cápsula nueva.
+/// Selector que abre el botón `+`: una cápsula nueva o un recuerdo nuevo
+/// (Video, Audio, Escribir, Foto) que se guarda en el banco de recuerdos.
 class PantallaSelectorCrear extends StatelessWidget {
   const PantallaSelectorCrear({super.key});
 
-  /// Captura el recuerdo y, si el usuario lo usa, abre la cápsula nueva con
-  /// ese recuerdo ya agregado (reemplaza al selector).
-  static Future<void> _capturarYCrear(BuildContext context, String ruta) async {
-    final elemento = await context.push<ElementoBorrador>(ruta);
-    if (elemento == null || !context.mounted) return;
-    context.pushReplacement(RutasApp.crearCapsula, extra: elemento);
+  /// Captura y guarda el recuerdo; si se guardó, reemplaza el selector por
+  /// el banco de recuerdos.
+  static Future<void> _nuevoRecuerdo(
+    BuildContext context,
+    TipoElemento tipo,
+  ) async {
+    final recuerdo = await capturarRecuerdo(context, tipo);
+    if (recuerdo == null || !context.mounted) return;
+    context.pushReplacement(RutasApp.recuerdos);
   }
 
   @override
@@ -40,34 +44,53 @@ class PantallaSelectorCrear extends StatelessWidget {
             destacada: true,
             alTocar: () => context.pushReplacement(RutasApp.crearCapsula),
           ),
+          const _TituloSeccion('Nuevo recuerdo'),
           _OpcionCrear(
             icono: Icons.videocam_outlined,
             titulo: 'Video',
             subtitulo: 'Graba un recuerdo en video (hasta 60 s)',
-            alTocar: () => _capturarYCrear(context, RutasApp.crearVideo),
+            alTocar: () => _nuevoRecuerdo(context, TipoElemento.video),
           ),
           _OpcionCrear(
             icono: Icons.mic_none_outlined,
             titulo: 'Audio',
             subtitulo: 'Deja un mensaje de voz (hasta 5 min)',
-            alTocar: () => _capturarYCrear(context, RutasApp.crearAudio),
+            alTocar: () => _nuevoRecuerdo(context, TipoElemento.audio),
           ),
           _OpcionCrear(
             icono: Icons.edit_outlined,
             titulo: 'Escribir',
             subtitulo: 'Escribe una nota o carta',
-            alTocar: () => _capturarYCrear(context, RutasApp.crearEscribir),
+            alTocar: () => _nuevoRecuerdo(context, TipoElemento.texto),
           ),
           _OpcionCrear(
             icono: Icons.photo_outlined,
             titulo: 'Foto',
             subtitulo: 'Guarda una imagen especial',
-            alTocar: () => _capturarYCrear(context, RutasApp.crearFoto),
+            alTocar: () => _nuevoRecuerdo(context, TipoElemento.foto),
           ),
         ],
       ),
     );
   }
+}
+
+class _TituloSeccion extends StatelessWidget {
+  const _TituloSeccion(this.texto);
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+        child: Text(
+          texto,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: ColoresApp.primario,
+          ),
+        ),
+      );
 }
 
 class _OpcionCrear extends StatelessWidget {

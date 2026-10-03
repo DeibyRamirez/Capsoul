@@ -12,6 +12,9 @@ abstract final class RutasApp {
   static const String crearFoto = '/crear/foto';
   static const String crearCapsula = '/crear/capsula';
   static const String capsulas = '/capsulas';
+  static const String recuerdos = '/recuerdos';
+  static const String guardarRecuerdo = '/recuerdos/guardar';
+  static const String elegirRecuerdos = '/recuerdos/elegir';
 
   static const String iniciarSesion = '/iniciar-sesion';
   static const String registro = '/registro';
@@ -32,6 +35,10 @@ abstract final class RutasApp {
   /// Ubicación del detalle de la cápsula [id].
   static String detalleCapsulaDe(String id) =>
       '$capsulas/${Uri.encodeComponent(id)}';
+
+  /// Ubicación del detalle del recuerdo [id].
+  static String detalleRecuerdoDe(String id) =>
+      '$recuerdos/${Uri.encodeComponent(id)}';
 
   /// Ubicación de "Revisa tu correo" para [correo]. Con [reenviar] la
   /// pantalla reenvía el correo de confirmación al abrirse.
