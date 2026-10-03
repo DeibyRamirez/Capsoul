@@ -6,8 +6,10 @@ import {
   ErrorSolicitud,
   type FilaMedio,
   firmarMedios,
+  firmarParametros,
   MAXIMO_IDS,
-  SEGUNDOS_VALIDEZ,
+  SEGUNDOS_VALIDEZ_MINIATURA,
+  SEGUNDOS_VALIDEZ_ORIGINAL,
   urlDescargaPrivada,
   urlMiniaturaFirmada,
   validarSolicitud,
@@ -75,26 +77,31 @@ Deno.test("la URL de descarga coincide con private_download_url del SDK", async 
   }
 });
 
-Deno.test("la miniatura firmada coincide con cloudinary.url del SDK", async () => {
-  const foto = cloudinary.url(`${PUBLIC_ID}.jpg`, {
-    resource_type: "image",
-    type: "authenticated",
-    sign_url: true,
-    version: 1759500000,
-    transformation: [{ crop: "limit", width: 480, quality: "auto" }],
-  });
-  const nuestraFoto = await urlMiniaturaFirmada(CREDENCIALES, PUBLIC_ID, "image", 1759500000);
-  afirmar(foto === nuestraFoto, `foto:\n${foto}\n${nuestraFoto}`);
-
-  const video = cloudinary.url(`${PUBLIC_ID}.jpg`, {
-    resource_type: "video",
-    type: "authenticated",
-    sign_url: true,
-    version: 1759500000,
-    transformation: [{ start_offset: 0, crop: "limit", width: 480, quality: "auto" }],
-  });
-  const nuestroVideo = await urlMiniaturaFirmada(CREDENCIALES, PUBLIC_ID, "video", 1759500000);
-  afirmar(video === nuestroVideo, `video:\n${video}\n${nuestroVideo}`);
+Deno.test("la miniatura es una descarga temporal del derivado eager, firmada con su transformación", async () => {
+  const expiresAt = 1_791_000_000;
+  const timestamp = 1_790_000_000;
+  for (
+    const [tipo, transformacion] of [
+      ["image", "c_limit,q_auto,w_480"],
+      ["video", "c_limit,q_auto,so_0,w_480"],
+    ] as const
+  ) {
+    const url = new URL(await urlMiniaturaFirmada(CREDENCIALES, PUBLIC_ID, tipo, expiresAt, timestamp));
+    afirmar(url.pathname === `/v1_1/${CREDENCIALES.cloudName}/${tipo}/download`, `ruta ${url.pathname}`);
+    const p = url.searchParams;
+    afirmar(p.get("transformation") === transformacion, `transformación ${tipo}`);
+    afirmar(p.get("format") === "jpg" && p.get("type") === "authenticated", "jpg authenticated");
+    afirmar(p.get("expires_at") === String(expiresAt), "expires_at");
+    // La firma cubre la transformación: igual que sign_request del SDK con esos parámetros.
+    const firmados: Record<string, string> = {};
+    for (const [clave, valor] of p) if (clave !== "signature" && clave !== "api_key") firmados[clave] = valor;
+    const delSdk = cloudinary.utils.api_sign_request(firmados, CREDENCIALES.apiSecret);
+    afirmar(p.get("signature") === delSdk, `firma ${tipo}`);
+    afirmar(p.get("signature") === await firmarParametros(firmados, CREDENCIALES.apiSecret), "firma propia");
+    // Otra transformación invalida la firma.
+    const otra = { ...firmados, transformation: "w_2000" };
+    afirmar(p.get("signature") !== await firmarParametros(otra, CREDENCIALES.apiSecret), "firma ligada");
+  }
 });
 
 Deno.test("firma solo medios: omite notas y filas incompletas", async () => {
@@ -127,12 +134,23 @@ Deno.test("firma solo medios: omite notas y filas incompletas", async () => {
   const ahora = 1_791_000_000;
   const medios = await firmarMedios(filas, CREDENCIALES, ahora);
   afirmar(medios.map((m) => m.id).join(",") === "foto,audio", "ids");
-  afirmar(medios[0].url_miniatura?.includes("/image/authenticated/s--") === true, "miniatura foto");
-  afirmar(new URL(medios[0].url).searchParams.get("format") === "jpg", "formato en minúsculas");
-  afirmar(medios[1].url_miniatura === null, "audio sin miniatura");
-  afirmar(new URL(medios[1].url).searchParams.get("format") === "m4a", "formato por defecto");
+  afirmar(medios[0].public_id === PUBLIC_ID, "public_id");
+  const miniatura = new URL(medios[0].url_miniatura ?? "https://x");
+  afirmar(miniatura.pathname.endsWith("/image/download"), "miniatura foto por Download API");
   afirmar(
-    medios[0].expira_en === new Date((ahora + SEGUNDOS_VALIDEZ) * 1000).toISOString(),
-    "expira en 1 h",
+    miniatura.searchParams.get("expires_at") === String(ahora + SEGUNDOS_VALIDEZ_MINIATURA),
+    "miniatura 7 d",
   );
+  afirmar(
+    new URL(medios[0].url).searchParams.get("expires_at") === String(ahora + SEGUNDOS_VALIDEZ_ORIGINAL),
+    "original 24 h",
+  );
+  afirmar(new URL(medios[0].url).searchParams.get("format") === "jpg", "formato en minúsculas");
+  afirmar(medios[1].url_miniatura === null && medios[1].expira_miniatura === null, "audio sin miniatura");
+  afirmar(new URL(medios[1].url).searchParams.get("format") === "m4a", "formato por defecto");
+  const iso = (s: number) => new Date(s * 1000).toISOString();
+  afirmar(SEGUNDOS_VALIDEZ_ORIGINAL === 86_400 && SEGUNDOS_VALIDEZ_MINIATURA === 604_800, "constantes");
+  afirmar(medios[0].expira_original === iso(ahora + SEGUNDOS_VALIDEZ_ORIGINAL), "expira_original 24 h");
+  afirmar(medios[0].expira_miniatura === iso(ahora + SEGUNDOS_VALIDEZ_MINIATURA), "expira_miniatura 7 d");
+  afirmar(medios[0].expira_en === medios[0].expira_original, "compatibilidad expira_en");
 });

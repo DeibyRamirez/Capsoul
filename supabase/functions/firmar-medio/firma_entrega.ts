@@ -3,12 +3,16 @@
 
 export const MAXIMO_IDS = 60;
 
-/** Segundos de validez de la URL del original (Download API). */
-export const SEGUNDOS_VALIDEZ = 60 * 60;
+/** Segundos de validez de la URL del original (Download API): 24 h. */
+export const SEGUNDOS_VALIDEZ_ORIGINAL = 24 * 60 * 60;
+
+/** Segundos de validez de la URL de la miniatura (Download API): 7 días. */
+export const SEGUNDOS_VALIDEZ_MINIATURA = 7 * 24 * 60 * 60;
 
 /**
- * Transformación de la miniatura: la del eager de firmar-subida, con los parámetros en el
- * orden canónico del SDK de Cloudinary (alfabético; `so_` va primero en video).
+ * Transformación de la miniatura: la del eager de firmar-subida (Cloudinary guarda el
+ * derivado en el orden canónico: alfabético, `so_` primero en video). En recursos
+ * authenticated no hay transformaciones al vuelo: solo sirve el derivado eager.
  */
 export const TRANSFORMACION_MINIATURA: Record<"image" | "video", string> = {
   image: "c_limit,q_auto,w_480",
@@ -68,8 +72,14 @@ export interface Credenciales {
 
 export interface MedioFirmado {
   id: string;
+  public_id: string;
+  /** Original; caduca en `expira_original`. */
   url: string;
+  expira_original: string;
+  /** Miniatura de 480 px (fotos y videos); caduca en `expira_miniatura`. */
   url_miniatura: string | null;
+  expira_miniatura: string | null;
+  /** Compatibilidad con la versión 1 (= `expira_original`). */
   expira_en: string;
 }
 
@@ -82,12 +92,6 @@ async function sha1(texto: string): Promise<Uint8Array> {
 
 function hex(bytes: Uint8Array): string {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function base64Url(bytes: Uint8Array): string {
-  let binario = "";
-  for (const b of bytes) binario += String.fromCharCode(b);
-  return btoa(binario).replace(/\+/g, "-").replace(/\//g, "_");
 }
 
 /** Firma de la API (parámetros `k=v` ordenados + secret, SHA-1 hex). */
@@ -103,8 +107,9 @@ export async function firmarParametros(
 }
 
 /**
- * URL temporal del original con la Download API (`private_download_url`): caduca en
- * `expiresAt` (segundos Unix) y solo sirve para ese recurso.
+ * URL temporal con la Download API (`private_download_url`): caduca en `expiresAt`
+ * (segundos Unix) y solo sirve para ese recurso (y esa `transformacion`, si se pasa;
+ * la firma cubre todos los parámetros).
  */
 export async function urlDescargaPrivada(
   credenciales: Credenciales,
@@ -113,6 +118,7 @@ export async function urlDescargaPrivada(
   tipoRecurso: string,
   expiresAt: number,
   timestamp: number,
+  transformacion?: string,
 ): Promise<string> {
   const parametros: Record<string, string> = {
     expires_at: String(expiresAt),
@@ -120,6 +126,7 @@ export async function urlDescargaPrivada(
     public_id: publicId,
     timestamp: String(timestamp),
     type: "authenticated",
+    ...(transformacion ? { transformation: transformacion } : {}),
   };
   const signature = await firmarParametros(parametros, credenciales.apiSecret);
   const consulta = new URLSearchParams({ ...parametros, signature, api_key: credenciales.apiKey });
@@ -127,27 +134,25 @@ export async function urlDescargaPrivada(
 }
 
 /**
- * URL de entrega firmada (`s--firma--`) de la miniatura de 480 px. La firma cubre la
- * transformación y el recurso, así que no se puede pedir otra variante con ella.
+ * URL temporal de la miniatura de 480 px (derivado eager, JPG) con la Download API y
+ * `transformation`: caduca en `expiresAt`, a diferencia de una URL de entrega `s--…--`.
  */
-export async function urlMiniaturaFirmada(
+export function urlMiniaturaFirmada(
   credenciales: Credenciales,
   publicId: string,
   tipoRecurso: "image" | "video",
-  version: number | null,
+  expiresAt: number,
+  timestamp: number,
 ): Promise<string> {
-  const transformacion = TRANSFORMACION_MINIATURA[tipoRecurso];
-  const recurso = `${publicId}.jpg`;
-  const firma = base64Url(await sha1(`${transformacion}/${recurso}${credenciales.apiSecret}`))
-    .slice(0, 8);
-  const partes = [
-    `https://res.cloudinary.com/${credenciales.cloudName}/${tipoRecurso}/authenticated`,
-    `s--${firma}--`,
-    transformacion,
-    ...(version ? [`v${version}`] : []),
-    recurso,
-  ];
-  return partes.join("/");
+  return urlDescargaPrivada(
+    credenciales,
+    publicId,
+    "jpg",
+    tipoRecurso,
+    expiresAt,
+    timestamp,
+    TRANSFORMACION_MINIATURA[tipoRecurso],
+  );
 }
 
 /** Firma las URLs de cada fila con medio (las notas y filas incompletas se omiten). */
@@ -156,8 +161,9 @@ export async function firmarMedios(
   credenciales: Credenciales,
   ahoraSegundos: number,
 ): Promise<MedioFirmado[]> {
-  const expiresAt = ahoraSegundos + SEGUNDOS_VALIDEZ;
-  const expiraEn = new Date(expiresAt * 1000).toISOString();
+  const expiraOriginal = ahoraSegundos + SEGUNDOS_VALIDEZ_ORIGINAL;
+  const expiraMiniatura = ahoraSegundos + SEGUNDOS_VALIDEZ_MINIATURA;
+  const iso = (segundos: number) => new Date(segundos * 1000).toISOString();
   const medios: MedioFirmado[] = [];
   for (const fila of filas) {
     const publicId = fila.cloudinary_public_id;
@@ -168,18 +174,21 @@ export async function firmarMedios(
     const conMiniatura = fila.tipo === "foto" || fila.tipo === "video";
     medios.push({
       id: fila.id,
+      public_id: publicId,
       url: await urlDescargaPrivada(
         credenciales,
         publicId,
         formato,
         tipoRecurso,
-        expiresAt,
+        expiraOriginal,
         ahoraSegundos,
       ),
+      expira_original: iso(expiraOriginal),
       url_miniatura: conMiniatura
-        ? await urlMiniaturaFirmada(credenciales, publicId, tipoRecurso, fila.cloudinary_version)
+        ? await urlMiniaturaFirmada(credenciales, publicId, tipoRecurso, expiraMiniatura, ahoraSegundos)
         : null,
-      expira_en: expiraEn,
+      expira_miniatura: conMiniatura ? iso(expiraMiniatura) : null,
+      expira_en: iso(expiraOriginal),
     });
   }
   return medios;
