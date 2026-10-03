@@ -1,7 +1,8 @@
 -- =====================================================================
 -- Capsoul · Límites de medios, máximo de elementos por cápsula y cuota
--- Versión: BORRADOR 1.0 · 2026-10-03 · Autor: Flutter Dev (límites aprobados por el PO)
--- Estado: pendiente de aprobación del PO. NO aplicada.
+-- Versión: 1.0 · 2026-10-03 · Autor: Flutter Dev (límites aprobados por el PO)
+-- Estado: APLICADA (versión 1.0) el 2026-10-03 en el proyecto Supabase capsoul mediante la Management API;
+--         registrada en supabase_migrations.schema_migrations.
 -- Requiere: 20261002000001_capsoul_modelo_inicial.sql (v1.3) aplicada.
 --
 -- Límites (los mismos de LimitesMedios en la app y de la Edge Function firmar-subida;
