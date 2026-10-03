@@ -2,8 +2,8 @@ import '../../../nucleo/errores/fallo_app.dart';
 
 /// Fallo de autenticación con un [mensaje] en español para el usuario.
 ///
-/// Los códigos siguen los de FirebaseAuthException, pero esta clase no
-/// depende de Firebase para poder usarse desde cualquier capa.
+/// Los códigos siguen los `error_code` de Supabase Auth (GoTrue), pero esta
+/// clase no depende de Supabase para poder usarse desde cualquier capa.
 class FalloAutenticacion implements FalloApp {
   const FalloAutenticacion._(this.codigo, this.mensaje);
 
@@ -15,8 +15,14 @@ class FalloAutenticacion implements FalloApp {
       : codigo = codigoDesconocido,
         mensaje = kMensajeErrorInesperado;
 
-  /// Código usado cuando el error no viene de Firebase Auth.
+  /// Código usado cuando el error no trae un código reconocible.
   static const String codigoDesconocido = 'desconocido';
+
+  /// Código propio para errores de red (Supabase no envía `error_code`).
+  static const String codigoSinRed = 'sin_red';
+
+  /// Código propio para HTTP 429 sin `error_code`.
+  static const String codigoDemasiadosIntentos = 'over_request_rate_limit';
 
   @override
   final String codigo;
@@ -24,28 +30,39 @@ class FalloAutenticacion implements FalloApp {
   @override
   final String mensaje;
 
-  bool get esUsuarioNoEncontrado => codigo == 'user-not-found';
+  bool get esUsuarioNoEncontrado => codigo == 'user_not_found';
 
   static String mensajeParaCodigo(String codigo) {
     return switch (codigo) {
-      'invalid-email' => 'El correo electrónico no es válido.',
-      'user-disabled' =>
+      'email_address_invalid' ||
+      'validation_failed' =>
+        'El correo electrónico no es válido.',
+      'user_banned' =>
         'Esta cuenta está deshabilitada. Escríbenos si crees que es un error.',
-      'user-not-found' ||
-      'wrong-password' ||
-      'invalid-credential' ||
-      'INVALID_LOGIN_CREDENTIALS' =>
+      'invalid_credentials' ||
+      'user_not_found' =>
         'Correo o contraseña incorrectos.',
-      'email-already-in-use' => 'Ya existe una cuenta con este correo.',
-      'weak-password' =>
+      'email_not_confirmed' =>
+        'Confirma tu correo antes de iniciar sesión. Revisa tu bandeja de '
+            'entrada.',
+      'user_already_exists' ||
+      'email_exists' =>
+        'Ya existe una cuenta con este correo.',
+      'weak_password' =>
         'La contraseña es muy débil. Usa al menos 8 caracteres.',
-      'too-many-requests' =>
+      'over_request_rate_limit' ||
+      'over_email_send_rate_limit' =>
         'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
-      'network-request-failed' =>
-        'Sin conexión. Revisa tu internet e inténtalo de nuevo.',
-      'operation-not-allowed' =>
+      codigoSinRed => 'Sin conexión. Revisa tu internet e inténtalo de nuevo.',
+      'signup_disabled' ||
+      'email_provider_disabled' =>
         'El acceso con correo y contraseña no está habilitado.',
-      'requires-recent-login' =>
+      'session_not_found' ||
+      'session_expired' ||
+      'refresh_token_not_found' ||
+      'refresh_token_already_used' =>
+        'Tu sesión expiró. Vuelve a iniciar sesión.',
+      'reauthentication_needed' =>
         'Por seguridad, vuelve a iniciar sesión e inténtalo de nuevo.',
       _ => kMensajeErrorInesperado,
     };

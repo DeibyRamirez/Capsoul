@@ -7,7 +7,7 @@ import '../../autenticacion/dominio/fallo_autenticacion.dart';
 import '../../usuarios/aplicacion/proveedores_usuarios.dart';
 import '../../usuarios/dominio/perfil_usuario.dart';
 
-/// Perfil `usuarios/{uid}` en vivo del usuario con sesión.
+/// Perfil (tabla `usuarios`) del usuario con sesión.
 final proveedorPerfilUsuarioActual =
     StreamProvider.autoDispose<PerfilUsuario?>((ref) {
   final uid = ref.watch(
@@ -33,7 +33,6 @@ class ControladorPerfil extends Notifier<AsyncValue<void>> {
       await usuarios.guardarNombreVisible(
         uid: usuario.uid,
         nombreVisible: nombreLimpio,
-        correo: usuario.correo ?? '',
       );
       await autenticacion.actualizarNombreVisible(nombreLimpio);
     });

@@ -1,3 +1,4 @@
+import 'resultado_registro.dart';
 import 'usuario_app.dart';
 
 /// Contrato de autenticación. Las implementaciones lanzan
@@ -14,16 +15,18 @@ abstract interface class RepositorioAutenticacion {
     required String contrasena,
   });
 
-  /// Crea la cuenta y le asigna el nombre visible.
-  Future<UsuarioApp> registrarUsuario({
+  /// Crea la cuenta con su nombre visible. El perfil en la tabla `usuarios`
+  /// lo crea el servidor (trigger `auth_usuarios_1_crear_perfil`).
+  Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
     required String correo,
     required String contrasena,
   });
 
+  /// Envía el enlace de recuperación. No revela si el correo existe.
   Future<void> enviarCorreoRecuperacion(String correo);
 
-  /// Envía el correo de verificación al usuario con sesión iniciada.
+  /// Reenvía el correo de confirmación al usuario con sesión iniciada.
   Future<void> enviarCorreoVerificacion();
 
   /// Recarga el usuario con sesión (p. ej. para refrescar si verificó el

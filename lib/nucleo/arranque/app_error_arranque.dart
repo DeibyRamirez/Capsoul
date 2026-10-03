@@ -3,9 +3,17 @@ import 'package:flutter/material.dart';
 import '../tema/colores_app.dart';
 import '../tema/tema_app.dart';
 
-/// Se muestra cuando Firebase no se puede inicializar al arrancar.
+/// Mensaje por defecto de la pantalla de error de arranque.
+const String kMensajeErrorArranque =
+    'Revisa tu conexión y vuelve a abrir la app.';
+
+/// Se muestra cuando la app no puede arrancar (p. ej. falta la configuración
+/// de Supabase o el servidor no responde).
 class AppErrorArranque extends StatelessWidget {
-  const AppErrorArranque({super.key});
+  const AppErrorArranque({super.key, this.detalle});
+
+  /// Explicación en español; si es `null` se usa [kMensajeErrorArranque].
+  final String? detalle;
 
   @override
   Widget build(BuildContext context) {
@@ -13,17 +21,21 @@ class AppErrorArranque extends StatelessWidget {
       title: 'Capsoul',
       debugShowCheckedModeBanner: false,
       theme: TemaApp.claro,
-      home: const Scaffold(
+      home: Scaffold(
         body: SafeArea(
           child: Center(
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.cloud_off, size: 56, color: ColoresApp.acento),
-                  SizedBox(height: 16),
-                  Text(
+                  const Icon(
+                    Icons.cloud_off,
+                    size: 56,
+                    color: ColoresApp.acento,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
                     'No pudimos iniciar Capsoul',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -32,11 +44,11 @@ class AppErrorArranque extends StatelessWidget {
                       color: ColoresApp.primario,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Revisa tu conexión y vuelve a abrir la app.',
+                    detalle ?? kMensajeErrorArranque,
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: ColoresApp.atenuado),
+                    style: const TextStyle(color: ColoresApp.atenuado),
                   ),
                 ],
               ),

@@ -1,19 +1,26 @@
-/// Perfil guardado en Firestore en `usuarios/{uid}`.
+/// Perfil de la tabla `usuarios` de Supabase (1:1 con `auth.users`).
+///
+/// La fila la crea el trigger `auth_usuarios_1_crear_perfil` al registrarse.
 class PerfilUsuario {
   const PerfilUsuario({
     required this.uid,
     required this.nombreVisible,
     required this.correo,
-    this.fotoUrl,
+    this.fotoPublicId,
+    this.perfilPublico = false,
     this.creadoEn,
   });
 
   final String uid;
   final String nombreVisible;
   final String correo;
-  final String? fotoUrl;
 
-  /// Es `null` mientras la marca de tiempo del servidor está pendiente.
+  /// `public_id` del avatar en Cloudinary (`foto_public_id`), no una URL.
+  final String? fotoPublicId;
+
+  /// Si otros usuarios que no son amigos pueden ver el perfil.
+  final bool perfilPublico;
+
   final DateTime? creadoEn;
 
   PerfilUsuario copiarCon({String? nombreVisible}) {
@@ -21,7 +28,8 @@ class PerfilUsuario {
       uid: uid,
       nombreVisible: nombreVisible ?? this.nombreVisible,
       correo: correo,
-      fotoUrl: fotoUrl,
+      fotoPublicId: fotoPublicId,
+      perfilPublico: perfilPublico,
       creadoEn: creadoEn,
     );
   }
@@ -33,9 +41,17 @@ class PerfilUsuario {
           other.uid == uid &&
           other.nombreVisible == nombreVisible &&
           other.correo == correo &&
-          other.fotoUrl == fotoUrl &&
+          other.fotoPublicId == fotoPublicId &&
+          other.perfilPublico == perfilPublico &&
           other.creadoEn == creadoEn;
 
   @override
-  int get hashCode => Object.hash(uid, nombreVisible, correo, fotoUrl, creadoEn);
+  int get hashCode => Object.hash(
+        uid,
+        nombreVisible,
+        correo,
+        fotoPublicId,
+        perfilPublico,
+        creadoEn,
+      );
 }

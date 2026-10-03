@@ -1,5 +1,5 @@
 /// Usuario autenticado tal como lo ve la app (desacoplado de los tipos de
-/// Firebase).
+/// Supabase Auth).
 class UsuarioApp {
   const UsuarioApp({
     required this.uid,

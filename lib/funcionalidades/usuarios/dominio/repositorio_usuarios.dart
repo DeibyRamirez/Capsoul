@@ -1,23 +1,18 @@
 import 'perfil_usuario.dart';
 
-/// Acceso al documento `usuarios/{uid}`. Las implementaciones lanzan
-/// [FalloPerfilUsuario] cuando algo sale mal.
+/// Acceso a la fila propia de la tabla `usuarios`. Las implementaciones
+/// lanzan [FalloPerfilUsuario] cuando algo sale mal.
+///
+/// La fila no se crea desde el cliente: la crea el trigger del servidor al
+/// registrarse en Supabase Auth.
 abstract interface class RepositorioUsuarios {
-  /// Perfil en vivo; emite `null` si el documento no existe o está mal
-  /// formado.
+  /// Emite el perfil al suscribirse y cada vez que este repositorio lo
+  /// modifica; `null` si la fila no existe o está mal formada.
   Stream<PerfilUsuario?> observarPerfil(String uid);
 
-  /// Crea `usuarios/{uid}` justo después del registro.
-  Future<void> crearPerfil({
-    required String uid,
-    required String nombreVisible,
-    required String correo,
-  });
-
-  /// Actualiza el nombre visible y crea el documento si falta.
+  /// Actualiza `nombre_visible` de la fila propia.
   Future<void> guardarNombreVisible({
     required String uid,
     required String nombreVisible,
-    required String correo,
   });
 }

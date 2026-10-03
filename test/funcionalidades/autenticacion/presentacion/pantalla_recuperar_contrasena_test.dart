@@ -29,10 +29,10 @@ void main() {
     expect(find.text('Ingresa tu correo electrónico'), findsOneWidget);
   });
 
-  testWidgets('user-not-found muestra la misma confirmación neutra y vuelve',
+  testWidgets('user_not_found muestra la misma confirmación neutra y vuelve',
       (tester) async {
     final autenticacion = RepositorioAutenticacionFalso()
-      ..siguienteFallo = FalloAutenticacion.desdeCodigo('user-not-found');
+      ..siguienteFallo = FalloAutenticacion.desdeCodigo('user_not_found');
     await montarAppCapsoul(tester, autenticacion: autenticacion);
     await abrirRecuperacion(tester);
 

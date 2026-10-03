@@ -16,7 +16,7 @@ void main() {
   RepositorioUsuariosFalso usuariosConAna() => RepositorioUsuariosFalso()
     ..perfiles['uid-123'] = const PerfilUsuario(
       uid: 'uid-123',
-      nombreVisible: 'Ana Firestore',
+      nombreVisible: 'Ana Supabase',
       correo: 'ana@capsoul.app',
     );
 
@@ -25,7 +25,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('muestra el nombre de usuarios/{uid} y el aviso de verificación',
+  testWidgets('muestra el nombre de la tabla usuarios y el aviso de verificación',
       (tester) async {
     final autenticacion =
         RepositorioAutenticacionFalso(usuarioInicial: usuarioSinVerificar);
@@ -36,7 +36,7 @@ void main() {
     );
     await abrirPerfil(tester);
 
-    expect(find.text('Ana Firestore'), findsOneWidget);
+    expect(find.text('Ana Supabase'), findsOneWidget);
     expect(find.text('ana@capsoul.app'), findsOneWidget);
     expect(find.text('Verifica tu correo electrónico'), findsOneWidget);
 

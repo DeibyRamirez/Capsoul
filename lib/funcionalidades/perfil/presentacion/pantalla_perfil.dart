@@ -8,7 +8,7 @@ import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../autenticacion/presentacion/validadores_autenticacion.dart';
 import '../aplicacion/controlador_perfil.dart';
 
-/// Pestaña "Yo": perfil de `usuarios/{uid}`, edición del nombre visible,
+/// Pestaña "Yo": perfil de la tabla `usuarios`, edición del nombre visible,
 /// aviso de correo sin verificar y cierre de sesión.
 class PantallaPerfil extends ConsumerWidget {
   const PantallaPerfil({super.key});

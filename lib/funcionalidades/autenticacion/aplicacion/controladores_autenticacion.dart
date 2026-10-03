@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../usuarios/aplicacion/proveedores_usuarios.dart';
 import '../dominio/fallo_autenticacion.dart';
+import '../dominio/resultado_registro.dart';
 import 'proveedores_autenticacion.dart';
 
 /// Base de las acciones de autenticación de un solo disparo con estado
@@ -50,47 +50,48 @@ class ControladorInicioSesion extends ControladorAccionAutenticacion {
   }
 }
 
+/// Resultado de la acción de registro para que la pantalla decida a dónde ir.
+enum ResultadoAccionRegistro {
+  /// Falló; el error queda en el estado del controlador.
+  fallido,
+
+  /// Hay sesión: el enrutador lleva al contenedor principal.
+  sesionIniciada,
+
+  /// Supabase exige confirmar el correo antes de iniciar sesión.
+  confirmacionPendiente,
+}
+
 class ControladorRegistro extends ControladorAccionAutenticacion {
-  /// Crea la cuenta, el documento `usuarios/{uid}` y envía el correo de
-  /// verificación. Los errores del perfil y del correo no bloquean la
-  /// entrada.
-  Future<bool> registrarUsuario({
+  /// Crea la cuenta en Supabase Auth con el nombre visible en los metadatos.
+  /// La fila `usuarios` la crea el trigger del servidor y Supabase envía el
+  /// correo de confirmación por su cuenta.
+  Future<ResultadoAccionRegistro> registrarUsuario({
     required String nombre,
     required String correo,
     required String contrasena,
-  }) {
+  }) async {
     final autenticacion = ref.read(proveedorRepositorioAutenticacion);
-    final usuarios = ref.read(proveedorRepositorioUsuarios);
-    final nombreLimpio = nombre.trim();
-    final correoLimpio = correo.trim();
-
-    return ejecutar(() async {
-      final usuario = await autenticacion.registrarUsuario(
-        nombre: nombreLimpio,
-        correo: correoLimpio,
+    ResultadoRegistro? resultado;
+    final exito = await ejecutar(() async {
+      resultado = await autenticacion.registrarUsuario(
+        nombre: nombre.trim(),
+        correo: correo.trim(),
         contrasena: contrasena,
       );
-      try {
-        await usuarios.crearPerfil(
-          uid: usuario.uid,
-          nombreVisible: nombreLimpio,
-          correo: usuario.correo ?? correoLimpio,
-        );
-      } catch (error) {
-        debugPrint('Capsoul: no se pudo crear usuarios/${usuario.uid}: $error');
-      }
-      try {
-        await autenticacion.enviarCorreoVerificacion();
-      } catch (error) {
-        debugPrint('Capsoul: no se pudo enviar la verificación: $error');
-      }
     });
+    final registro = resultado;
+    if (!exito || registro == null) return ResultadoAccionRegistro.fallido;
+    return registro.sesionIniciada
+        ? ResultadoAccionRegistro.sesionIniciada
+        : ResultadoAccionRegistro.confirmacionPendiente;
   }
 }
 
 class ControladorRecuperacionContrasena extends ControladorAccionAutenticacion {
-  /// Envía el enlace de recuperación. `user-not-found` se trata como éxito
-  /// para que la interfaz nunca revele si la cuenta existe.
+  /// Envía el enlace de recuperación. `user_not_found` se trata como éxito
+  /// para que la interfaz nunca revele si la cuenta existe (Supabase ya
+  /// responde igual exista o no la cuenta).
   Future<bool> enviarEnlaceRecuperacion(String correo) {
     final repositorio = ref.read(proveedorRepositorioAutenticacion);
     return ejecutar(() async {

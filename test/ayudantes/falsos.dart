@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:capsoul/funcionalidades/autenticacion/dominio/fallo_autenticacion.dart';
 import 'package:capsoul/funcionalidades/autenticacion/dominio/repositorio_autenticacion.dart';
+import 'package:capsoul/funcionalidades/autenticacion/dominio/resultado_registro.dart';
 import 'package:capsoul/funcionalidades/autenticacion/dominio/usuario_app.dart';
+import 'package:capsoul/funcionalidades/usuarios/dominio/fallo_perfil_usuario.dart';
 import 'package:capsoul/funcionalidades/usuarios/dominio/perfil_usuario.dart';
 import 'package:capsoul/funcionalidades/usuarios/dominio/repositorio_usuarios.dart';
 
@@ -14,10 +16,16 @@ const usuarioPrueba = UsuarioApp(
 );
 
 /// [RepositorioAutenticacion] en memoria para pruebas de widgets (sin
-/// Firebase).
+/// Supabase).
 class RepositorioAutenticacionFalso implements RepositorioAutenticacion {
-  RepositorioAutenticacionFalso({UsuarioApp? usuarioInicial})
-      : _usuario = usuarioInicial;
+  RepositorioAutenticacionFalso({
+    UsuarioApp? usuarioInicial,
+    this.exigeConfirmarCorreo = false,
+  }) : _usuario = usuarioInicial;
+
+  /// Simula un proyecto de Supabase que exige confirmar el correo: el
+  /// registro no abre sesión.
+  final bool exigeConfirmarCorreo;
 
   UsuarioApp? _usuario;
   final _cambios = StreamController<UsuarioApp?>.broadcast();
@@ -30,6 +38,7 @@ class RepositorioAutenticacionFalso implements RepositorioAutenticacion {
   Completer<void>? compuertaInicioSesion;
 
   String? ultimoCorreoRecuperacion;
+  String? ultimoNombreRegistrado;
   int correosVerificacionEnviados = 0;
   int llamadasCerrarSesion = 0;
 
@@ -73,19 +82,24 @@ class RepositorioAutenticacionFalso implements RepositorioAutenticacion {
   }
 
   @override
-  Future<UsuarioApp> registrarUsuario({
+  Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
     required String correo,
     required String contrasena,
   }) async {
     _lanzarSiCorresponde();
+    ultimoNombreRegistrado = nombre;
     final usuario = UsuarioApp(
       uid: 'uid-nuevo',
       correo: correo,
       nombreVisible: nombre,
+      correoVerificado: !exigeConfirmarCorreo,
     );
-    _asignarUsuario(usuario);
-    return usuario;
+    if (!exigeConfirmarCorreo) _asignarUsuario(usuario);
+    return ResultadoRegistro(
+      usuario: usuario,
+      sesionIniciada: !exigeConfirmarCorreo,
+    );
   }
 
   @override
@@ -123,7 +137,7 @@ class RepositorioAutenticacionFalso implements RepositorioAutenticacion {
   }
 }
 
-/// [RepositorioUsuarios] en memoria para pruebas de widgets (sin Firestore).
+/// [RepositorioUsuarios] en memoria para pruebas de widgets (sin Supabase).
 class RepositorioUsuariosFalso implements RepositorioUsuarios {
   final Map<String, PerfilUsuario> perfiles = {};
   final _cambios = StreamController<void>.broadcast();
@@ -137,29 +151,17 @@ class RepositorioUsuariosFalso implements RepositorioUsuarios {
   }
 
   @override
-  Future<void> crearPerfil({
-    required String uid,
-    required String nombreVisible,
-    required String correo,
-  }) async {
-    perfiles[uid] = PerfilUsuario(
-      uid: uid,
-      nombreVisible: nombreVisible,
-      correo: correo,
-    );
-    _cambios.add(null);
-  }
-
-  @override
   Future<void> guardarNombreVisible({
     required String uid,
     required String nombreVisible,
-    required String correo,
   }) async {
     final actual = perfiles[uid];
-    perfiles[uid] = actual == null
-        ? PerfilUsuario(uid: uid, nombreVisible: nombreVisible, correo: correo)
-        : actual.copiarCon(nombreVisible: nombreVisible);
+    if (actual == null) {
+      throw FalloPerfilUsuario.desdeCodigo(
+        FalloPerfilUsuario.codigoNoEncontrado,
+      );
+    }
+    perfiles[uid] = actual.copiarCon(nombreVisible: nombreVisible);
     _cambios.add(null);
   }
 }

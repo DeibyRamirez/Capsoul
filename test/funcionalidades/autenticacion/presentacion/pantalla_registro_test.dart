@@ -1,3 +1,4 @@
+import 'package:capsoul/funcionalidades/autenticacion/presentacion/pantalla_registro.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -39,27 +40,39 @@ void main() {
     expect(find.text('Las contraseñas no coinciden'), findsOneWidget);
   });
 
-  testWidgets('el registro crea usuarios/{uid}, envía verificación y entra',
-      (tester) async {
-    final autenticacion = RepositorioAutenticacionFalso();
-    final usuarios = RepositorioUsuariosFalso();
-    await montarAppCapsoul(
-      tester,
-      autenticacion: autenticacion,
-      usuarios: usuarios,
-    );
-    await abrirRegistro(tester);
-
+  Future<void> llenarFormulario(WidgetTester tester) async {
     await tester.enterText(campo('Nombre'), ' Ana María ');
     await tester.enterText(campo('Correo electrónico'), 'ana@capsoul.app');
     await tester.enterText(campo('Contraseña'), 'secreta123');
     await tester.enterText(campo('Confirmar contraseña'), 'secreta123');
     await tester.tap(botonCrearCuenta());
     await tester.pumpAndSettle();
+  }
 
-    expect(usuarios.perfiles['uid-nuevo']?.nombreVisible, 'Ana María');
-    expect(usuarios.perfiles['uid-nuevo']?.correo, 'ana@capsoul.app');
-    expect(autenticacion.correosVerificacionEnviados, 1);
+  testWidgets('con sesión al registrarse entra al inicio', (tester) async {
+    final autenticacion = RepositorioAutenticacionFalso();
+    await montarAppCapsoul(tester, autenticacion: autenticacion);
+    await abrirRegistro(tester);
+
+    await llenarFormulario(tester);
+
+    expect(autenticacion.ultimoNombreRegistrado, 'Ana María');
     expect(find.text('Hola'), findsOneWidget);
+  });
+
+  testWidgets(
+      'si falta confirmar el correo avisa y vuelve a iniciar sesión',
+      (tester) async {
+    final autenticacion =
+        RepositorioAutenticacionFalso(exigeConfirmarCorreo: true);
+    await montarAppCapsoul(tester, autenticacion: autenticacion);
+    await abrirRegistro(tester);
+
+    await llenarFormulario(tester);
+
+    expect(find.text(kMensajeConfirmarCorreo), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Iniciar sesión'), findsOneWidget);
+    expect(find.text('Hola'), findsNothing);
+    expect(autenticacion.usuarioActual, isNull);
   });
 }

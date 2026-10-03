@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/enrutador/rutas_app.dart';
 import '../aplicacion/controladores_autenticacion.dart';
 import 'componentes/campo_texto_autenticacion.dart';
 import 'componentes/encabezado_autenticacion.dart';
 import 'componentes/estructura_autenticacion.dart';
 import 'validadores_autenticacion.dart';
+
+/// Aviso cuando la cuenta se creó pero falta confirmar el correo.
+const String kMensajeConfirmarCorreo =
+    'Te enviamos un correo para confirmar tu cuenta. Confírmala y luego '
+    'inicia sesión.';
 
 class PantallaRegistro extends ConsumerStatefulWidget {
   const PantallaRegistro({super.key});
@@ -35,12 +42,18 @@ class _EstadoPantallaRegistro extends ConsumerState<PantallaRegistro> {
   Future<void> _enviar() async {
     FocusScope.of(context).unfocus();
     if (!(_claveFormulario.currentState?.validate() ?? false)) return;
-    // Si todo sale bien, el enrutador redirige solo al contenedor principal.
-    await ref.read(proveedorControladorRegistro.notifier).registrarUsuario(
-          nombre: _controladorNombre.text,
-          correo: _controladorCorreo.text,
-          contrasena: _controladorContrasena.text,
-        );
+    // Con sesión, el enrutador redirige solo al contenedor principal.
+    final resultado =
+        await ref.read(proveedorControladorRegistro.notifier).registrarUsuario(
+              nombre: _controladorNombre.text,
+              correo: _controladorCorreo.text,
+              contrasena: _controladorContrasena.text,
+            );
+    if (!mounted) return;
+    if (resultado == ResultadoAccionRegistro.confirmacionPendiente) {
+      mostrarAvisoInformativo(context, kMensajeConfirmarCorreo);
+      context.go(RutasApp.iniciarSesion);
+    }
   }
 
   @override

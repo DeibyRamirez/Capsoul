@@ -62,7 +62,7 @@ void main() {
   testWidgets('credenciales inválidas muestran SnackBar en español',
       (tester) async {
     final autenticacion = RepositorioAutenticacionFalso()
-      ..siguienteFallo = FalloAutenticacion.desdeCodigo('invalid-credential');
+      ..siguienteFallo = FalloAutenticacion.desdeCodigo('invalid_credentials');
     await montarAppCapsoul(tester, autenticacion: autenticacion);
 
     await tester.enterText(campo('Correo electrónico'), 'ana@capsoul.app');
