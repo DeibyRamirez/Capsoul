@@ -20,7 +20,9 @@ import '../../funcionalidades/elementos/presentacion/pantalla_escribir_nota.dart
 import '../../funcionalidades/elementos/presentacion/pantalla_grabar_audio.dart';
 import '../../funcionalidades/inicio/presentacion/pantalla_inicio.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_legado.dart';
+import '../../funcionalidades/momentos/presentacion/pantalla_detalle_momento.dart';
 import '../../funcionalidades/momentos/presentacion/pantalla_momentos.dart';
+import '../../funcionalidades/momentos/presentacion/pantalla_nuevo_momento.dart';
 import '../../funcionalidades/navegacion/presentacion/contenedor_navegacion.dart';
 import '../../funcionalidades/perfil/presentacion/pantalla_perfil.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_detalle_recuerdo.dart';
@@ -134,6 +136,23 @@ GoRouter crearEnrutadorApp({
                 path: RutasApp.momentos,
                 name: 'momentos',
                 builder: (context, state) => const PantallaMomentos(),
+                routes: [
+                  // La ruta fija va antes de `:id`.
+                  GoRoute(
+                    path: 'nuevo',
+                    name: 'nuevo-momento',
+                    parentNavigatorKey: claveNavegadorRaiz,
+                    builder: (context, state) => const PantallaNuevoMomento(),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    name: 'detalle-momento',
+                    parentNavigatorKey: claveNavegadorRaiz,
+                    builder: (context, state) => PantallaDetalleMomento(
+                      idMomento: state.pathParameters['id'] ?? '',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

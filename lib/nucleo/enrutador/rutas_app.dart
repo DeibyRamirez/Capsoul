@@ -3,6 +3,7 @@ abstract final class RutasApp {
   static const String raiz = '/';
   static const String inicio = '/inicio';
   static const String momentos = '/momentos';
+  static const String nuevoMomento = '/momentos/nuevo';
   static const String legado = '/legado';
   static const String yo = '/yo';
   static const String crear = '/crear';
@@ -35,6 +36,10 @@ abstract final class RutasApp {
   /// Ubicación del detalle de la cápsula [id].
   static String detalleCapsulaDe(String id) =>
       '$capsulas/${Uri.encodeComponent(id)}';
+
+  /// Ubicación del detalle del momento [id].
+  static String detalleMomentoDe(String id) =>
+      '$momentos/${Uri.encodeComponent(id)}';
 
   /// Ubicación del detalle del recuerdo [id].
   static String detalleRecuerdoDe(String id) =>

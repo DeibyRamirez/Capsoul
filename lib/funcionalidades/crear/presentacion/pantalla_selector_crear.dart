@@ -44,6 +44,12 @@ class PantallaSelectorCrear extends StatelessWidget {
             destacada: true,
             alTocar: () => context.pushReplacement(RutasApp.crearCapsula),
           ),
+          _OpcionCrear(
+            icono: Icons.auto_awesome_mosaic_outlined,
+            titulo: 'Momento',
+            subtitulo: 'Junta varios recuerdos bajo un nombre',
+            alTocar: () => context.pushReplacement(RutasApp.nuevoMomento),
+          ),
           const _TituloSeccion('Nuevo recuerdo'),
           _OpcionCrear(
             icono: Icons.videocam_outlined,
