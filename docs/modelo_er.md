@@ -5,9 +5,9 @@
 | Documento | 13 · Modelo Entidad-Relación |
 | Fecha | 2026-10-03 |
 | Versión | 1.3 (1.2 del 2026-10-02 + permisos por defecto globales y vinculación de invitaciones al cambiar el correo, aprobados por el PO el 2026-10-03) |
-| Estado | **Borrador para revisión** del PO y de Flutter Dev. La migración no se ha aplicado en ningún proyecto |
+| Estado | Aplicado en el proyecto Supabase `capsoul` (Management API, registradas en `supabase_migrations.schema_migrations`): `000001` v1.3 (2026-10-03), `000003` límites de medios (2026-10-03) y `000004` recuerdos y momentos (2026-10-03). **Pendiente:** `000002` (`pg_cron`, `pg_net` y Vault) |
 | Relacionado | ARQ-3 ([DEV-91](https://linear.app/fabrica-de-software-uac/issue/DEV-91)); documentos 05 (Arquitectura) y 12 (Decisión de migración) |
-| Archivos | `20261002000001_capsoul_modelo_inicial.sql`, `20261002000002_capsoul_programar_trabajos.sql`, `pruebas_rls_capsoul.sql` y `13-Modelo-Entidad-Relacion.mmd` en la carpeta de documentos |
+| Archivos | `20261002000001_capsoul_modelo_inicial.sql`, `20261002000002_capsoul_programar_trabajos.sql`, `20261003000003_capsoul_limites_medios.sql`, `20261004000004_capsoul_recuerdos_momentos.sql`, `pruebas_rls_capsoul.sql` y `13-Modelo-Entidad-Relacion.mmd` en la carpeta de documentos |
 
 > Origen: decisión del PO del 2026-10-02 (Supabase/Postgres + Cloudinary) y su lista de entidades: usuarios, cápsulas, elementos, momentos, herencias, retos y red de amistades cercanas, donde "la mayoría de tablas consumen de elementos". El diagrama original del PO no estaba disponible como archivo en el repositorio ni en Drive; este modelo parte de esa lista de entidades y de los requisitos de los documentos 02 y 03. Las cardinalidades ambiguas se resolvieron con supuestos (sección 6), que el PO debe confirmar.
 
@@ -18,7 +18,7 @@ Registro completo en el documento 12, sección "Decisiones del PO".
 | # | Decisión | Efecto en este modelo |
 |---|---|---|
 | D1 | Plan Free de Supabase; el PO acepta el riesgo de pausa (R1) | Ninguno en el esquema. Mientras el proyecto esté pausado, `pg_cron` no libera cápsulas |
-| D2 | Medios privados: entrega `authenticated`, subida firmada desde una Edge Function, `public_id` aleatorio, URLs firmadas solo después de `fecha_apertura` y solo para destinatarios, nunca preset sin firmar | `elementos.cloudinary_tipo_entrega` solo admite `'authenticated'` (CHECK). Se **elimina** la columna `url_segura`: en la base solo queda el `public_id` y sus metadatos. El `public_id` lo fija `firmar-subida` (aleatorio, sin uid ni nombre de archivo). La Edge Function `firmar-medio` firma solo si `privado.puede_ver_elemento()` lo permite. Para un medio de cápsula, esa función exige que la cápsula esté `liberada` y que quien pide sea destinatario (vía `puede_ver_capsula`). **Supuesto 12 (confirmado por el PO el 2026-10-03):** el propietario del elemento conserva el acceso a su propio medio antes de la apertura (`es_mi_elemento`), y los medios de momentos, herencias y retos siguen sus propias reglas. La URL firmada (`private_download_url`) vence a la hora (`expires_at` = 1 h) |
+| D2 | Medios privados: entrega `authenticated`, subida firmada desde una Edge Function, `public_id` aleatorio, URLs firmadas solo después de `fecha_apertura` y solo para destinatarios, nunca preset sin firmar | `elementos.cloudinary_tipo_entrega` solo admite `'authenticated'` (CHECK). Se **elimina** la columna `url_segura`: en la base solo queda el `public_id` y sus metadatos. El `public_id` lo fija `firmar-subida` (aleatorio, sin uid ni nombre de archivo). La Edge Function `firmar-medio` firma solo si `privado.puede_ver_elemento()` lo permite. Para un medio de cápsula, esa función exige que la cápsula esté `liberada` y que quien pide sea destinatario (vía `puede_ver_capsula`). **Supuesto 12 (confirmado por el PO el 2026-10-03):** el propietario del elemento conserva el acceso a su propio medio antes de la apertura (`es_mi_elemento`), y los medios de momentos, herencias y retos siguen sus propias reglas. Las URLs firmadas usan `private_download_url` con `expires_at`: el original vence a las 24 h y la miniatura de 480 px (derivado *eager*, parámetro `transformation`) a los 7 días (decisión del PO del 2026-10-03; antes 1 h y miniatura sin caducidad). La app guarda los medios en el dispositivo por `public_id` y reutiliza los enlaces vigentes |
 | D3 | SMTP con Resend (`send.cheiviz.com`) | Ninguno en el esquema. Hace viable el aviso por correo a destinatarios externos (`notificaciones.canal = 'correo'`) |
 | D4 | Firebase baja a Spark y queda solo FCM | Ninguno: `dispositivos_push` ya guarda tokens de FCM |
 | D5 | R3 cerrado (2026-10-03): la confirmación de correo es **obligatoria** ("Confirm email" activo en Supabase Auth) | Toda cuenta con sesión tiene `email_confirmed_at`; el supuesto 10 (vincular invitados externos solo con correo confirmado) queda garantizado |
@@ -376,7 +376,8 @@ La migración `000001` se ejecutó sin errores en un **Postgres 17 local**, con 
 --   1.2: correo privado (solo el dueño) + vista public.perfiles_visibles; sincronización de
 --        usuarios.correo con auth.users.email; EXECUTE revocado en el esquema privado salvo lo
 --        que usan las políticas; decisión D2 (medios solo 'authenticated', sin url_segura).
--- Estado: pendiente de revisión por el PO y Flutter Dev. NO aplicada.
+-- Estado: APLICADA (versión 1.3) el 2026-10-03 en el proyecto Supabase capsoul mediante la Management API;
+--   registrada en supabase_migrations.schema_migrations.
 -- Destino sugerido en el repo: supabase/migrations/20261002000001_capsoul_modelo_inicial.sql
 --
 -- Principios:
