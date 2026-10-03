@@ -5,6 +5,7 @@ import 'package:capsoul/funcionalidades/capsulas/dominio/capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/estado_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/presentacion/pantalla_detalle_capsula.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
+import 'package:capsoul/funcionalidades/recuerdos/aplicacion/proveedores_recuerdos.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
 import 'package:capsoul/nucleo/tema/tema_app.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../ayudantes/falsos.dart';
 import '../../../ayudantes/falsos_capsulas.dart';
+import '../../../ayudantes/falsos_recuerdos.dart';
 
 final _ahora = DateTime(2026, 10, 3, 10);
 
@@ -62,6 +64,9 @@ Future<void> _montar(
           ),
         ),
         proveedorRepositorioCapsulas.overrideWithValue(repositorio),
+        proveedorRepositorioUrlsMedio.overrideWithValue(
+          RepositorioUrlsMedioFalso(),
+        ),
         proveedorReloj.overrideWithValue(() => _ahora),
       ],
       child: MaterialApp(

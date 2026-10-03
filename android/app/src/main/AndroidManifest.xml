@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Internet en release (Supabase, Cloudinary y reproduccion de medios); en debug ya lo agrega el manifiesto de depuracion. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Captura de elementos: foto y video (camara) y notas de voz / audio del video (microfono). -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />

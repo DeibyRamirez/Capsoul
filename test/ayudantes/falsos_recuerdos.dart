@@ -3,6 +3,8 @@ import 'package:capsoul/funcionalidades/recuerdos/dominio/filtro_recuerdos.dart'
 import 'package:capsoul/funcionalidades/recuerdos/dominio/nuevo_recuerdo.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/repositorio_recuerdos.dart';
+import 'package:capsoul/funcionalidades/recuerdos/dominio/repositorio_urls_medio.dart';
+import 'package:capsoul/funcionalidades/recuerdos/dominio/url_medio.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/uso_medios.dart';
 import 'package:capsoul/nucleo/errores/fallo_app.dart';
 
@@ -98,4 +100,14 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
   @override
   Future<UsoMedios> leerUsoMedios() async =>
       UsoMedios(bytesUsados: bytesUsados);
+}
+
+/// [RepositorioUrlsMedio] sin entrega: la UI muestra los respaldos.
+class RepositorioUrlsMedioFalso implements RepositorioUrlsMedio {
+  RepositorioUrlsMedioFalso([this.urls = const {}]);
+
+  final Map<String, UrlMedio> urls;
+
+  @override
+  Future<UrlMedio?> obtener(String idRecuerdo) async => urls[idRecuerdo];
 }

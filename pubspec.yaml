@@ -46,6 +46,8 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   uuid: ^4.6.0
+  video_player: ^2.14.1
+  just_audio: ^0.10.6
 
 dev_dependencies:
   flutter_test:
