@@ -53,6 +53,7 @@ Future<void> montarAppCapsoul(
         proveedorRepositorioUrlsMedio.overrideWithValue(
           RepositorioUrlsMedioFalso(),
         ),
+        proveedorArchivosMedio.overrideWithValue(ArchivosMedioFalso()),
         proveedorReloj.overrideWithValue(() => ahoraPrueba),
       ],
       child: const AppCapsoul(),

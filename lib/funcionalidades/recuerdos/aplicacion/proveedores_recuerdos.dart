@@ -1,17 +1,23 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../elementos/aplicacion/proveedores_elementos.dart';
 import '../datos/acceso_tablas_recuerdos.dart';
+import '../datos/archivos_medio_dispositivo.dart';
 import '../datos/repositorio_recuerdos_supabase.dart';
 import '../datos/repositorio_urls_medio_agrupado.dart';
+import '../dominio/archivos_medio.dart';
+import '../dominio/enlace_medio.dart';
 import '../dominio/filtro_recuerdos.dart';
 import '../dominio/recuerdo.dart';
 import '../dominio/repositorio_recuerdos.dart';
 import '../dominio/repositorio_urls_medio.dart';
-import '../dominio/url_medio.dart';
 import '../dominio/uso_medios.dart';
+import 'cargador_medios.dart';
 
 /// Repositorio del banco de recuerdos (se sobrescribe en pruebas).
 final proveedorRepositorioRecuerdos = Provider<RepositorioRecuerdos>((ref) {
@@ -33,10 +39,41 @@ final proveedorRepositorioUrlsMedio = Provider<RepositorioUrlsMedio>((ref) {
   return RepositorioUrlsMedioAgrupado(solicitar: solicitarUrlsMedioSupabase);
 });
 
-/// URLs firmadas del medio de un recuerdo (`null` si no hay).
-final proveedorUrlMedio = FutureProvider.autoDispose.family<UrlMedio?, String>(
-  (ref, id) => ref.watch(proveedorRepositorioUrlsMedio).obtener(id),
+/// Archivos de medios en el dispositivo (se sobrescribe en pruebas). Al
+/// cerrar sesión o cambiar de cuenta se vacían.
+final proveedorArchivosMedio = Provider<ArchivosMedio>((ref) {
+  final archivos = ArchivosMedioDispositivo();
+  ref.listen(
+    proveedorEstadoAutenticacion.select((estado) => estado.value?.uid),
+    (antes, ahora) {
+      if (antes != null && antes != ahora) unawaited(archivos.vaciar());
+    },
+  );
+  return archivos;
+});
+
+/// Caché del dispositivo + enlaces firmados vigentes.
+final proveedorCargadorMedios = Provider<CargadorMedios>(
+  (ref) => CargadorMedios(
+    urls: ref.watch(proveedorRepositorioUrlsMedio),
+    archivos: ref.watch(proveedorArchivosMedio),
+  ),
 );
+
+/// Archivo local de la variante pedida (`null` si no hay o falló).
+final proveedorArchivoMedio =
+    FutureProvider.autoDispose.family<File?, SolicitudMedio>(
+  (ref, solicitud) => ref.watch(proveedorCargadorMedios).archivo(solicitud),
+);
+
+/// Solicitud de la [variante] del medio de [recuerdo] o `null` si no tiene
+/// (notas, recuerdos sin subir o audio sin miniatura).
+SolicitudMedio? solicitudMedioDe(Recuerdo recuerdo, VarianteMedio variante) {
+  final publicId = recuerdo.publicId;
+  if (publicId == null) return null;
+  if (variante == VarianteMedio.miniatura && !recuerdo.esVisual) return null;
+  return (idRecuerdo: recuerdo.id, publicId: publicId, variante: variante);
+}
 
 /// Recuerdos propios que pasan el filtro.
 final proveedorRecuerdos = FutureProvider.autoDispose

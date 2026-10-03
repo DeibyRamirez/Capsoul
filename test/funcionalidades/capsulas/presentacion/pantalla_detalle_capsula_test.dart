@@ -67,6 +67,7 @@ Future<void> _montar(
         proveedorRepositorioUrlsMedio.overrideWithValue(
           RepositorioUrlsMedioFalso(),
         ),
+        proveedorArchivosMedio.overrideWithValue(ArchivosMedioFalso()),
         proveedorReloj.overrideWithValue(() => _ahora),
       ],
       child: MaterialApp(

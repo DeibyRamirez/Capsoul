@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,10 +11,20 @@ import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../../elementos/dominio/validador_medios.dart';
 import '../../aplicacion/proveedores_recuerdos.dart';
+import '../../dominio/enlace_medio.dart';
 import '../../dominio/recuerdo.dart';
 import 'vista_recuerdo.dart';
 
-/// Foto a tamaño completo (URL firmada de `firmar-medio`), con zoom.
+/// Original del recuerdo (caché del dispositivo o enlace de `firmar-medio`).
+/// `cargando` es `true` mientras se busca o descarga.
+({File? archivo, bool cargando}) _original(WidgetRef ref, Recuerdo recuerdo) {
+  final solicitud = solicitudMedioDe(recuerdo, VarianteMedio.original);
+  if (solicitud == null) return (archivo: null, cargando: false);
+  final estado = ref.watch(proveedorArchivoMedio(solicitud));
+  return (archivo: estado.value, cargando: estado.isLoading);
+}
+
+/// Foto a tamaño completo (original, solo en el detalle), con zoom.
 class FotoCompleta extends ConsumerWidget {
   const FotoCompleta({super.key, required this.recuerdo});
 
@@ -21,27 +32,26 @@ class FotoCompleta extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final url = ref.watch(proveedorUrlMedio(recuerdo.id)).value?.url;
-    if (url == null) return MarcoMiniatura(recuerdo: recuerdo);
+    final (:archivo, :cargando) = _original(ref, recuerdo);
+    if (archivo == null) {
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          MarcoMiniatura(recuerdo: recuerdo),
+          if (cargando) const CircularProgressIndicator(),
+        ],
+      );
+    }
     final ancho = recuerdo.ancho;
     final alto = recuerdo.alto;
     return AspectRatio(
       aspectRatio: ancho != null && alto != null && alto > 0 ? ancho / alto : 4 / 3,
       child: InteractiveViewer(
         maxScale: 4,
-        child: Image.network(
-          url,
+        child: Image.file(
+          archivo,
           fit: BoxFit.contain,
           semanticLabel: recuerdo.nombre,
-          loadingBuilder: (context, hijo, progreso) => progreso == null
-              ? hijo
-              : Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    MarcoMiniatura(recuerdo: recuerdo),
-                    const Center(child: CircularProgressIndicator()),
-                  ],
-                ),
           errorBuilder: (_, _, _) => MarcoMiniatura(recuerdo: recuerdo),
         ),
       ),
@@ -62,7 +72,6 @@ class ReproductorVideoRecuerdo extends ConsumerStatefulWidget {
 
 class _EstadoReproductorVideo extends ConsumerState<ReproductorVideoRecuerdo> {
   VideoPlayerController? _controlador;
-  String? _urlCargada;
   bool _fallo = false;
 
   @override
@@ -71,9 +80,8 @@ class _EstadoReproductorVideo extends ConsumerState<ReproductorVideoRecuerdo> {
     super.dispose();
   }
 
-  Future<void> _preparar(String url) async {
-    _urlCargada = url;
-    final controlador = VideoPlayerController.networkUrl(Uri.parse(url));
+  Future<void> _preparar(File archivo) async {
+    final controlador = VideoPlayerController.file(archivo);
     _controlador = controlador;
     try {
       await controlador.initialize();
@@ -94,10 +102,8 @@ class _EstadoReproductorVideo extends ConsumerState<ReproductorVideoRecuerdo> {
 
   @override
   Widget build(BuildContext context) {
-    final url = ref.watch(proveedorUrlMedio(widget.recuerdo.id)).value?.url;
-    if (url != null && url != _urlCargada && _controlador == null) {
-      unawaited(_preparar(url));
-    }
+    final (:archivo, :cargando) = _original(ref, widget.recuerdo);
+    if (archivo != null && _controlador == null) unawaited(_preparar(archivo));
     final controlador = _controlador;
     if (_fallo || controlador == null || !controlador.value.isInitialized) {
       return Stack(
@@ -106,7 +112,7 @@ class _EstadoReproductorVideo extends ConsumerState<ReproductorVideoRecuerdo> {
           MarcoMiniatura(recuerdo: widget.recuerdo),
           if (_fallo)
             const _AvisoMedio('No se pudo reproducir el video.')
-          else if (url != null)
+          else if (cargando || archivo != null)
             const CircularProgressIndicator(color: ColoresApp.sobrePrimario),
         ],
       );
@@ -157,7 +163,6 @@ class ReproductorAudioRecuerdo extends ConsumerStatefulWidget {
 
 class _EstadoReproductorAudio extends ConsumerState<ReproductorAudioRecuerdo> {
   AudioPlayer? _reproductor;
-  String? _urlCargada;
   bool _fallo = false;
 
   @override
@@ -166,12 +171,11 @@ class _EstadoReproductorAudio extends ConsumerState<ReproductorAudioRecuerdo> {
     super.dispose();
   }
 
-  Future<void> _preparar(String url) async {
-    _urlCargada = url;
+  Future<void> _preparar(File archivo) async {
     final reproductor = AudioPlayer();
     _reproductor = reproductor;
     try {
-      await reproductor.setUrl(url);
+      await reproductor.setFilePath(archivo.path);
       if (mounted) setState(() {});
     } catch (error) {
       debugPrint('Capsoul: no se pudo abrir la nota de voz: $error');
@@ -181,10 +185,8 @@ class _EstadoReproductorAudio extends ConsumerState<ReproductorAudioRecuerdo> {
 
   @override
   Widget build(BuildContext context) {
-    final url = ref.watch(proveedorUrlMedio(widget.recuerdo.id)).value?.url;
-    if (url != null && url != _urlCargada && _reproductor == null) {
-      unawaited(_preparar(url));
-    }
+    final (:archivo, cargando: _) = _original(ref, widget.recuerdo);
+    if (archivo != null && _reproductor == null) unawaited(_preparar(archivo));
     final reproductor = _reproductor;
     final total = widget.recuerdo.duracion ?? Duration.zero;
     return Card(

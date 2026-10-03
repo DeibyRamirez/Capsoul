@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
+import 'package:capsoul/funcionalidades/recuerdos/dominio/archivos_medio.dart';
+import 'package:capsoul/funcionalidades/recuerdos/dominio/enlace_medio.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/filtro_recuerdos.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/nuevo_recuerdo.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
@@ -102,12 +106,44 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
       UsoMedios(bytesUsados: bytesUsados);
 }
 
-/// [RepositorioUrlsMedio] sin entrega: la UI muestra los respaldos.
+/// [RepositorioUrlsMedio] de prueba: devuelve la variante pedida de [urls]
+/// (por id de recuerdo) y anota cada petición.
 class RepositorioUrlsMedioFalso implements RepositorioUrlsMedio {
   RepositorioUrlsMedioFalso([this.urls = const {}]);
 
   final Map<String, UrlMedio> urls;
+  final List<String> pedidos = [];
 
   @override
-  Future<UrlMedio?> obtener(String idRecuerdo) async => urls[idRecuerdo];
+  Future<String?> enlace({
+    required String idRecuerdo,
+    required String publicId,
+    required VarianteMedio variante,
+  }) async {
+    pedidos.add(claveMedio(publicId, variante));
+    return urls[idRecuerdo]?.de(variante)?.url;
+  }
+}
+
+/// [ArchivosMedio] en memoria: "descargar" crea un [File] ficticio con la
+/// clave y lo guarda; anota las descargas.
+class ArchivosMedioFalso implements ArchivosMedio {
+  final Map<String, File> archivos = {};
+  final List<String> descargas = [];
+  int vaciados = 0;
+
+  @override
+  Future<File?> enCache(String clave) async => archivos[clave];
+
+  @override
+  Future<File> descargar(String url, String clave) async {
+    descargas.add(url);
+    return archivos[clave] = File('/no-existe/${clave.replaceAll('/', '_')}');
+  }
+
+  @override
+  Future<void> vaciar() async {
+    vaciados++;
+    archivos.clear();
+  }
 }

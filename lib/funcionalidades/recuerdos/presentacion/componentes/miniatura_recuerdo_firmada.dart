@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../aplicacion/proveedores_recuerdos.dart';
+import '../../dominio/enlace_medio.dart';
 import '../../dominio/recuerdo.dart';
 import 'miniatura_recuerdo.dart';
 
-/// [MiniaturaRecuerdo] que, para fotos y videos, carga la miniatura firmada
-/// del servidor (Edge Function `firmar-medio`). Mientras carga o si falla se
-/// ve el respaldo de marca.
+/// [MiniaturaRecuerdo] que, para fotos y videos, muestra la miniatura de
+/// 480 px (nunca el original): de la caché del dispositivo por `public_id` o,
+/// si falta, descargada con un enlace de `firmar-medio`. Mientras carga o si
+/// falla se ve el respaldo de marca.
 class MiniaturaRecuerdoFirmada extends ConsumerWidget {
   const MiniaturaRecuerdoFirmada({
     super.key,
@@ -20,15 +22,16 @@ class MiniaturaRecuerdoFirmada extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final miniatura = recuerdo.esVisual && recuerdo.publicId != null
-        ? ref.watch(proveedorUrlMedio(recuerdo.id)).value?.urlMiniatura
-        : null;
+    final solicitud = solicitudMedioDe(recuerdo, VarianteMedio.miniatura);
+    final miniatura = solicitud == null
+        ? null
+        : ref.watch(proveedorArchivoMedio(solicitud)).value;
     return MiniaturaRecuerdo(
       recuerdo: recuerdo,
       tamanoIcono: tamanoIcono,
       imagen: miniatura == null
           ? null
-          : Image.network(
+          : Image.file(
               miniatura,
               fit: BoxFit.cover,
               gaplessPlayback: true,
