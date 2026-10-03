@@ -9,10 +9,12 @@ abstract final class ConfiguracionSupabase {
   /// `service_role` ni una clave secreta.
   static const String claveAnonima = String.fromEnvironment('SUPABASE_ANON_KEY');
 
-  /// Opcional: URL a la que vuelven los enlaces de correo (recuperar
-  /// contraseña). Vacía = la Site URL configurada en Supabase Auth.
-  static const String urlRedireccion =
-      String.fromEnvironment('SUPABASE_URL_REDIRECCION');
+  /// Deep link al que vuelve el enlace de confirmación de correo. Debe estar
+  /// en las *Redirect URLs* de Supabase Auth y en AndroidManifest/Info.plist.
+  static const String urlConfirmacion = 'capsoul://auth/confirmar';
+
+  /// Deep link al que vuelve el enlace de recuperación de contraseña.
+  static const String urlRecuperacion = 'capsoul://auth/recuperar';
 }
 
 /// Devuelve un mensaje en español si la configuración no sirve para

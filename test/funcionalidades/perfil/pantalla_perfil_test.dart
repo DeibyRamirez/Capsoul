@@ -7,6 +7,7 @@ import '../../ayudantes/app_prueba.dart';
 import '../../ayudantes/falsos.dart';
 
 void main() {
+  // Sin emailConfirmedAt en el objeto local: aun así no hay aviso.
   const usuarioSinVerificar = UsuarioApp(
     uid: 'uid-123',
     correo: 'ana@capsoul.app',
@@ -25,7 +26,8 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('muestra el nombre de la tabla usuarios y el aviso de verificación',
+  testWidgets(
+      'muestra el nombre de la tabla usuarios sin aviso de verificación',
       (tester) async {
     final autenticacion =
         RepositorioAutenticacionFalso(usuarioInicial: usuarioSinVerificar);
@@ -38,11 +40,9 @@ void main() {
 
     expect(find.text('Ana Supabase'), findsOneWidget);
     expect(find.text('ana@capsoul.app'), findsOneWidget);
-    expect(find.text('Verifica tu correo electrónico'), findsOneWidget);
-
-    await tester.tap(find.text('Reenviar correo'));
-    await tester.pumpAndSettle();
-    expect(autenticacion.correosVerificacionEnviados, 1);
+    // Con "Confirm email" activo toda sesión tiene el correo confirmado.
+    expect(find.text('Verifica tu correo electrónico'), findsNothing);
+    expect(find.text('Reenviar correo'), findsNothing);
   });
 
   testWidgets('edita el nombre visible', (tester) async {

@@ -153,7 +153,9 @@ void main() {
       ).thenAnswer((_) async => respuesta);
     }
 
-    test('envía nombre_visible en los metadatos para el trigger', () async {
+    test(
+        'envía nombre_visible para el trigger y el deep link de '
+        'confirmación', () async {
       simularRegistro(AuthResponse(session: sesion, user: usuario));
 
       final resultado = await repositorio.registrarUsuario(
@@ -167,7 +169,7 @@ void main() {
           email: 'ana@capsoul.app',
           password: 'secreta123',
           data: {'nombre_visible': 'Ana María'},
-          emailRedirectTo: any(named: 'emailRedirectTo'),
+          emailRedirectTo: 'capsoul://auth/confirmar',
         ),
       ).called(1);
       expect(resultado.usuario.uid, 'uid-1');
@@ -215,11 +217,8 @@ void main() {
     });
   });
 
-  test('enviarCorreoRecuperacion delega en resetPasswordForEmail', () async {
-    final conRedireccion = RepositorioAutenticacionSupabase(
-      auth: auth,
-      urlRedireccion: 'capsoul://recuperar',
-    );
+  test('enviarCorreoRecuperacion usa el deep link capsoul://auth/recuperar',
+      () async {
     when(
       () => auth.resetPasswordForEmail(
         any(),
@@ -227,45 +226,106 @@ void main() {
       ),
     ).thenAnswer((_) async {});
 
-    await conRedireccion.enviarCorreoRecuperacion('ana@capsoul.app');
+    await repositorio.enviarCorreoRecuperacion('ana@capsoul.app');
 
     verify(
       () => auth.resetPasswordForEmail(
         'ana@capsoul.app',
-        redirectTo: 'capsoul://recuperar',
+        redirectTo: 'capsoul://auth/recuperar',
       ),
     ).called(1);
   });
 
-  test('enviarCorreoVerificacion reenvía la confirmación de registro',
+  group('reenviarCorreoConfirmacion', () {
+    void simularReenvio() {
+      when(
+        () => auth.resend(
+          type: any(named: 'type'),
+          email: any(named: 'email'),
+          emailRedirectTo: any(named: 'emailRedirectTo'),
+        ),
+      ).thenAnswer((_) async => ResendResponse());
+    }
+
+    test('reenvía la confirmación de registro sin sesión con el deep link',
+        () async {
+      when(() => auth.currentUser).thenReturn(null);
+      simularReenvio();
+
+      await repositorio.reenviarCorreoConfirmacion('ana@capsoul.app');
+
+      verify(
+        () => auth.resend(
+          type: OtpType.signup,
+          email: 'ana@capsoul.app',
+          emailRedirectTo: 'capsoul://auth/confirmar',
+        ),
+      ).called(1);
+    });
+
+    test('respeta una URL de confirmación inyectada', () async {
+      simularReenvio();
+      final otro = RepositorioAutenticacionSupabase(
+        auth: auth,
+        urlConfirmacion: 'capsoul://auth/otra',
+      );
+
+      await otro.reenviarCorreoConfirmacion('ana@capsoul.app');
+
+      verify(
+        () => auth.resend(
+          type: OtpType.signup,
+          email: 'ana@capsoul.app',
+          emailRedirectTo: 'capsoul://auth/otra',
+        ),
+      ).called(1);
+    });
+
+    test('el límite de envíos se traduce a FalloAutenticacion', () {
+      when(
+        () => auth.resend(
+          type: any(named: 'type'),
+          email: any(named: 'email'),
+          emailRedirectTo: any(named: 'emailRedirectTo'),
+        ),
+      ).thenThrow(
+        AuthApiException(
+          'Email rate limit exceeded',
+          statusCode: '429',
+          code: 'over_email_send_rate_limit',
+        ),
+      );
+
+      expect(
+        () => repositorio.reenviarCorreoConfirmacion('ana@capsoul.app'),
+        lanzaFalloAutenticacion('over_email_send_rate_limit'),
+      );
+    });
+  });
+
+  test('actualizarContrasena envía la contraseña nueva', () async {
+    when(() => auth.updateUser(any()))
+        .thenAnswer((_) async => _RespuestaUsuarioSimulada());
+
+    await repositorio.actualizarContrasena('nueva-secreta1');
+
+    final atributos =
+        verify(() => auth.updateUser(captureAny())).captured.single
+            as UserAttributes;
+    expect(atributos.password, 'nueva-secreta1');
+  });
+
+  test('enlacesRecuperacion solo emite con el evento passwordRecovery',
       () async {
-    when(() => auth.currentUser).thenReturn(usuario);
-    when(
-      () => auth.resend(
-        type: any(named: 'type'),
-        email: any(named: 'email'),
-        emailRedirectTo: any(named: 'emailRedirectTo'),
-      ),
-    ).thenAnswer((_) async => ResendResponse());
-
-    await repositorio.enviarCorreoVerificacion();
-
-    verify(
-      () => auth.resend(
-        type: OtpType.signup,
-        email: 'ana@capsoul.app',
-        emailRedirectTo: any(named: 'emailRedirectTo'),
-      ),
-    ).called(1);
-  });
-
-  test('enviarCorreoVerificacion sin sesión lanza desconocido', () {
-    when(() => auth.currentUser).thenReturn(null);
-
-    expect(
-      () => repositorio.enviarCorreoVerificacion(),
-      lanzaFalloAutenticacion(FalloAutenticacion.codigoDesconocido),
+    when(() => auth.onAuthStateChange).thenAnswer(
+      (_) => Stream.fromIterable([
+        AuthState(AuthChangeEvent.signedIn, sesion),
+        AuthState(AuthChangeEvent.passwordRecovery, sesion),
+        AuthState(AuthChangeEvent.signedOut, null),
+      ]),
     );
+
+    expect(await repositorio.enlacesRecuperacion().length, 1);
   });
 
   test('actualizarNombreVisible guarda nombre_visible en los metadatos',

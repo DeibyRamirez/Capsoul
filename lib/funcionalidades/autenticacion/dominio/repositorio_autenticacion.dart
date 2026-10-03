@@ -26,12 +26,18 @@ abstract interface class RepositorioAutenticacion {
   /// Envía el enlace de recuperación. No revela si el correo existe.
   Future<void> enviarCorreoRecuperacion(String correo);
 
-  /// Reenvía el correo de confirmación al usuario con sesión iniciada.
-  Future<void> enviarCorreoVerificacion();
+  /// Reenvía el correo de confirmación de registro a [correo]. No requiere
+  /// sesión: la cuenta aún no está confirmada.
+  Future<void> reenviarCorreoConfirmacion(String correo);
 
-  /// Recarga el usuario con sesión (p. ej. para refrescar si verificó el
-  /// correo).
-  Future<UsuarioApp?> recargarUsuario();
+  /// Emite cada vez que se abre un enlace de recuperación de contraseña
+  /// (evento `passwordRecovery`): hay sesión temporal y falta la contraseña
+  /// nueva.
+  Stream<void> enlacesRecuperacion();
+
+  /// Cambia la contraseña del usuario con sesión (tras el enlace de
+  /// recuperación).
+  Future<void> actualizarContrasena(String contrasenaNueva);
 
   Future<void> actualizarNombreVisible(String nombre);
 

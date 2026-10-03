@@ -8,8 +8,9 @@ import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../autenticacion/presentacion/validadores_autenticacion.dart';
 import '../aplicacion/controlador_perfil.dart';
 
-/// Pestaña "Yo": perfil de la tabla `usuarios`, edición del nombre visible,
-/// aviso de correo sin verificar y cierre de sesión.
+/// Pestaña "Yo": perfil de la tabla `usuarios`, edición del nombre visible y
+/// cierre de sesión. No hay aviso de verificación: para tener sesión el
+/// correo ya debe estar confirmado.
 class PantallaPerfil extends ConsumerWidget {
   const PantallaPerfil({super.key});
 
@@ -31,18 +32,6 @@ class PantallaPerfil extends ConsumerWidget {
     }
   }
 
-  Future<void> _reenviarCorreo(BuildContext context, WidgetRef ref) async {
-    final enviado = await ref
-        .read(proveedorControladorPerfil.notifier)
-        .reenviarCorreoVerificacion();
-    if (enviado && context.mounted) {
-      mostrarAvisoInformativo(
-        context,
-        'Te enviamos un nuevo correo de verificación',
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen<AsyncValue<void>>(proveedorControladorPerfil, (_, siguiente) {
@@ -57,7 +46,6 @@ class PantallaPerfil extends ConsumerWidget {
     final nombre =
         perfil?.nombreVisible ?? usuarioSesion?.nombreVisible ?? 'Sin nombre';
     final correo = perfil?.correo ?? usuarioSesion?.correo ?? '';
-    final correoVerificado = usuarioSesion?.correoVerificado ?? true;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Yo')),
@@ -81,16 +69,6 @@ class PantallaPerfil extends ConsumerWidget {
                 ),
               ),
             const SizedBox(height: 24),
-            if (!correoVerificado) ...[
-              _AvisoVerificacionCorreo(
-                ocupado: ocupado,
-                alReenviar: () => _reenviarCorreo(context, ref),
-                alActualizar: () => ref
-                    .read(proveedorControladorPerfil.notifier)
-                    .actualizarVerificacionCorreo(),
-              ),
-              const SizedBox(height: 16),
-            ],
             Card(
               color: ColoresApp.sobrePrimario,
               child: ListTile(
@@ -164,70 +142,6 @@ class _EncabezadoPerfil extends StatelessWidget {
           style: estilosTexto.bodyMedium?.copyWith(color: ColoresApp.atenuado),
         ),
       ],
-    );
-  }
-}
-
-class _AvisoVerificacionCorreo extends StatelessWidget {
-  const _AvisoVerificacionCorreo({
-    required this.ocupado,
-    required this.alReenviar,
-    required this.alActualizar,
-  });
-
-  final bool ocupado;
-  final VoidCallback alReenviar;
-  final VoidCallback alActualizar;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: ColoresApp.acento.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(TemaApp.radioMediano),
-        border: Border.all(color: ColoresApp.acento.withValues(alpha: 0.4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.mark_email_unread_outlined, color: ColoresApp.acento),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Verifica tu correo electrónico',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: ColoresApp.primario,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Te enviamos un enlace de verificación. Puedes seguir usando '
-            'Capsoul mientras tanto.',
-            style: TextStyle(color: ColoresApp.sobreSuperficie),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              TextButton(
-                onPressed: ocupado ? null : alReenviar,
-                child: const Text('Reenviar correo'),
-              ),
-              TextButton(
-                onPressed: ocupado ? null : alActualizar,
-                child: const Text('Ya lo verifiqué'),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

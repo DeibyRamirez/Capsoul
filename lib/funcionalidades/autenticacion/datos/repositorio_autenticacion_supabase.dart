@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../nucleo/supabase/configuracion_supabase.dart';
 import '../dominio/fallo_autenticacion.dart';
 import '../dominio/repositorio_autenticacion.dart';
 import '../dominio/resultado_registro.dart';
@@ -14,23 +14,35 @@ import '../dominio/usuario_app.dart';
 /// [GoTrueClient] se puede inyectar en las pruebas; por defecto se resuelve
 /// de forma diferida (`Supabase.instance.client.auth`) para que construir el
 /// repositorio nunca toque la red.
+///
+/// Los enlaces de correo vuelven a la app por deep link
+/// ([ConfiguracionSupabase.urlConfirmacion] y
+/// [ConfiguracionSupabase.urlRecuperacion]); `supabase_flutter` los recibe con
+/// `app_links` y abre la sesión.
 class RepositorioAutenticacionSupabase implements RepositorioAutenticacion {
-  RepositorioAutenticacionSupabase({GoTrueClient? auth, String? urlRedireccion})
-      : _authInyectado = auth,
-        _urlRedireccion =
-            (urlRedireccion == null || urlRedireccion.isEmpty) ? null : urlRedireccion;
+  RepositorioAutenticacionSupabase({
+    GoTrueClient? auth,
+    this.urlConfirmacion = ConfiguracionSupabase.urlConfirmacion,
+    this.urlRecuperacion = ConfiguracionSupabase.urlRecuperacion,
+  }) : _authInyectado = auth;
 
   /// Clave de `raw_user_meta_data` que lee el trigger de perfil.
   static const String claveNombreVisible = 'nombre_visible';
 
   final GoTrueClient? _authInyectado;
-  final String? _urlRedireccion;
+  final String urlConfirmacion;
+  final String urlRecuperacion;
 
   GoTrueClient get _auth => _authInyectado ?? Supabase.instance.client.auth;
 
   @override
   Stream<UsuarioApp?> cambiosEstadoAutenticacion() =>
       _auth.onAuthStateChange.map((estado) => _aUsuarioApp(estado.session?.user));
+
+  @override
+  Stream<void> enlacesRecuperacion() => _auth.onAuthStateChange
+      .where((estado) => estado.event == AuthChangeEvent.passwordRecovery)
+      .map((_) {});
 
   @override
   UsuarioApp? get usuarioActual => _aUsuarioApp(_auth.currentUser);
@@ -62,7 +74,7 @@ class RepositorioAutenticacionSupabase implements RepositorioAutenticacion {
         email: correo,
         password: contrasena,
         data: {claveNombreVisible: nombre},
-        emailRedirectTo: _urlRedireccion,
+        emailRedirectTo: urlConfirmacion,
       );
       final usuario = respuesta.user;
       if (usuario == null) throw const FalloAutenticacion.desconocido();
@@ -81,29 +93,25 @@ class RepositorioAutenticacionSupabase implements RepositorioAutenticacion {
   @override
   Future<void> enviarCorreoRecuperacion(String correo) {
     return _proteger(
-      () => _auth.resetPasswordForEmail(correo, redirectTo: _urlRedireccion),
+      () => _auth.resetPasswordForEmail(correo, redirectTo: urlRecuperacion),
     );
   }
 
   @override
-  Future<void> enviarCorreoVerificacion() {
+  Future<void> reenviarCorreoConfirmacion(String correo) {
     return _proteger(() async {
-      final correo = _auth.currentUser?.email;
-      if (correo == null) throw const FalloAutenticacion.desconocido();
       await _auth.resend(
         type: OtpType.signup,
         email: correo,
-        emailRedirectTo: _urlRedireccion,
+        emailRedirectTo: urlConfirmacion,
       );
     });
   }
 
   @override
-  Future<UsuarioApp?> recargarUsuario() {
+  Future<void> actualizarContrasena(String contrasenaNueva) {
     return _proteger(() async {
-      if (_auth.currentSession == null) return null;
-      final respuesta = await _auth.refreshSession();
-      return _aUsuarioApp(respuesta.user ?? _auth.currentUser);
+      await _auth.updateUser(UserAttributes(password: contrasenaNueva));
     });
   }
 
@@ -138,8 +146,6 @@ class RepositorioAutenticacionSupabase implements RepositorioAutenticacion {
       throw FalloAutenticacion.desdeCodigo(FalloAutenticacion.codigoSinRed);
     } on AuthException catch (error) {
       throw FalloAutenticacion.desdeCodigo(_codigoDe(error));
-    } on SocketException {
-      throw FalloAutenticacion.desdeCodigo(FalloAutenticacion.codigoSinRed);
     } on TimeoutException {
       throw FalloAutenticacion.desdeCodigo(FalloAutenticacion.codigoSinRed);
     } catch (error) {

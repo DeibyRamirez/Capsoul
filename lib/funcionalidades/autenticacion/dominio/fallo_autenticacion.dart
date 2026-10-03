@@ -30,7 +30,13 @@ class FalloAutenticacion implements FalloApp {
   @override
   final String mensaje;
 
+  /// Código de Supabase Auth cuando la cuenta existe pero no confirmó el
+  /// correo.
+  static const String codigoCorreoNoConfirmado = 'email_not_confirmed';
+
   bool get esUsuarioNoEncontrado => codigo == 'user_not_found';
+
+  bool get esCorreoNoConfirmado => codigo == codigoCorreoNoConfirmado;
 
   static String mensajeParaCodigo(String codigo) {
     return switch (codigo) {
@@ -50,6 +56,8 @@ class FalloAutenticacion implements FalloApp {
         'Ya existe una cuenta con este correo.',
       'weak_password' =>
         'La contraseña es muy débil. Usa al menos 8 caracteres.',
+      'same_password' =>
+        'La nueva contraseña debe ser distinta de la anterior.',
       'over_request_rate_limit' ||
       'over_email_send_rate_limit' =>
         'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',

@@ -95,4 +95,48 @@ void main() {
     await tester.pump();
     expect(textoContrasena().obscureText, isFalse);
   });
+
+  testWidgets(
+      'correo sin confirmar avisa en español y permite reenviar la '
+      'confirmación', (tester) async {
+    final autenticacion = RepositorioAutenticacionFalso()
+      ..siguienteFallo = FalloAutenticacion.desdeCodigo('email_not_confirmed');
+    await montarAppCapsoul(tester, autenticacion: autenticacion);
+
+    await tester.enterText(campo('Correo electrónico'), ' ana@capsoul.app ');
+    await tester.enterText(campo('Contraseña'), 'secreta123');
+    await tester.tap(botonIniciarSesion());
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'Confirma tu correo antes de iniciar sesión. Revisa tu bandeja de '
+        'entrada.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Reenviar correo de confirmación'), findsOneWidget);
+
+    await tester.tap(find.text('Reenviar correo de confirmación'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Revisa tu correo'), findsOneWidget);
+    expect(find.text('ana@capsoul.app'), findsOneWidget);
+    expect(autenticacion.correosConfirmacionReenviados, ['ana@capsoul.app']);
+    expect(autenticacion.usuarioActual, isNull);
+  });
+
+  testWidgets('otros errores no muestran la opción de reenviar',
+      (tester) async {
+    final autenticacion = RepositorioAutenticacionFalso()
+      ..siguienteFallo = FalloAutenticacion.desdeCodigo('invalid_credentials');
+    await montarAppCapsoul(tester, autenticacion: autenticacion);
+
+    await tester.enterText(campo('Correo electrónico'), 'ana@capsoul.app');
+    await tester.enterText(campo('Contraseña'), 'mala');
+    await tester.tap(botonIniciarSesion());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reenviar correo de confirmación'), findsNothing);
+  });
 }

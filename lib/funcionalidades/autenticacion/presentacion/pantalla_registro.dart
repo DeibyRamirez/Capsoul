@@ -11,11 +11,6 @@ import 'componentes/encabezado_autenticacion.dart';
 import 'componentes/estructura_autenticacion.dart';
 import 'validadores_autenticacion.dart';
 
-/// Aviso cuando la cuenta se creó pero falta confirmar el correo.
-const String kMensajeConfirmarCorreo =
-    'Te enviamos un correo para confirmar tu cuenta. Confírmala y luego '
-    'inicia sesión.';
-
 class PantallaRegistro extends ConsumerStatefulWidget {
   const PantallaRegistro({super.key});
 
@@ -42,7 +37,8 @@ class _EstadoPantallaRegistro extends ConsumerState<PantallaRegistro> {
   Future<void> _enviar() async {
     FocusScope.of(context).unfocus();
     if (!(_claveFormulario.currentState?.validate() ?? false)) return;
-    // Con sesión, el enrutador redirige solo al contenedor principal.
+    // Con sesión, el enrutador redirige solo al contenedor principal. Con
+    // "Confirm email" activo no hay sesión: se muestra "Revisa tu correo".
     final resultado =
         await ref.read(proveedorControladorRegistro.notifier).registrarUsuario(
               nombre: _controladorNombre.text,
@@ -51,8 +47,7 @@ class _EstadoPantallaRegistro extends ConsumerState<PantallaRegistro> {
             );
     if (!mounted) return;
     if (resultado == ResultadoAccionRegistro.confirmacionPendiente) {
-      mostrarAvisoInformativo(context, kMensajeConfirmarCorreo);
-      context.go(RutasApp.iniciarSesion);
+      context.go(RutasApp.revisaTuCorreoPara(_controladorCorreo.text.trim()));
     }
   }
 

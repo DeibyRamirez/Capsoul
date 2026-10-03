@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../funcionalidades/autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../funcionalidades/autenticacion/dominio/usuario_app.dart';
 import '../../funcionalidades/autenticacion/presentacion/pantalla_iniciar_sesion.dart';
+import '../../funcionalidades/autenticacion/presentacion/pantalla_nueva_contrasena.dart';
 import '../../funcionalidades/autenticacion/presentacion/pantalla_recuperar_contrasena.dart';
 import '../../funcionalidades/autenticacion/presentacion/pantalla_registro.dart';
+import '../../funcionalidades/autenticacion/presentacion/pantalla_revisa_tu_correo.dart';
 import '../../funcionalidades/crear/presentacion/pantalla_selector_crear.dart';
 import '../../funcionalidades/inicio/presentacion/pantalla_inicio.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_legado.dart';
@@ -25,6 +27,10 @@ final proveedorEnrutadorApp = Provider<GoRouter>((ref) {
     proveedorEstadoAutenticacion,
     (_, _) => notificadorRefresco.refrescar(),
   );
+  ref.listen<bool>(
+    proveedorModoRecuperacion,
+    (_, _) => notificadorRefresco.refrescar(),
+  );
 
   bool haySesion() {
     final estado = ref.read(proveedorEstadoAutenticacion);
@@ -37,6 +43,7 @@ final proveedorEnrutadorApp = Provider<GoRouter>((ref) {
   final enrutador = crearEnrutadorApp(
     notificadorRefresco: notificadorRefresco,
     haySesion: haySesion,
+    enModoRecuperacion: () => ref.read(proveedorModoRecuperacion),
   );
   ref.onDispose(enrutador.dispose);
   return enrutador;
@@ -49,6 +56,7 @@ class _NotificadorRefrescoEnrutador extends ChangeNotifier {
 GoRouter crearEnrutadorApp({
   required Listenable notificadorRefresco,
   required bool Function() haySesion,
+  bool Function()? enModoRecuperacion,
 }) {
   final claveNavegadorRaiz = GlobalKey<NavigatorState>();
 
@@ -59,6 +67,7 @@ GoRouter crearEnrutadorApp({
     redirect: (context, state) => resolverRedireccionAutenticacion(
       sesionIniciada: haySesion(),
       ubicacion: state.matchedLocation,
+      modoRecuperacion: enModoRecuperacion?.call() ?? false,
     ),
     routes: [
       GoRoute(
@@ -79,6 +88,19 @@ GoRouter crearEnrutadorApp({
         path: RutasApp.recuperar,
         name: 'recuperar',
         builder: (context, state) => const PantallaRecuperarContrasena(),
+      ),
+      GoRoute(
+        path: RutasApp.revisaTuCorreo,
+        name: 'revisa-tu-correo',
+        builder: (context, state) => PantallaRevisaTuCorreo(
+          correo: state.uri.queryParameters['correo'] ?? '',
+          reenviarAlEntrar: state.uri.queryParameters['reenviar'] == '1',
+        ),
+      ),
+      GoRoute(
+        path: RutasApp.nuevaContrasena,
+        name: 'nueva-contrasena',
+        builder: (context, state) => const PantallaNuevaContrasena(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navegacionRamas) {

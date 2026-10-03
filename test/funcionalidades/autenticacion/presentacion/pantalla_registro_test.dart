@@ -1,4 +1,3 @@
-import 'package:capsoul/funcionalidades/autenticacion/presentacion/pantalla_registro.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -61,7 +60,7 @@ void main() {
   });
 
   testWidgets(
-      'si falta confirmar el correo avisa y vuelve a iniciar sesión',
+      'si falta confirmar el correo muestra Revisa tu correo con el correo',
       (tester) async {
     final autenticacion =
         RepositorioAutenticacionFalso(exigeConfirmarCorreo: true);
@@ -70,8 +69,9 @@ void main() {
 
     await llenarFormulario(tester);
 
-    expect(find.text(kMensajeConfirmarCorreo), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, 'Iniciar sesión'), findsOneWidget);
+    expect(find.text('Revisa tu correo'), findsOneWidget);
+    expect(find.text('ana@capsoul.app'), findsOneWidget);
+    expect(find.text('Volver a iniciar sesión'), findsOneWidget);
     expect(find.text('Hola'), findsNothing);
     expect(autenticacion.usuarioActual, isNull);
   });

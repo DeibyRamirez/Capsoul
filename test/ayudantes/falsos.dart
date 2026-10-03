@@ -29,6 +29,7 @@ class RepositorioAutenticacionFalso implements RepositorioAutenticacion {
 
   UsuarioApp? _usuario;
   final _cambios = StreamController<UsuarioApp?>.broadcast();
+  final _recuperaciones = StreamController<void>.broadcast();
 
   /// Si se asigna, la siguiente llamada lanza este fallo.
   FalloAutenticacion? siguienteFallo;
@@ -37,9 +38,13 @@ class RepositorioAutenticacionFalso implements RepositorioAutenticacion {
   /// observar el estado de carga).
   Completer<void>? compuertaInicioSesion;
 
+  /// Igual que [compuertaInicioSesion], para el reenvío de confirmación.
+  Completer<void>? compuertaReenvio;
+
   String? ultimoCorreoRecuperacion;
   String? ultimoNombreRegistrado;
-  int correosVerificacionEnviados = 0;
+  final List<String> correosConfirmacionReenviados = [];
+  String? ultimaContrasenaNueva;
   int llamadasCerrarSesion = 0;
 
   void _lanzarSiCorresponde() {
@@ -109,13 +114,28 @@ class RepositorioAutenticacionFalso implements RepositorioAutenticacion {
   }
 
   @override
-  Future<void> enviarCorreoVerificacion() async {
+  Future<void> reenviarCorreoConfirmacion(String correo) async {
+    final compuerta = compuertaReenvio;
+    if (compuerta != null) await compuerta.future;
     _lanzarSiCorresponde();
-    correosVerificacionEnviados++;
+    correosConfirmacionReenviados.add(correo);
   }
 
   @override
-  Future<UsuarioApp?> recargarUsuario() async => _usuario;
+  Stream<void> enlacesRecuperacion() => _recuperaciones.stream;
+
+  /// Simula abrir el enlace de recuperación: sesión temporal + evento
+  /// `passwordRecovery`.
+  void simularEnlaceRecuperacion({UsuarioApp usuario = usuarioPrueba}) {
+    _asignarUsuario(usuario);
+    _recuperaciones.add(null);
+  }
+
+  @override
+  Future<void> actualizarContrasena(String contrasenaNueva) async {
+    _lanzarSiCorresponde();
+    ultimaContrasenaNueva = contrasenaNueva;
+  }
 
   @override
   Future<void> actualizarNombreVisible(String nombre) async {

@@ -65,7 +65,8 @@ enum ResultadoAccionRegistro {
 class ControladorRegistro extends ControladorAccionAutenticacion {
   /// Crea la cuenta en Supabase Auth con el nombre visible en los metadatos.
   /// La fila `usuarios` la crea el trigger del servidor y Supabase envía el
-  /// correo de confirmación por su cuenta.
+  /// correo de confirmación por su cuenta (con "Confirm email" activo no hay
+  /// sesión hasta confirmar).
   Future<ResultadoAccionRegistro> registrarUsuario({
     required String nombre,
     required String correo,
@@ -103,6 +104,46 @@ class ControladorRecuperacionContrasena extends ControladorAccionAutenticacion {
     });
   }
 }
+
+class ControladorReenvioConfirmacion extends ControladorAccionAutenticacion {
+  /// Reenvía el correo de confirmación de registro (no requiere sesión).
+  Future<bool> reenviar(String correo) {
+    final repositorio = ref.read(proveedorRepositorioAutenticacion);
+    return ejecutar(() => repositorio.reenviarCorreoConfirmacion(correo.trim()));
+  }
+}
+
+class ControladorNuevaContrasena extends ControladorAccionAutenticacion {
+  /// Guarda la contraseña nueva tras abrir el enlace de recuperación y sale
+  /// del modo recuperación (el enrutador lleva entonces al contenedor).
+  Future<bool> guardar(String contrasenaNueva) async {
+    final repositorio = ref.read(proveedorRepositorioAutenticacion);
+    final exito =
+        await ejecutar(() => repositorio.actualizarContrasena(contrasenaNueva));
+    if (exito && ref.mounted) {
+      ref.read(proveedorModoRecuperacion.notifier).terminar();
+    }
+    return exito;
+  }
+
+  /// Abandona la recuperación: cierra la sesión temporal del enlace.
+  Future<bool> cancelar() async {
+    final repositorio = ref.read(proveedorRepositorioAutenticacion);
+    final exito = await ejecutar(repositorio.cerrarSesion);
+    if (ref.mounted) ref.read(proveedorModoRecuperacion.notifier).terminar();
+    return exito;
+  }
+}
+
+final proveedorControladorReenvioConfirmacion = NotifierProvider.autoDispose<
+    ControladorReenvioConfirmacion, AsyncValue<void>>(
+  ControladorReenvioConfirmacion.new,
+);
+
+final proveedorControladorNuevaContrasena = NotifierProvider.autoDispose<
+    ControladorNuevaContrasena, AsyncValue<void>>(
+  ControladorNuevaContrasena.new,
+);
 
 final proveedorControladorInicioSesion =
     NotifierProvider.autoDispose<ControladorInicioSesion, AsyncValue<void>>(

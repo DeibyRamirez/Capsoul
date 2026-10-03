@@ -60,6 +60,58 @@ void main() {
       expect(RutasApp.iniciarSesion, '/iniciar-sesion');
       expect(RutasApp.registro, '/registro');
       expect(RutasApp.recuperar, '/recuperar');
+      expect(RutasApp.revisaTuCorreo, '/revisa-tu-correo');
+      expect(RutasApp.nuevaContrasena, '/nueva-contrasena');
+    });
+
+    test('revisaTuCorreoPara codifica el correo y el reenvío', () {
+      expect(
+        RutasApp.revisaTuCorreoPara('ana+1@capsoul.app'),
+        '/revisa-tu-correo?correo=ana%2B1%40capsoul.app',
+      );
+      expect(
+        Uri.parse(RutasApp.revisaTuCorreoPara('a@b.co', reenviar: true))
+            .queryParameters,
+        {'correo': 'a@b.co', 'reenviar': '1'},
+      );
+    });
+
+    test('en modo recuperación con sesión todo va a /nueva-contrasena', () {
+      for (final ubicacion in ['/inicio', '/yo', '/iniciar-sesion']) {
+        expect(
+          resolverRedireccionAutenticacion(
+            sesionIniciada: true,
+            ubicacion: ubicacion,
+            modoRecuperacion: true,
+          ),
+          RutasApp.nuevaContrasena,
+        );
+      }
+      expect(
+        resolverRedireccionAutenticacion(
+          sesionIniciada: true,
+          ubicacion: RutasApp.nuevaContrasena,
+          modoRecuperacion: true,
+        ),
+        isNull,
+      );
+    });
+
+    test('/nueva-contrasena fuera del modo recuperación no se abre', () {
+      expect(
+        resolverRedireccionAutenticacion(
+          sesionIniciada: true,
+          ubicacion: RutasApp.nuevaContrasena,
+        ),
+        RutasApp.inicio,
+      );
+      expect(
+        resolverRedireccionAutenticacion(
+          sesionIniciada: false,
+          ubicacion: RutasApp.nuevaContrasena,
+        ),
+        RutasApp.iniciarSesion,
+      );
     });
   });
 }
