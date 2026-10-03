@@ -1,6 +1,10 @@
 -- =====================================================================
 -- Capsoul · Migración inicial del modelo relacional (Supabase / Postgres)
--- Versión: BORRADOR 1.2 · 2026-10-02 · Autor: Scrum Master (propuesta) + correcciones aprobadas por el PO
+-- Versión: BORRADOR 1.3 · 2026-10-03 · Autor: Scrum Master (propuesta) + correcciones aprobadas por el PO
+--   1.3: permiso por defecto GLOBAL para el rol postgres: las funciones futuras ya no nacen con
+--        EXECUTE para PUBLIC (sección 9); al cambiar el correo en Supabase Auth también se
+--        vinculan las invitaciones pendientes al correo nuevo, con la misma lógica que al
+--        confirmarlo (función común privado.vincular_invitaciones_correo, sección 4.2).
 --   1.2: correo privado (solo el dueño) + vista public.perfiles_visibles; sincronización de
 --        usuarios.correo con auth.users.email; EXECUTE revocado en el esquema privado salvo lo
 --        que usan las políticas; decisión D2 (medios solo 'authenticated', sin url_segura).
@@ -446,22 +450,36 @@ create trigger auth_usuarios_1_crear_perfil
   after insert on auth.users
   for each row execute function privado.crear_perfil_usuario();
 
--- 4.2 Al confirmar el correo, vincula invitaciones hechas a ese correo externo.
---     (Los triggers del mismo evento se ejecutan en orden alfabético: 1_ antes que 2_.)
---     Solo con correo CONFIRMADO, para que nadie reclame herencias ajenas.
+-- 4.2 Vinculación de invitaciones hechas a un correo externo (cápsulas y herencias) con la
+--     cuenta que lo posee. Lógica ÚNICA, usada por dos triggers:
+--       * auth_usuarios_2_vincular_correo: al registrarse/confirmar el correo;
+--       * auth_usuarios_3_sincronizar_correo: al cambiar el correo (4.2b).
+--     Criterio: solo se vincula un correo CONFIRMADO (auth.users.email_confirmed_at not null),
+--     para que nadie reclame herencias ajenas registrando o poniendo un correo que no controla.
+--     Es idempotente (solo toca filas sin usuario) y no desvincula lo ya vinculado.
+--     (Los triggers del mismo evento se ejecutan en orden alfabético: 1_ antes que 2_ y 3_.)
+create or replace function privado.vincular_invitaciones_correo(p_usuario uuid, p_correo text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if p_usuario is null or p_correo is null then
+    return;
+  end if;
+  update public.capsula_destinatarios d
+     set usuario_id = p_usuario
+   where d.usuario_id is null and lower(d.correo_externo) = lower(p_correo)
+     and not exists (select 1 from public.capsula_destinatarios d2
+                     where d2.capsula_id = d.capsula_id and d2.usuario_id = p_usuario);
+  update public.herencias h
+     set beneficiario_usuario_id = p_usuario
+   where h.beneficiario_usuario_id is null and lower(h.beneficiario_correo) = lower(p_correo)
+     and h.propietario_id <> p_usuario;
+end $$;
+
 create or replace function privado.vincular_correo_confirmado()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   if new.email_confirmed_at is not null then
-    update public.capsula_destinatarios d
-       set usuario_id = new.id
-     where d.usuario_id is null and lower(d.correo_externo) = lower(new.email)
-       and not exists (select 1 from public.capsula_destinatarios d2
-                       where d2.capsula_id = d.capsula_id and d2.usuario_id = new.id);
-    update public.herencias h
-       set beneficiario_usuario_id = new.id
-     where h.beneficiario_usuario_id is null and lower(h.beneficiario_correo) = lower(new.email)
-       and h.propietario_id <> new.id;
+    perform privado.vincular_invitaciones_correo(new.id, new.email);
   end if;
   return new;
 end $$;
@@ -470,13 +488,21 @@ create trigger auth_usuarios_2_vincular_correo
   after insert or update of email_confirmed_at on auth.users
   for each row execute function privado.vincular_correo_confirmado();
 
--- 4.2b Si el usuario cambia su correo en Supabase Auth (ya confirmado el cambio),
---      se copia a usuarios.correo para que no quede desactualizado.
+-- 4.2b Si el usuario cambia su correo en Supabase Auth, se copia a usuarios.correo para que no
+--      quede desactualizado y se vinculan las invitaciones pendientes al correo NUEVO (misma
+--      función que 4.2). Criterio de "confirmado", coherente con 4.2: la cuenta debe tener
+--      email_confirmed_at. Con "Secure email change" Supabase solo escribe auth.users.email
+--      cuando el usuario abrió el enlace enviado al correo nuevo (mientras tanto el cambio
+--      espera en email_change), así que el correo nuevo ya está verificado. Si un mismo UPDATE
+--      cambia email y email_confirmed_at, ambos triggers vinculan: no pasa nada (idempotente).
 create or replace function privado.sincronizar_correo_usuario()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   if new.email is not null and new.email is distinct from old.email then
     update public.usuarios set correo = new.email where id = new.id;
+    if new.email_confirmed_at is not null then
+      perform privado.vincular_invitaciones_correo(new.id, new.email);
+    end if;
   end if;
   return new;
 end $$;
@@ -898,9 +924,17 @@ grant execute on function public.capsulas_recibidas(), public.marcar_capsula_abi
 -- ---------------------------------------------------------------------
 -- Nadie del cliente ejecuta funciones de privado salvo lo imprescindible.
 revoke execute on all functions in schema privado from public, anon, authenticated;
--- Nota: en Postgres el EXECUTE a PUBLIC es un permiso por defecto GLOBAL y no se puede quitar
--- por esquema; esta línea cubre anon/authenticated y deja constancia. Cada migración futura
--- que cree funciones en privado debe revocar/otorgar EXECUTE de forma explícita.
+-- Funciones FUTURAS: en Postgres el EXECUTE a PUBLIC es un permiso por defecto GLOBAL; un
+-- "alter default privileges ... in schema privado revoke ... from public" NO lo quita (los
+-- permisos por esquema solo se suman a los globales; comprobado en Postgres 17). Por eso se
+-- revoca de forma global para el rol postgres, que es quien aplica las migraciones en
+-- Supabase: esta línea SÍ cubre el EXECUTE por defecto de PUBLIC para toda función futura
+-- creada por postgres, en privado y en cualquier esquema. En public no rompe nada: Supabase
+-- otorga por defecto EXECUTE en public a anon/authenticated/service_role con su propio
+-- "alter default privileges ... in schema public", y las RPC de este modelo llevan grants
+-- explícitos. En privado nadie del cliente recibe EXECUTE salvo grant explícito.
+alter default privileges for role postgres revoke execute on functions from public;
+-- Por si alguien añade grants por defecto a anon/authenticated en privado.
 alter default privileges in schema privado revoke execute on functions from public, anon, authenticated;
 
 -- Las políticas RLS se evalúan con el rol del usuario (authenticated): las funciones que

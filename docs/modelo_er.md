@@ -3,8 +3,8 @@
 | Campo | Valor |
 |---|---|
 | Documento | 13 · Modelo Entidad-Relación |
-| Fecha | 2026-10-02 |
-| Versión | 1.2 (1.1 ajustada el 2026-10-02 con las decisiones del PO de la sección 0 y las correcciones de seguridad aprobadas por el PO) |
+| Fecha | 2026-10-03 |
+| Versión | 1.3 (1.2 del 2026-10-02 + permisos por defecto globales y vinculación de invitaciones al cambiar el correo, aprobados por el PO el 2026-10-03) |
 | Estado | **Borrador para revisión** del PO y de Flutter Dev. La migración no se ha aplicado en ningún proyecto |
 | Relacionado | ARQ-3 ([DEV-91](https://linear.app/fabrica-de-software-uac/issue/DEV-91)); documentos 05 (Arquitectura) y 12 (Decisión de migración) |
 | Archivos | `20261002000001_capsoul_modelo_inicial.sql`, `20261002000002_capsoul_programar_trabajos.sql`, `pruebas_rls_capsoul.sql` y `13-Modelo-Entidad-Relacion.mmd` en la carpeta de documentos |
@@ -18,10 +18,10 @@ Registro completo en el documento 12, sección "Decisiones del PO".
 | # | Decisión | Efecto en este modelo |
 |---|---|---|
 | D1 | Plan Free de Supabase; el PO acepta el riesgo de pausa (R1) | Ninguno en el esquema. Mientras el proyecto esté pausado, `pg_cron` no libera cápsulas |
-| D2 | Medios privados: entrega `authenticated`, subida firmada desde una Edge Function, `public_id` aleatorio, URLs firmadas solo después de `fecha_apertura` y solo para destinatarios, nunca preset sin firmar | `elementos.cloudinary_tipo_entrega` solo admite `'authenticated'` (CHECK). Se **elimina** la columna `url_segura`: en la base solo queda el `public_id` y sus metadatos. El `public_id` lo fija `firmar-subida` (aleatorio, sin uid ni nombre de archivo). La Edge Function `firmar-medio` firma solo si `privado.puede_ver_elemento()` lo permite. Para un medio de cápsula, esa función exige que la cápsula esté `liberada` y que quien pide sea destinatario (vía `puede_ver_capsula`). **Supuesto 12 (confirmar con el PO):** el propietario del elemento conserva el acceso a su propio medio antes de la apertura (`es_mi_elemento`), y los medios de momentos, herencias y retos siguen sus propias reglas |
+| D2 | Medios privados: entrega `authenticated`, subida firmada desde una Edge Function, `public_id` aleatorio, URLs firmadas solo después de `fecha_apertura` y solo para destinatarios, nunca preset sin firmar | `elementos.cloudinary_tipo_entrega` solo admite `'authenticated'` (CHECK). Se **elimina** la columna `url_segura`: en la base solo queda el `public_id` y sus metadatos. El `public_id` lo fija `firmar-subida` (aleatorio, sin uid ni nombre de archivo). La Edge Function `firmar-medio` firma solo si `privado.puede_ver_elemento()` lo permite. Para un medio de cápsula, esa función exige que la cápsula esté `liberada` y que quien pide sea destinatario (vía `puede_ver_capsula`). **Supuesto 12 (confirmado por el PO el 2026-10-03):** el propietario del elemento conserva el acceso a su propio medio antes de la apertura (`es_mi_elemento`), y los medios de momentos, herencias y retos siguen sus propias reglas. La URL firmada (`private_download_url`) vence a la hora (`expires_at` = 1 h) |
 | D3 | SMTP con Resend (`send.cheiviz.com`) | Ninguno en el esquema. Hace viable el aviso por correo a destinatarios externos (`notificaciones.canal = 'correo'`) |
 | D4 | Firebase baja a Spark y queda solo FCM | Ninguno: `dispositivos_push` ya guarda tokens de FCM |
-| D5 | R3 (confirmación de correo) sigue abierto | El supuesto 10 (vincular invitados externos solo con correo confirmado) depende de esta decisión |
+| D5 | R3 cerrado (2026-10-03): la confirmación de correo es **obligatoria** ("Confirm email" activo en Supabase Auth) | Toda cuenta con sesión tiene `email_confirmed_at`; el supuesto 10 (vincular invitados externos solo con correo confirmado) queda garantizado |
 
 > Verificado otra vez en el Postgres 17 local tras el cambio de D2: la migración `000001` corre sin errores, `pruebas_rls_capsoul.sql` da los mismos resultados de la sección 7, y un INSERT con `cloudinary_tipo_entrega = 'upload'` lo rechaza el CHECK `elementos_cloudinary_tipo_entrega_check`.
 >
@@ -31,6 +31,11 @@ Registro completo en el documento 12, sección "Decisiones del PO".
 > - **Mínimo privilegio en `privado`:** al final de la migración se revoca EXECUTE a `public`, `anon` y `authenticated`, y solo se devuelve a `authenticated` en las funciones que usan las políticas RLS y la vista. Los trabajos del servidor solo los ejecuta `service_role`/`postgres`.
 > - Verificado en un Postgres 17 local desechable: migración sin errores y `pruebas_rls_capsoul.sql` con los resultados de la sección 7 (incluidas las pruebas nuevas de correo privado).
 >
+> **Correcciones 1.3 aprobadas por el PO (2026-10-03):**
+> - **Permisos por defecto globales:** en la sección 9 se añade `alter default privileges for role postgres revoke execute on functions from public;` (sin `in schema`). En Postgres el EXECUTE de PUBLIC sobre funciones es un permiso por defecto **global**: la variante `... in schema privado revoke ... from public` no lo quita (comprobado en Postgres 17: la función nueva seguía ejecutable por `anon`). La forma global sí cubre toda función futura creada por `postgres` (el rol que aplica las migraciones en Supabase). En `public` no rompe nada: Supabase otorga por defecto EXECUTE a `anon`/`authenticated`/`service_role` en ese esquema, y las RPC del modelo llevan grants explícitos.
+> - **Vinculación al cambiar el correo:** la lógica de vincular invitaciones (cápsulas y herencias dirigidas a un correo externo) se extrae a `privado.vincular_invitaciones_correo(uuid, text)`, que usan `auth_usuarios_2_vincular_correo` (al confirmar) y `auth_usuarios_3_sincronizar_correo` (al cambiar el correo, además de copiarlo a `usuarios.correo`). Criterio: solo si la cuenta tiene `email_confirmed_at`; con *Secure email change* Supabase solo escribe `auth.users.email` después de que el usuario confirma el correo nuevo. Es idempotente y no desvincula lo ya vinculado.
+> - Verificado en un Postgres 17 local desechable: migración sin errores y `pruebas_rls_capsoul.sql` con los resultados de la sección 7 (incluidas las pruebas nuevas de 1.3).
+
 > Pendiente: las miniaturas. Un recurso `authenticated` no admite transformaciones al vuelo; las derivadas (miniatura, versión comprimida) se generan como *eager* en la subida firmada, y cada una lleva su propia firma ([Cloudinary: authenticated](https://cloudinary.com/documentation/control_access_to_media#authenticated_media_assets)). `miniatura_public_id` queda como metadato opcional.
 
 ## 1. Principios del modelo
@@ -207,7 +212,7 @@ erDiagram
 | `ultima_actividad_en` | timestamptz | La alimenta la RPC `registrar_actividad()`; se usa en las herencias por inactividad |
 | `creado_en`, `actualizado_en` | timestamptz | `now()`; trigger de actualización |
 
-La fila se crea **automáticamente** con un trigger sobre `auth.users` (`privado.crear_perfil_usuario`), que lee `nombre_visible` de los metadatos del registro. El cliente solo puede actualizar `nombre_visible`, `foto_public_id` y `perfil_publico` (GRANT por columna), lo que equivale al `affectedKeys().hasOnly(['nombreVisible'])` de las reglas actuales. Cada usuario solo lee su propia fila; para ver a amigos y perfiles públicos se usa la vista `public.perfiles_visibles`, que no incluye `correo`. Si el usuario cambia su correo en Supabase Auth, el trigger `auth_usuarios_3_sincronizar_correo` lo copia a `usuarios.correo`.
+La fila se crea **automáticamente** con un trigger sobre `auth.users` (`privado.crear_perfil_usuario`), que lee `nombre_visible` de los metadatos del registro. El cliente solo puede actualizar `nombre_visible`, `foto_public_id` y `perfil_publico` (GRANT por columna), lo que equivale al `affectedKeys().hasOnly(['nombreVisible'])` de las reglas actuales. Cada usuario solo lee su propia fila; para ver a amigos y perfiles públicos se usa la vista `public.perfiles_visibles`, que no incluye `correo`. Si el usuario cambia su correo en Supabase Auth, el trigger `auth_usuarios_3_sincronizar_correo` lo copia a `usuarios.correo` y vincula las invitaciones pendientes dirigidas al correo nuevo (con la misma función que al confirmar el registro).
 
 ### 3.2 `dispositivos_push`
 `id` PK · `usuario_id` FK → usuarios · `token_fcm` UNIQUE · `plataforma` (`android`/`ios`) · `creado_en` · `ultimo_uso_en`. Un usuario puede tener varios dispositivos.
@@ -244,7 +249,7 @@ PK compuesta `(capsula_id, elemento_id)` · `orden`. Índice sobre `elemento_id`
 ### 3.7 `capsula_destinatarios` (1:N desde la cápsula)
 `id` PK · `capsula_id` FK · `usuario_id` FK (nullable) · `correo_externo` (nullable) · `notificado_en` · `abierta_en`.
 - CHECK: debe haber al menos uno de `usuario_id` o `correo_externo`. Índices únicos por `(capsula_id, usuario_id)` y por `(capsula_id, lower(correo_externo))`.
-- "Para mí" es el autor como destinatario. Cuando un invitado externo **confirma** su correo en Supabase Auth, un trigger lo vincula a su `usuario_id`.
+- "Para mí" es el autor como destinatario. Cuando un invitado externo **confirma** su correo en Supabase Auth, o un usuario confirmado **cambia** su correo al de la invitación, un trigger lo vincula a su `usuario_id` (`privado.vincular_invitaciones_correo`).
 
 ### 3.8 `momentos` y `momento_elementos`
 `momentos`: `id` PK · `autor_id` FK · `texto` · `visibilidad` (`privado`, `cercanos`, `amigos`; por defecto `cercanos`). `momento_elementos`: PK `(momento_id, elemento_id)` · `orden`.
@@ -253,7 +258,7 @@ PK compuesta `(capsula_id, elemento_id)` · `orden`. Índice sobre `elemento_id`
 | Columna | Reglas |
 |---|---|
 | `id` PK, `propietario_id` FK, `titulo`, `descripcion` | — |
-| `beneficiario_usuario_id` FK (nullable) / `beneficiario_correo` (nullable) | CHECK: al menos uno. El beneficiario no puede ser el propietario. Si el beneficiario es externo, se vincula cuando confirma su correo |
+| `beneficiario_usuario_id` FK (nullable) / `beneficiario_correo` (nullable) | CHECK: al menos uno. El beneficiario no puede ser el propietario. Si el beneficiario es externo, se vincula cuando confirma su correo o cuando un usuario confirmado cambia su correo a ese |
 | `persona_confianza_id` FK (nullable) | Obligatoria si la condición es `confirmacion_confianza` |
 | `condicion_activacion` | `fecha` (requiere `fecha_activacion`), `inactividad` (requiere `dias_inactividad`, de 30 a 3650) o `confirmacion_confianza` |
 | `estado` | `borrador`, `activa`, `en_verificacion`, `liberada`, `revocada` |
@@ -339,15 +344,16 @@ Además: `REVOKE ALL ... FROM anon` en las 15 tablas (sin sesión no se lee nada
 7. **Los retos son entre amigos**: el creador invita y hay una entrega por participante y día. Los retos públicos quedan fuera.
 8. **Los momentos son visibles para `cercanos` por defecto** (red reservada, RNF-23). No hay comentarios ni reacciones (fuera del alcance actual).
 9. **La herencia por inactividad** usa `ultima_actividad_en`, con 7 días de verificación y un aviso previo al propietario. Los 7 días y el mínimo de 30 días de inactividad son valores propuestos.
-10. **Un invitado externo se vincula por correo solo si lo confirma** en Supabase Auth, para que nadie reclame cápsulas o herencias ajenas.
+10. **Un invitado externo se vincula por correo solo si lo confirma** en Supabase Auth, para que nadie reclame cápsulas o herencias ajenas. Lo mismo al cambiar el correo: solo con la cuenta confirmada (`email_confirmed_at`).
 11. **Borrado de elementos**: no se puede borrar un elemento que ya forma parte de una cápsula o herencia liberada, para proteger al receptor.
-12. **El propietario ve sus propios medios antes de la apertura** (para revisar lo que sube). La regla de D2 (URLs firmadas solo tras `fecha_apertura` y solo a destinatarios) se aplica a los demás usuarios. Si el PO quiere que ni el autor vea el medio una vez sellada la cápsula, `firmar-medio` debe excluir ese caso.
+12. **El propietario ve sus propios medios antes de la apertura** (para revisar lo que sube; **confirmado por el PO el 2026-10-03**). La regla de D2 (URLs firmadas solo tras `fecha_apertura` y solo a destinatarios) se aplica a los demás usuarios. Si el PO quiere que ni el autor vea el medio una vez sellada la cápsula, `firmar-medio` debe excluir ese caso.
 
 ## 7. Verificación hecha
 
 La migración `000001` se ejecutó sin errores en un **Postgres 17 local**, con un esquema `auth` simulado (`auth.users` y `auth.uid()`) y los roles `anon`, `authenticated` y `service_role`. El script `pruebas_rls_capsoul.sql` comprobó lo siguiente:
 - El autor no puede liberar ni poner una fecha pasada; no puede cambiar su `correo` (GRANT) pero sí su `nombre_visible`.
 - Correo privado: un amigo ve el perfil por `perfiles_visibles` pero lee 0 filas de `usuarios` (no ve el correo), y la vista no tiene columna `correo`; un perfil público se ve por la vista y no por la tabla; el dueño lee su fila con correo. Un cambio de `auth.users.email` se copia a `usuarios.correo`. Un usuario no puede ejecutar `privado.liberar_capsulas_vencidas()`. Un elemento con entrega `upload` lo rechaza el CHECK.
+- 1.3: tras cambiar el correo, la invitación a una cápsula y la herencia dirigidas al correo nuevo (aunque difiera en mayúsculas) quedan vinculadas al usuario, y `capsulas_recibidas()` ya le devuelve la cápsula; una cuenta **sin confirmar** que cambia de correo se sincroniza pero no se vincula. Una función nueva creada por `postgres` en `privado` después de la migración no es ejecutable por `anon` ni `authenticated` (`has_function_privilege` = false y la llamada falla con *permission denied*); tampoco `privado.vincular_invitaciones_correo`.
 - Antes de la liberación, el destinatario ve 0 cápsulas y 0 elementos, y `capsulas_recibidas()` le devuelve 1 fila sin título. Después de la liberación ve la cápsula y su elemento. Un tercero no ve nada.
 - `liberar_capsulas_vencidas()` libera 1 cápsula la primera vez y 0 la segunda (idempotente), y encola exactamente un aviso push (usuario) y un aviso por correo (externo).
 - Amistades: el solicitante no puede aceptar su propia solicitud. Los momentos `cercanos` solo se ven cuando el autor marca al otro como cercano.
@@ -362,7 +368,11 @@ La migración `000001` se ejecutó sin errores en un **Postgres 17 local**, con 
 ```sql
 -- =====================================================================
 -- Capsoul · Migración inicial del modelo relacional (Supabase / Postgres)
--- Versión: BORRADOR 1.2 · 2026-10-02 · Autor: Scrum Master (propuesta) + correcciones aprobadas por el PO
+-- Versión: BORRADOR 1.3 · 2026-10-03 · Autor: Scrum Master (propuesta) + correcciones aprobadas por el PO
+--   1.3: permiso por defecto GLOBAL para el rol postgres: las funciones futuras ya no nacen con
+--        EXECUTE para PUBLIC (sección 9); al cambiar el correo en Supabase Auth también se
+--        vinculan las invitaciones pendientes al correo nuevo, con la misma lógica que al
+--        confirmarlo (función común privado.vincular_invitaciones_correo, sección 4.2).
 --   1.2: correo privado (solo el dueño) + vista public.perfiles_visibles; sincronización de
 --        usuarios.correo con auth.users.email; EXECUTE revocado en el esquema privado salvo lo
 --        que usan las políticas; decisión D2 (medios solo 'authenticated', sin url_segura).
@@ -808,22 +818,36 @@ create trigger auth_usuarios_1_crear_perfil
   after insert on auth.users
   for each row execute function privado.crear_perfil_usuario();
 
--- 4.2 Al confirmar el correo, vincula invitaciones hechas a ese correo externo.
---     (Los triggers del mismo evento se ejecutan en orden alfabético: 1_ antes que 2_.)
---     Solo con correo CONFIRMADO, para que nadie reclame herencias ajenas.
+-- 4.2 Vinculación de invitaciones hechas a un correo externo (cápsulas y herencias) con la
+--     cuenta que lo posee. Lógica ÚNICA, usada por dos triggers:
+--       * auth_usuarios_2_vincular_correo: al registrarse/confirmar el correo;
+--       * auth_usuarios_3_sincronizar_correo: al cambiar el correo (4.2b).
+--     Criterio: solo se vincula un correo CONFIRMADO (auth.users.email_confirmed_at not null),
+--     para que nadie reclame herencias ajenas registrando o poniendo un correo que no controla.
+--     Es idempotente (solo toca filas sin usuario) y no desvincula lo ya vinculado.
+--     (Los triggers del mismo evento se ejecutan en orden alfabético: 1_ antes que 2_ y 3_.)
+create or replace function privado.vincular_invitaciones_correo(p_usuario uuid, p_correo text)
+returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if p_usuario is null or p_correo is null then
+    return;
+  end if;
+  update public.capsula_destinatarios d
+     set usuario_id = p_usuario
+   where d.usuario_id is null and lower(d.correo_externo) = lower(p_correo)
+     and not exists (select 1 from public.capsula_destinatarios d2
+                     where d2.capsula_id = d.capsula_id and d2.usuario_id = p_usuario);
+  update public.herencias h
+     set beneficiario_usuario_id = p_usuario
+   where h.beneficiario_usuario_id is null and lower(h.beneficiario_correo) = lower(p_correo)
+     and h.propietario_id <> p_usuario;
+end $$;
+
 create or replace function privado.vincular_correo_confirmado()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   if new.email_confirmed_at is not null then
-    update public.capsula_destinatarios d
-       set usuario_id = new.id
-     where d.usuario_id is null and lower(d.correo_externo) = lower(new.email)
-       and not exists (select 1 from public.capsula_destinatarios d2
-                       where d2.capsula_id = d.capsula_id and d2.usuario_id = new.id);
-    update public.herencias h
-       set beneficiario_usuario_id = new.id
-     where h.beneficiario_usuario_id is null and lower(h.beneficiario_correo) = lower(new.email)
-       and h.propietario_id <> new.id;
+    perform privado.vincular_invitaciones_correo(new.id, new.email);
   end if;
   return new;
 end $$;
@@ -832,13 +856,21 @@ create trigger auth_usuarios_2_vincular_correo
   after insert or update of email_confirmed_at on auth.users
   for each row execute function privado.vincular_correo_confirmado();
 
--- 4.2b Si el usuario cambia su correo en Supabase Auth (ya confirmado el cambio),
---      se copia a usuarios.correo para que no quede desactualizado.
+-- 4.2b Si el usuario cambia su correo en Supabase Auth, se copia a usuarios.correo para que no
+--      quede desactualizado y se vinculan las invitaciones pendientes al correo NUEVO (misma
+--      función que 4.2). Criterio de "confirmado", coherente con 4.2: la cuenta debe tener
+--      email_confirmed_at. Con "Secure email change" Supabase solo escribe auth.users.email
+--      cuando el usuario abrió el enlace enviado al correo nuevo (mientras tanto el cambio
+--      espera en email_change), así que el correo nuevo ya está verificado. Si un mismo UPDATE
+--      cambia email y email_confirmed_at, ambos triggers vinculan: no pasa nada (idempotente).
 create or replace function privado.sincronizar_correo_usuario()
 returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   if new.email is not null and new.email is distinct from old.email then
     update public.usuarios set correo = new.email where id = new.id;
+    if new.email_confirmed_at is not null then
+      perform privado.vincular_invitaciones_correo(new.id, new.email);
+    end if;
   end if;
   return new;
 end $$;
@@ -1260,9 +1292,17 @@ grant execute on function public.capsulas_recibidas(), public.marcar_capsula_abi
 -- ---------------------------------------------------------------------
 -- Nadie del cliente ejecuta funciones de privado salvo lo imprescindible.
 revoke execute on all functions in schema privado from public, anon, authenticated;
--- Nota: en Postgres el EXECUTE a PUBLIC es un permiso por defecto GLOBAL y no se puede quitar
--- por esquema; esta línea cubre anon/authenticated y deja constancia. Cada migración futura
--- que cree funciones en privado debe revocar/otorgar EXECUTE de forma explícita.
+-- Funciones FUTURAS: en Postgres el EXECUTE a PUBLIC es un permiso por defecto GLOBAL; un
+-- "alter default privileges ... in schema privado revoke ... from public" NO lo quita (los
+-- permisos por esquema solo se suman a los globales; comprobado en Postgres 17). Por eso se
+-- revoca de forma global para el rol postgres, que es quien aplica las migraciones en
+-- Supabase: esta línea SÍ cubre el EXECUTE por defecto de PUBLIC para toda función futura
+-- creada por postgres, en privado y en cualquier esquema. En public no rompe nada: Supabase
+-- otorga por defecto EXECUTE en public a anon/authenticated/service_role con su propio
+-- "alter default privileges ... in schema public", y las RPC de este modelo llevan grants
+-- explícitos. En privado nadie del cliente recibe EXECUTE salvo grant explícito.
+alter default privileges for role postgres revoke execute on functions from public;
+-- Por si alguien añade grants por defecto a anon/authenticated en privado.
 alter default privileges in schema privado revoke execute on functions from public, anon, authenticated;
 
 -- Las políticas RLS se evalúan con el rol del usuario (authenticated): las funciones que

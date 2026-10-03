@@ -111,10 +111,41 @@ set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-000
 \echo '--- A ve el perfil público de C por la vista (1) pero no su fila en usuarios (0)'
 select count(*) from public.perfiles_visibles where id='00000000-0000-0000-0000-00000000000c';
 select count(*) from public.usuarios where id='00000000-0000-0000-0000-00000000000c';
+-- Invitaciones pendientes al correo al que A se cambiará (1.3)
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
+insert into public.capsulas (id, autor_id, titulo, mensaje, fecha_apertura, estado) values ('20000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-00000000000b','Para Ana nueva','hola', now()+interval '1 day','programada');
+insert into public.capsula_destinatarios (capsula_id, correo_externo) values ('20000000-0000-0000-0000-000000000002','Ana@Nuevo.co');
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
+insert into public.herencias (id, propietario_id, titulo, beneficiario_correo, persona_confianza_id, condicion_activacion, estado) values
+ ('40000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-00000000000c','Libros','ana@nuevo.co','00000000-0000-0000-0000-00000000000b','confirmacion_confianza','activa');
 reset role;
 \echo '--- Cambio de correo en auth.users se copia a usuarios.correo -> ana@nuevo.co'
 update auth.users set email='ana@nuevo.co' where id='00000000-0000-0000-0000-00000000000a';
 select correo from public.usuarios where id='00000000-0000-0000-0000-00000000000a';
+\echo '--- 1.3: tras el cambio de correo se vinculan las invitaciones al correo nuevo -> a, a'
+select usuario_id from public.capsula_destinatarios where capsula_id='20000000-0000-0000-0000-000000000002';
+select beneficiario_usuario_id from public.herencias where id='40000000-0000-0000-0000-000000000002';
+set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+\echo '--- 1.3: A ya la ve como recibida (1 fila, sin contenido hasta la apertura)'
+select count(*) recibidas_para_ana_nueva from public.capsulas_recibidas() where capsula_id='20000000-0000-0000-0000-000000000002';
+reset role;
+\echo '--- 1.3: cuenta SIN confirmar que cambia de correo: se sincroniza pero NO vincula -> e2@x.co, null'
+insert into auth.users (id, email) values ('00000000-0000-0000-0000-00000000000e','e@x.co');
+insert into public.capsula_destinatarios (capsula_id, correo_externo) values ('20000000-0000-0000-0000-000000000002','e2@x.co');
+update auth.users set email='e2@x.co' where id='00000000-0000-0000-0000-00000000000e';
+select correo from public.usuarios where id='00000000-0000-0000-0000-00000000000e';
+select usuario_id from public.capsula_destinatarios where correo_externo='e2@x.co';
+\echo '--- 1.3: función NUEVA creada por postgres en privado: sin EXECUTE para anon/authenticated -> f, f'
+create function privado.prueba_funcion_nueva() returns integer language sql as 'select 1';
+select has_function_privilege('anon', 'privado.prueba_funcion_nueva()', 'execute') anon_ejecuta,
+       has_function_privilege('authenticated', 'privado.prueba_funcion_nueva()', 'execute') authenticated_ejecuta;
+set role authenticated;
+\echo '--- 1.3: authenticated la llama (debe fallar: permission denied)'
+select privado.prueba_funcion_nueva();
+reset role;
+drop function privado.prueba_funcion_nueva();
+\echo '--- 1.3: la función común de vinculación tampoco es ejecutable por el cliente -> f'
+select has_function_privilege('authenticated', 'privado.vincular_invitaciones_correo(uuid, text)', 'execute') authenticated_vincula;
 \echo '--- D2: un elemento con entrega upload lo rechaza el CHECK (debe fallar)'
 insert into public.elementos (propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, cloudinary_tipo_entrega)
 values ('00000000-0000-0000-0000-00000000000a','foto','k3j9x2m1','image','upload');
