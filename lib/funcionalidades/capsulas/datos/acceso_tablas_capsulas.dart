@@ -4,11 +4,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// `capsula_elementos` (existe para simular la base en pruebas sin imitar
 /// los builders encadenados de `supabase_flutter`).
 abstract interface class AccesoTablasCapsulas {
-  /// Inserta una fila en `elementos` y devuelve su id.
-  Future<String> insertarElemento(Map<String, dynamic> fila);
+  /// Inserta una fila en `elementos` (la fila ya trae su `id`).
+  Future<void> insertarElemento(Map<String, dynamic> fila);
 
-  /// Inserta una fila en `capsulas` y devuelve su id.
-  Future<String> insertarCapsula(Map<String, dynamic> fila);
+  /// Inserta una fila en `capsulas` (la fila ya trae su `id`).
+  Future<void> insertarCapsula(Map<String, dynamic> fila);
 
   Future<void> insertarEnlaces(List<Map<String, dynamic>> filas);
 
@@ -41,18 +41,16 @@ class AccesoTablasCapsulasSupabase implements AccesoTablasCapsulas {
 
   SupabaseClient get _cliente => _clienteInyectado ?? Supabase.instance.client;
 
+  // Sin `.select()`: el id lo genera el cliente y así el INSERT no depende
+  // de la política SELECT (RETURNING), que era la causa del 42501.
   @override
-  Future<String> insertarElemento(Map<String, dynamic> fila) async {
-    final insertada =
-        await _cliente.from('elementos').insert(fila).select('id').single();
-    return insertada['id'] as String;
+  Future<void> insertarElemento(Map<String, dynamic> fila) async {
+    await _cliente.from('elementos').insert(fila);
   }
 
   @override
-  Future<String> insertarCapsula(Map<String, dynamic> fila) async {
-    final insertada =
-        await _cliente.from('capsulas').insert(fila).select('id').single();
-    return insertada['id'] as String;
+  Future<void> insertarCapsula(Map<String, dynamic> fila) async {
+    await _cliente.from('capsulas').insert(fila);
   }
 
   @override

@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
+import '../../../nucleo/identificadores/generador_ids.dart';
+import '../../../nucleo/supabase/errores_postgrest.dart';
 import '../../elementos/dominio/elemento_borrador.dart';
 import '../../elementos/dominio/fallo_medios.dart';
 import '../../elementos/dominio/repositorio_medios.dart';
@@ -30,7 +32,9 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     required this._medios,
     required this._uidActual,
     DateTime Function()? reloj,
-  }) : _reloj = reloj ?? DateTime.now;
+    GeneradorIds? generarId,
+  })  : _reloj = reloj ?? DateTime.now,
+        _generarId = generarId ?? generarIdAleatorio;
 
   /// SQLSTATE propios de la migración 000003.
   static const String codigoCuotaExcedida = 'CAP01';
@@ -40,6 +44,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   final RepositorioMedios _medios;
   final String? Function() _uidActual;
   final DateTime Function() _reloj;
+  final GeneradorIds _generarId;
 
   @override
   Future<String> crearCapsula(
@@ -58,18 +63,22 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       alProgreso?.call(0, total);
       for (final elemento in nueva.elementos) {
         final fila = await _filaElemento(uid, elemento);
-        idsElementos.add(await _acceso.insertarElemento(fila));
+        await _acceso.insertarElemento(fila);
+        idsElementos.add(fila['id'] as String);
         alProgreso?.call(idsElementos.length, total);
       }
       final mensaje = nueva.mensaje?.trim();
-      idCapsula = await _acceso.insertarCapsula({
+      final nuevoId = _generarId();
+      await _acceso.insertarCapsula({
+        'id': nuevoId,
         'autor_id': uid,
         'titulo': nueva.titulo.trim(),
         'mensaje': (mensaje == null || mensaje.isEmpty) ? null : mensaje,
         'fecha_apertura': nueva.fechaApertura.toUtc().toIso8601String(),
         'estado': EstadoCapsula.borrador.valorBd,
       });
-      final capsulaId = idCapsula;
+      idCapsula = nuevoId;
+      final capsulaId = nuevoId;
       await _acceso.insertarEnlaces([
         for (var i = 0; i < idsElementos.length; i++)
           {'capsula_id': capsulaId, 'elemento_id': idsElementos[i], 'orden': i},
@@ -91,6 +100,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   ) async {
     if (elemento.tipo == TipoElemento.texto) {
       return {
+        'id': _generarId(),
         'propietario_id': uid,
         'tipo': TipoElemento.texto.valorBd,
         'contenido_texto': elemento.texto,
@@ -101,6 +111,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     final duracion = medio.duracionSegundos ??
         (duracionLocal == null ? null : duracionLocal.inMilliseconds / 1000);
     return {
+      'id': _generarId(),
       'propietario_id': uid,
       'tipo': elemento.tipo.valorBd,
       'cloudinary_public_id': medio.publicId,
@@ -214,6 +225,14 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   static DateTime? _fecha(Object? valor) =>
       valor is String ? DateTime.tryParse(valor) : null;
 
+  /// Mensaje de permiso según la tabla que rechazó la operación.
+  @visibleForTesting
+  static FalloCapsula falloPermisoPorTabla(String? tabla) => switch (tabla) {
+        'elementos' => const FalloCapsula.permisoRecuerdo(),
+        'capsula_elementos' => const FalloCapsula.permisoEnlace(),
+        _ => const FalloCapsula.permisoDenegado(),
+      };
+
   /// Traduce errores de PostgREST, red y medios a fallos de dominio.
   @visibleForTesting
   static FalloApp traducirError(Object error) {
@@ -224,8 +243,12 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
           return const FalloMedios.cuotaExcedida();
         case codigoMaximoElementos:
           return const FalloCapsula.demasiadosElementos();
-        case '42501' || 'PGRST301' || 'PGRST302' || 'PGRST303':
-          return const FalloCapsula.permisoDenegado();
+        case ErroresPostgrest.permisoDenegado:
+          return falloPermisoPorTabla(
+            ErroresPostgrest.tablaDeViolacionRls(error.message),
+          );
+        case final codigo? when ErroresPostgrest.sesionInvalida.contains(codigo):
+          return const FalloCapsula.sesionVencida();
         case 'P0001' when error.message.contains('fecha de apertura'):
           return const FalloCapsula.fechaInvalida();
         case '23514':

@@ -22,7 +22,19 @@ class FalloCapsula implements FalloApp {
 
   const FalloCapsula.permisoDenegado()
       : this(codigoPermisoDenegado,
-            'No tienes permiso para ver o editar esta cápsula.');
+            'No tienes permiso para crear o editar esta cápsula.');
+
+  const FalloCapsula.permisoRecuerdo()
+      : this(codigoPermisoRecuerdo,
+            'No tienes permiso para guardar o cambiar este recuerdo.');
+
+  const FalloCapsula.permisoEnlace()
+      : this(codigoPermisoEnlace,
+            'No puedes agregar ese recuerdo a esta cápsula.');
+
+  const FalloCapsula.sesionVencida()
+      : this(codigoSesionVencida,
+            'Tu sesión expiró. Vuelve a iniciar sesión.');
 
   const FalloCapsula.sinSesion()
       : this(codigoSinSesion, 'Inicia sesión para guardar tu cápsula.');
@@ -39,6 +51,9 @@ class FalloCapsula implements FalloApp {
   static const String codigoSinElementos = 'sin_elementos';
   static const String codigoDemasiadosElementos = 'demasiados_elementos';
   static const String codigoPermisoDenegado = 'permiso_denegado';
+  static const String codigoPermisoRecuerdo = 'permiso_recuerdo';
+  static const String codigoPermisoEnlace = 'permiso_enlace';
+  static const String codigoSesionVencida = 'sesion_vencida';
   static const String codigoSinSesion = 'sin_sesion';
   static const String codigoSinRed = 'sin_red';
   static const String codigoDesconocido = 'desconocido';

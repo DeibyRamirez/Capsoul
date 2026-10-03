@@ -45,6 +45,7 @@ dependencies:
   path_provider: ^2.1.6
   flutter_localizations:
     sdk: flutter
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:

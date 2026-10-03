@@ -23,17 +23,15 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   Map<String, dynamic>? filaLeida;
 
   @override
-  Future<String> insertarElemento(Map<String, dynamic> fila) async {
+  Future<void> insertarElemento(Map<String, dynamic> fila) async {
     operaciones.add('elemento');
     elementos.add(fila);
-    return 'e${elementos.length}';
   }
 
   @override
-  Future<String> insertarCapsula(Map<String, dynamic> fila) async {
+  Future<void> insertarCapsula(Map<String, dynamic> fila) async {
     operaciones.add('capsula:${fila['estado']}');
     capsulas.add(fila);
-    return 'c1';
   }
 
   @override
@@ -95,6 +93,7 @@ void main() {
       );
 
   setUp(() {
+    var siguienteId = 0;
     acceso = _AccesoFalso();
     medios = RepositorioMediosFalso();
     repositorio = RepositorioCapsulasSupabase(
@@ -102,6 +101,7 @@ void main() {
       medios: medios,
       uidActual: () => 'uid-123',
       reloj: () => ahora,
+      generarId: () => 'id-${++siguienteId}',
     );
   });
 
@@ -112,7 +112,8 @@ void main() {
       alProgreso: (guardados, _) => progreso.add(guardados),
     );
 
-    expect(id, 'c1');
+    // Los ids los genera el cliente: nota id-1, foto id-2, cápsula id-3.
+    expect(id, 'id-3');
     expect(acceso.operaciones, [
       'elemento',
       'elemento',
@@ -122,6 +123,7 @@ void main() {
     ]);
     expect(progreso, [0, 1, 2]);
     expect(acceso.elementos[0], {
+      'id': 'id-1',
       'propietario_id': 'uid-123',
       'tipo': 'texto',
       'contenido_texto': 'Te quiero',
@@ -129,12 +131,14 @@ void main() {
     expect(acceso.elementos[1]['cloudinary_public_id'], 'capsoul/aleatorio-1');
     expect(acceso.elementos[1]['cloudinary_tipo_recurso'], 'image');
     expect(acceso.elementos[1]['bytes'], 1000);
+    expect(acceso.elementos[1]['id'], 'id-2');
+    expect(acceso.capsulas.single['id'], 'id-3');
     expect(acceso.capsulas.single['titulo'], 'Para Jacobo');
     expect(acceso.capsulas.single['mensaje'], isNull);
     expect(acceso.capsulas.single['fecha_apertura'], '2046-08-13T13:00:00.000Z');
     expect(acceso.enlaces, [
-      {'capsula_id': 'c1', 'elemento_id': 'e1', 'orden': 0},
-      {'capsula_id': 'c1', 'elemento_id': 'e2', 'orden': 1},
+      {'capsula_id': 'id-3', 'elemento_id': 'id-1', 'orden': 0},
+      {'capsula_id': 'id-3', 'elemento_id': 'id-2', 'orden': 1},
     ]);
     expect(medios.subidos, [foto]);
   });
@@ -176,7 +180,7 @@ void main() {
       )),
     );
     expect(acceso.capsulas, isEmpty);
-    expect(acceso.elementosBorrados, ['e1']);
+    expect(acceso.elementosBorrados, ['id-1']);
   });
 
   test('si falla un paso posterior, borra la cápsula y los elementos', () async {
@@ -193,8 +197,8 @@ void main() {
         FalloCapsula.codigoDemasiadosElementos,
       )),
     );
-    expect(acceso.capsulasBorradas, ['c1']);
-    expect(acceso.elementosBorrados, ['e1']);
+    expect(acceso.capsulasBorradas, ['id-2']);
+    expect(acceso.elementosBorrados, ['id-1']);
   });
 
   group('traducirError', () {
@@ -210,6 +214,33 @@ void main() {
           PostgrestException(message: 'x', code: '42501'),
         ).codigo,
         FalloCapsula.codigoPermisoDenegado,
+      );
+      // El mensaje dice qué tabla rechazó la fila (antes siempre "cápsula").
+      expect(
+        RepositorioCapsulasSupabase.traducirError(
+          PostgrestException(
+            message: 'new row violates row-level security policy for table '
+                '"elementos"',
+            code: '42501',
+          ),
+        ).mensaje,
+        'No tienes permiso para guardar o cambiar este recuerdo.',
+      );
+      expect(
+        RepositorioCapsulasSupabase.traducirError(
+          PostgrestException(
+            message: 'new row violates row-level security policy for table '
+                '"capsula_elementos"',
+            code: '42501',
+          ),
+        ).codigo,
+        FalloCapsula.codigoPermisoEnlace,
+      );
+      expect(
+        RepositorioCapsulasSupabase.traducirError(
+          PostgrestException(message: 'JWT expired', code: 'PGRST301'),
+        ).codigo,
+        FalloCapsula.codigoSesionVencida,
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
