@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Capsoul · Migración inicial del modelo relacional (Supabase / Postgres)
--- Versión: BORRADOR 1.3 · 2026-10-03 · Autor: Scrum Master (propuesta) + correcciones aprobadas por el PO
+-- Versión: 1.3 · 2026-10-03 · Autor: Scrum Master (propuesta) + correcciones aprobadas por el PO
 --   1.3: permiso por defecto GLOBAL para el rol postgres: las funciones futuras ya no nacen con
 --        EXECUTE para PUBLIC (sección 9); al cambiar el correo en Supabase Auth también se
 --        vinculan las invitaciones pendientes al correo nuevo, con la misma lógica que al
@@ -8,7 +8,8 @@
 --   1.2: correo privado (solo el dueño) + vista public.perfiles_visibles; sincronización de
 --        usuarios.correo con auth.users.email; EXECUTE revocado en el esquema privado salvo lo
 --        que usan las políticas; decisión D2 (medios solo 'authenticated', sin url_segura).
--- Estado: pendiente de revisión por el PO y Flutter Dev. NO aplicada.
+-- Estado: APLICADA (versión 1.3) el 2026-10-03 en el proyecto Supabase capsoul mediante la Management API;
+--   registrada en supabase_migrations.schema_migrations.
 -- Destino sugerido en el repo: supabase/migrations/20261002000001_capsoul_modelo_inicial.sql
 --
 -- Principios:
