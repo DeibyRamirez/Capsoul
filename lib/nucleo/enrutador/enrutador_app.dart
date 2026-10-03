@@ -9,7 +9,15 @@ import '../../funcionalidades/autenticacion/presentacion/pantalla_nueva_contrase
 import '../../funcionalidades/autenticacion/presentacion/pantalla_recuperar_contrasena.dart';
 import '../../funcionalidades/autenticacion/presentacion/pantalla_registro.dart';
 import '../../funcionalidades/autenticacion/presentacion/pantalla_revisa_tu_correo.dart';
+import '../../funcionalidades/capsulas/presentacion/pantalla_crear_capsula.dart';
+import '../../funcionalidades/capsulas/presentacion/pantalla_detalle_capsula.dart';
+import '../../funcionalidades/capsulas/presentacion/pantalla_mis_capsulas.dart';
 import '../../funcionalidades/crear/presentacion/pantalla_selector_crear.dart';
+import '../../funcionalidades/elementos/dominio/elemento_borrador.dart';
+import '../../funcionalidades/elementos/presentacion/pantalla_capturar_foto.dart';
+import '../../funcionalidades/elementos/presentacion/pantalla_capturar_video.dart';
+import '../../funcionalidades/elementos/presentacion/pantalla_escribir_nota.dart';
+import '../../funcionalidades/elementos/presentacion/pantalla_grabar_audio.dart';
 import '../../funcionalidades/inicio/presentacion/pantalla_inicio.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_legado.dart';
 import '../../funcionalidades/momentos/presentacion/pantalla_momentos.dart';
@@ -152,28 +160,49 @@ GoRouter crearEnrutadorApp({
         builder: (context, state) => const PantallaSelectorCrear(),
         routes: [
           GoRoute(
+            path: 'capsula',
+            name: 'crear-capsula',
+            builder: (context, state) {
+              final extra = state.extra;
+              return PantallaCrearCapsula(
+                elementoInicial: extra is ElementoBorrador ? extra : null,
+              );
+            },
+          ),
+          GoRoute(
             path: 'video',
             name: 'crear-video',
-            builder: (context, state) =>
-                const PantallaMarcadorCrear(modalidad: 'Video'),
+            builder: (context, state) => const PantallaCapturarVideo(),
           ),
           GoRoute(
             path: 'audio',
             name: 'crear-audio',
-            builder: (context, state) =>
-                const PantallaMarcadorCrear(modalidad: 'Audio'),
+            builder: (context, state) => const PantallaGrabarAudio(),
           ),
           GoRoute(
             path: 'escribir',
             name: 'crear-escribir',
-            builder: (context, state) =>
-                const PantallaMarcadorCrear(modalidad: 'Escribir'),
+            builder: (context, state) => const PantallaEscribirNota(),
           ),
           GoRoute(
             path: 'foto',
             name: 'crear-foto',
-            builder: (context, state) =>
-                const PantallaMarcadorCrear(modalidad: 'Foto'),
+            builder: (context, state) => const PantallaCapturarFoto(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: RutasApp.capsulas,
+        name: 'capsulas',
+        parentNavigatorKey: claveNavegadorRaiz,
+        builder: (context, state) => const PantallaMisCapsulas(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            name: 'detalle-capsula',
+            builder: (context, state) => PantallaDetalleCapsula(
+              idCapsula: state.pathParameters['id'] ?? '',
+            ),
           ),
         ],
       ),

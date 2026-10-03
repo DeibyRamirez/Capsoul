@@ -10,6 +10,8 @@ abstract final class RutasApp {
   static const String crearAudio = '/crear/audio';
   static const String crearEscribir = '/crear/escribir';
   static const String crearFoto = '/crear/foto';
+  static const String crearCapsula = '/crear/capsula';
+  static const String capsulas = '/capsulas';
 
   static const String iniciarSesion = '/iniciar-sesion';
   static const String registro = '/registro';
@@ -26,6 +28,10 @@ abstract final class RutasApp {
     recuperar,
     revisaTuCorreo,
   };
+
+  /// Ubicación del detalle de la cápsula [id].
+  static String detalleCapsulaDe(String id) =>
+      '$capsulas/${Uri.encodeComponent(id)}';
 
   /// Ubicación de "Revisa tu correo" para [correo]. Con [reenviar] la
   /// pantalla reenvía el correo de confirmación al abrirse.
