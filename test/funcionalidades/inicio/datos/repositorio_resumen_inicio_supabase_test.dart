@@ -9,7 +9,7 @@ void main() {
       contador: (tabla, {required iguales, distintos = const {}}) async {
         consultas[tabla] = (iguales, distintos);
         return switch (tabla) {
-          'momentos' => 128,
+          'elementos' => 128,
           'reto_participantes' => throw Exception('sin tabla'),
           'capsulas' => 5,
           'herencias' => 2,
@@ -24,6 +24,7 @@ void main() {
       resumen,
       const ResumenInicio(recuerdos: 128, retosActivos: 0, capsulas: 5, herencias: 2),
     );
+    expect(consultas['elementos']?.$1, {'propietario_id': 'uid-1'});
     expect(consultas['capsulas']?.$1, {'autor_id': 'uid-1'});
     expect(consultas['capsulas']?.$2, {'estado': 'cancelada'});
     expect(consultas['reto_participantes']?.$1, {

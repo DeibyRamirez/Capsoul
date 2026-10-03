@@ -23,7 +23,8 @@ class RepositorioResumenInicioSupabase implements RepositorioResumenInicio {
   @override
   Future<ResumenInicio> leerResumen(String uid) async {
     final conteos = await Future.wait([
-      _seguro('momentos', iguales: {'autor_id': uid}),
+      // Recuerdos = banco de recuerdos (filas propias de `elementos`).
+      _seguro('elementos', iguales: {'propietario_id': uid}),
       _seguro(
         'reto_participantes',
         iguales: {'usuario_id': uid, 'estado': 'aceptado'},
