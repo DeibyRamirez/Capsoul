@@ -110,7 +110,9 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 - Medios (D2): `elementos.cloudinary_tipo_entrega` solo `'authenticated'`, sin `url_segura`, `public_id` aleatorio de
   la Edge Function `firmar-subida`; miniaturas *eager*; URLs firmadas por `firmar-medio` (`private_download_url` con
   `expires_at` a 1 h); el autor ve sus propios medios antes de `fecha_apertura`.
-- **Dependencia:** el código de Auth/perfil funciona solo cuando la migración oficial esté aplicada en Supabase.
+- Migración `20261002000001` v1.3 **aplicada** el 2026-10-03 en el proyecto `capsoul` (Management API, registrada en
+  `supabase_migrations.schema_migrations`). Auth configurado: *Site URL* `capsoul://auth/confirmar`, redirecciones
+  `capsoul://auth/confirmar` y `capsoul://auth/recuperar`, confirmación de correo obligatoria, SMTP Resend.
 - `firestore.rules` y `firebase.json` siguen en el repo pero ya no se usan (borrado propuesto al PO).
 - UI en español.
 
@@ -119,8 +121,8 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 | Sprint | Objetivo | Estado |
 |---|---|---|
 | S1 | Cimientos: estructura, tema, navegación, init Firebase, org, skills | ✅ Terminado (en `develop`, validación de Capsoul en ClickUp y Linear) |
-| S2 | Identidad y autenticación (registro, inicio de sesión, recuperar, sesión, perfil, reglas) | ✅ En `develop` (tip `73fb3e7`) sobre Firebase. 🟡 Migrado a Supabase Auth (2026-10-02, en `develop`) y R3 confirmación de correo obligatoria + deep links (2026-10-03, commit local; 93 tests); falta aplicar la migración, configurar Auth y probar en dispositivo |
-| MIG | Migración a Supabase + Cloudinary (Firebase solo FCM) | 🟡 Skills, modelo ER/SQL oficiales y Auth listos en archivos; pendiente aprobación del PO para entornos |
+| S2 | Identidad y autenticación (registro, inicio de sesión, recuperar, sesión, perfil, reglas) | ✅ **Cerrado** (2026-10-03) en `develop`: Supabase Auth + R3 confirmación de correo obligatoria + deep links; migración 000001 aplicada, Auth configurado y el PO probó registro e inicio de sesión con correo OK |
+| MIG | Migración a Supabase + Cloudinary (Firebase solo FCM) | 🟡 Modelo 1.3 aplicado y Auth en Supabase; pendiente 000002 (pg_cron), Edge Functions y Cloudinary firmado |
 | S4 | Ruta crítica de cápsulas + Security Rules | ⏳ |
 | S8 | Endurecer reglas + FCM | ⏳ |
 
@@ -128,23 +130,16 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 
 Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 
-- [ ] **Push** a `origin/develop` de los 3 commits locales del 2026-10-03 (solo con autorización del PO).
-- [ ] PO: revisar y commitear (o pedir cambios) `android/app/src/main/AndroidManifest.xml` e `ios/Runner/Info.plist`
-      (deep link `capsoul://auth`, `flutter_deeplinking_enabled`/`FlutterDeepLinkingEnabled` = false); quedan sin commit.
-- [ ] PO: aplicar `supabase/migrations/20261002000001_capsoul_modelo_inicial.sql` **v1.3** y luego
-      `…000002_capsoul_programar_trabajos.sql` (requiere extensiones `pg_cron` y `pg_net`, y en Vault `project_url` y
-      `llave_cron`).
-- [ ] PO: Supabase Auth → *Confirm email* **ON**; *Site URL* `capsoul://auth/confirmar`; *Redirect URLs*
-      `capsoul://auth/confirmar` y `capsoul://auth/recuperar`; *Secure email change* ON. (Proveedor Email activo y SMTP
-      Resend ya hechos; publishable key ya en `env/dev.json`.)
+- [ ] PO: aplicar `…000002_capsoul_programar_trabajos.sql` (requiere extensiones `pg_cron` y `pg_net`, y en Vault
+      `project_url` y `llave_cron`).
 - [ ] Director: actualizar RF-05 en Drive si hace falta (no existe en el repo; la copia 02 v1.2 ya pide confirmación
       obligatoria y la pantalla "Revisa tu correo").
 - [ ] Llamar `registrar_actividad()` (RPC) al abrir la app, para herencias por inactividad.
 - [ ] Cloudinary: preset/subida firmada por Edge Function (sin API secret en el cliente).
 - [ ] Borrar `firestore.rules` y `firebase.json` y desactivar Firebase Auth/Firestore/Storage en la consola (decisión del PO).
 - [ ] Edge Functions `firmar-subida`, `firmar-medio` y `enviar-avisos`.
-- [ ] PO: probar el flujo real en emulador/dispositivo (registro → Revisa tu correo → enlace → contenedor; login sin
-      confirmar → reenviar; recuperar → enlace → nueva contraseña; editar nombre, cerrar sesión, sesión persistente).
+- [ ] PO: probar en dispositivo lo que falta del flujo (login sin confirmar → reenviar; recuperar → enlace → nueva
+      contraseña; editar nombre, cerrar sesión, sesión persistente). Registro e inicio de sesión con correo: OK.
 - [ ] Vigilar el límite de Resend (plan gratuito, 100 correos/día) y el rate limit de correos de Supabase Auth.
 - [ ] iOS: falta `ios/Runner/GoogleService-Info.plist` (necesario para FCM).
 - [ ] Actualizar remoto local: `git remote set-url origin https://github.com/DeibyRamirez/Capsoul.git`.
@@ -240,3 +235,8 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - **2026-10-03** Entorno ya hecho por el PO: Resend configurado como SMTP de Supabase (plan gratuito, 100 correos/día).
   Con su autorización se crearon 3 commits **locales** (auth, modelo, memoria), **sin push**; nada ejecutado en
   Supabase, Cloudinary ni Firebase.
+- **2026-10-03** Cierre de S2. Entorno hecho por el PO: migración 000001 v1.3 aplicada (Management API, registrada en
+  `supabase_migrations.schema_migrations`); Auth con *Site URL* `capsoul://auth/confirmar`, redirecciones confirmar/recuperar,
+  confirmación obligatoria y SMTP Resend. El PO probó registro e inicio de sesión con correo: OK. Commits
+  `configuración(plataforma)` (deep links), `documentación(migraciones)` y `documentación(memoria)`; push a `origin/develop`
+  autorizado por el PO.
