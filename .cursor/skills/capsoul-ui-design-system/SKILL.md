@@ -15,10 +15,19 @@ description: >-
 - Barra inferior (5 zonas): Inicio | Momentos | + | Mi legado | Yo
 - No usar un feed estilo Instagram como inicio
 
+## Documentación completa
+Leer **`docs/Design.md`** antes de crear o revisar pantallas: fondos (nocturno / suave / plano), partículas, tipografía serif en hero y anti-patrones.
+
 ## Tema
 1. Colores en `lib/nucleo/tema/colores_app.dart` (`ColoresApp`) y `ThemeData` en `tema_app.dart` (`TemaApp`).
-2. Nunca hexadecimales en los widgets de funcionalidades: `ColoresApp` o `Theme.of(context)`.
-3. Preferir `NavigationBar` / `FilledButton` / `Card` de Material 3 con los colores de marca.
+2. Degradados en `lib/nucleo/tema/degradados_capsoul.dart` (`DegradadosCapsoul`).
+3. Nunca hexadecimales en los widgets de funcionalidades: `ColoresApp` o `Theme.of(context)`.
+4. Preferir `NavigationBar` / `FilledButton` / `Card` de Material 3 con los colores de marca.
+
+## Componentes de envoltorio
+- `PantallaCapsoul` + `FondoCapsoul` para toda pantalla nueva o refactorizada.
+- `CieloNocturno` animado solo en hero y autenticación.
+- `TarjetaCapsoul` para tarjetas blancas con chip de icono.
 
 ## Hábitos de diseño
 1. Áreas seguras siempre.

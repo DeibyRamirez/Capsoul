@@ -39,7 +39,7 @@ void main() {
     await abrirPerfil(tester);
 
     expect(find.text('Ana Supabase'), findsOneWidget);
-    expect(find.text('ana@capsoul.app'), findsOneWidget);
+    expect(find.text('Editar perfil'), findsOneWidget);
     // Con "Confirm email" activo toda sesión tiene el correo confirmado.
     expect(find.text('Verifica tu correo electrónico'), findsNothing);
     expect(find.text('Reenviar correo'), findsNothing);
@@ -57,7 +57,7 @@ void main() {
     await abrirPerfil(tester);
 
     expect(find.text('Verifica tu correo electrónico'), findsNothing);
-    await tester.tap(find.text('Editar nombre'));
+    await tester.tap(find.text('Editar perfil'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.descendant(
@@ -84,7 +84,7 @@ void main() {
     );
     await abrirPerfil(tester);
 
-    await tester.tap(find.text('Cerrar sesión'));
+    await tester.tap(find.byKey(const Key('boton-cerrar-sesion')));
     await tester.pumpAndSettle();
 
     expect(autenticacion.llamadasCerrarSesion, 1);

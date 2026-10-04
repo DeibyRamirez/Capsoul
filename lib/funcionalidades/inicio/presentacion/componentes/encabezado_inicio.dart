@@ -20,7 +20,7 @@ class EncabezadoInicio extends StatelessWidget {
               Text(
                 'cápsoul',
                 style: estilos.displaySmall?.copyWith(
-                  color: ColoresApp.primario,
+                  color: ColoresApp.sobrePrimario,
                   fontFamily: 'serif',
                   fontWeight: FontWeight.w500,
                   letterSpacing: 1,
@@ -29,7 +29,9 @@ class EncabezadoInicio extends StatelessWidget {
               Text(
                 'Pequeñas herencias, grandes recuerdos',
                 textAlign: TextAlign.center,
-                style: estilos.bodyMedium?.copyWith(color: ColoresApp.acento),
+                style: estilos.bodyMedium?.copyWith(
+                  color: ColoresApp.sobrePrimario.withValues(alpha: 0.85),
+                ),
               ),
             ],
           ),
@@ -38,7 +40,7 @@ class EncabezadoInicio extends StatelessWidget {
           tooltip: 'Avisos',
           onPressed: alTocarCampana,
           icon: const Icon(Icons.notifications_none_outlined),
-          color: ColoresApp.primario,
+          color: ColoresApp.sobrePrimario,
         ),
       ],
     );

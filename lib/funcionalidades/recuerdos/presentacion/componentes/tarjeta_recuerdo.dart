@@ -31,7 +31,12 @@ class TarjetaRecuerdo extends StatelessWidget {
       label: '${recuerdo.tipo.etiqueta}: ${recuerdo.nombre}',
       child: Material(
         color: ColoresApp.sobrePrimario,
-        borderRadius: BorderRadius.circular(TemaApp.radioMediano),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TemaApp.radioGrande),
+          side: BorderSide(
+            color: ColoresApp.atenuado.withValues(alpha: 0.12),
+          ),
+        ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: alTocar,

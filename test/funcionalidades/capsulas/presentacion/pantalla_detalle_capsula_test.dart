@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../../ayudantes/app_prueba.dart';
 import '../../../ayudantes/falsos.dart';
 import '../../../ayudantes/falsos_capsulas.dart';
 import '../../../ayudantes/falsos_recuerdos.dart';
@@ -70,9 +71,11 @@ Future<void> _montar(
         proveedorArchivosMedio.overrideWithValue(ArchivosMedioFalso()),
         proveedorReloj.overrideWithValue(() => _ahora),
       ],
-      child: MaterialApp(
-        theme: TemaApp.claro,
-        home: const PantallaDetalleCapsula(idCapsula: 'c1'),
+      child: envoltorioPrueba(
+        MaterialApp(
+          theme: TemaApp.claro,
+          home: const PantallaDetalleCapsula(idCapsula: 'c1'),
+        ),
       ),
     ),
   );
@@ -144,7 +147,9 @@ void main() {
           proveedorRepositorioCapsulas
               .overrideWithValue(RepositorioCapsulasFalso()),
         ],
-        child: const MaterialApp(home: PantallaDetalleCapsula(idCapsula: 'x')),
+        child: envoltorioPrueba(
+          const MaterialApp(home: PantallaDetalleCapsula(idCapsula: 'x')),
+        ),
       ),
     );
     await tester.pumpAndSettle();

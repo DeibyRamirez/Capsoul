@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
+import '../../../nucleo/componentes/cabecera_detalle_capsoul.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/formato/fechas.dart';
 import '../../../nucleo/tema/colores_app.dart';
@@ -24,7 +25,7 @@ class PantallaDetalleRecuerdo extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final recuerdo = ref.watch(proveedorRecuerdo(idRecuerdo));
     return Scaffold(
-      appBar: AppBar(title: const Text('Recuerdo')),
+      backgroundColor: ColoresApp.superficie,
       body: recuerdo.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _Mensaje(mensajeParaUsuario(error)),
@@ -123,7 +124,6 @@ class _Contenido extends ConsumerWidget {
     final ocupado = ref.watch(
       proveedorControladorRecuerdos.select((estado) => estado.ocupado),
     );
-    final estilos = Theme.of(context).textTheme;
     final bytes = recuerdo.bytes;
     final duracion = recuerdo.duracion;
     final datos = [
@@ -131,34 +131,31 @@ class _Contenido extends ConsumerWidget {
       if (duracion != null) formatearDuracion(duracion),
       if (bytes != null) formatearBytes(bytes),
     ].join(' · ');
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+    return Column(
       children: [
-        VistaRecuerdo(recuerdo: recuerdo),
-        const SizedBox(height: 20),
-        Text(
-          recuerdo.nombre,
-          style: estilos.titleLarge?.copyWith(
-            color: ColoresApp.primario,
-            fontWeight: FontWeight.w700,
+        CabeceraDetalleCapsoul(
+          titulo: recuerdo.nombre,
+          subtitulo: formatearFechaCorta(recuerdo.fechaRecuerdo),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            children: [
+              VistaRecuerdo(recuerdo: recuerdo),
+              const SizedBox(height: 12),
+              Text(datos, style: const TextStyle(color: ColoresApp.atenuado)),
+              if (recuerdo.propietarioId == uid) ...[
+                const SizedBox(height: 32),
+                OutlinedButton.icon(
+                  key: const Key('boton-borrar-recuerdo'),
+                  onPressed: ocupado ? null : () => _borrar(context, ref),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Borrar recuerdo'),
+                ),
+              ],
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          formatearFechaCorta(recuerdo.fechaRecuerdo),
-          style: estilos.bodyMedium?.copyWith(color: ColoresApp.atenuado),
-        ),
-        const SizedBox(height: 2),
-        Text(datos, style: const TextStyle(color: ColoresApp.atenuado)),
-        if (recuerdo.propietarioId == uid) ...[
-          const SizedBox(height: 32),
-          OutlinedButton.icon(
-            key: const Key('boton-borrar-recuerdo'),
-            onPressed: ocupado ? null : () => _borrar(context, ref),
-            icon: const Icon(Icons.delete_outline),
-            label: const Text('Borrar recuerdo'),
-          ),
-        ],
       ],
     );
   }

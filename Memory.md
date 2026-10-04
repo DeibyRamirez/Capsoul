@@ -69,6 +69,7 @@ lib/
   nucleo/
     errores/fallo_app.dart           # FalloApp, mensajeParaUsuario()
     firebase/arranque_firebase.dart  # inicializarFirebase() (solo FCM)
+    firebase/servicio_notificaciones_push.dart  # getToken() seguro (Android/iOS)
     supabase/configuracion_supabase.dart # ConfiguracionSupabase (String.fromEnvironment) + validación
     supabase/arranque_supabase.dart  # inicializarSupabase() -> null o mensaje de error
     arranque/app_error_arranque.dart # AppErrorArranque(detalle) si falta configuración o Supabase no inicia
@@ -80,16 +81,23 @@ lib/
   funcionalidades/
     autenticacion/{aplicacion,datos,dominio,presentacion}  # RepositorioAutenticacion(+Supabase), ResultadoRegistro
     usuarios/{aplicacion,datos,dominio}                    # RepositorioUsuarios(+Supabase), AccesoTablaUsuarios
-    perfil/{aplicacion,presentacion}                       # ControladorPerfil, PantallaPerfil (pestaña Yo)
+    perfil/{aplicacion,presentacion}                       # ControladorPerfil, PantallaPerfil (Instagram + rejilla momentos)
     navegacion/presentacion/contenedor_navegacion.dart     # barra: Inicio | Momentos | + | Mi legado | Yo
     elementos/{aplicacion,datos,dominio,presentacion}      # LimitesMedios, captura foto/video/audio/nota, compresión, firma+subida
     capsulas/{aplicacion,datos,dominio,presentacion}       # crear, mis cápsulas, detalle (candado, cuenta regresiva, apertura)
     inicio/{aplicacion,datos,dominio,presentacion}         # Inicio del mockup con conteos reales (RepositorioResumenInicio)
     recuerdos/{aplicacion,datos,dominio,presentacion}      # banco de recuerdos, URLs firmadas (firmar-medio), reproductores, elegir
-    momentos/{aplicacion,datos,dominio,presentacion}       # crear, listar y ver momentos (portada + rejilla bento)
+    momentos/{aplicacion,datos,dominio,presentacion}       # feed vertical, crear, detalle bento, filtros perfil
     crear/ legado/                                         # presentacion/pantalla_*.dart
 test/                                # espejo de lib/ (nucleo/, funcionalidades/) + ayudantes/ (falsos, app_prueba)
+docs/README.md                       # índice de documentación técnica
 docs/arquitectura.md                 # ARQ-2 v2.0: Supabase + Cloudinary + FCM + Resend (4 diagramas Mermaid)
+docs/01-vision-y-objetivos.md        # producto, metas, DoD
+docs/03-estructura-proyecto.md       # mapa de carpetas y capas
+docs/04-flujos-criticos.md           # arranque, auth, medios, cápsulas, momentos
+docs/05-casos-de-uso.md              # actor → pantalla → repositorio
+docs/06-integraciones.md             # Supabase, Cloudinary, FCM, secretos
+docs/07-patrones-y-convenciones.md   # Riverpod, go_router, nomenclatura
 docs/modelo_er.{md,mmd,png}          # modelo ER del director, v1.3 con las correcciones aprobadas por el PO
 supabase/migrations/                 # 20261002000001_capsoul_modelo_inicial.sql, 20261002000002_capsoul_programar_trabajos.sql
 supabase/migrations/20261003000003_capsoul_limites_medios.sql  # límites, 10 elementos, cuota 200 MB (aplicada)
@@ -331,3 +339,10 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   flutter_cache_manager 3.4.5 con clave `public_id|variante`, `CacheEnlacesMedio` con margen de 5 min y
   `CargadorMedios` que evita descargas repetidas; listas y rejillas solo con miniatura. Se corrigió
   `docs/modelo_er.md` (000001, 000003 y 000004 aplicadas) y `docs/arquitectura.md`.
+- **2026-10-03** FCM, documentación, Perfil y Momentos: `getToken()` movido a
+  `nucleo/firebase/servicio_notificaciones_push.dart` (solo Android/iOS, try/catch, no bloquea arranque).
+  Documentación ampliada en `docs/` (README, visión, estructura, flujos, casos de uso, integraciones, patrones).
+- **2026-10-03** Intercambio Perfil ↔ Momentos: Perfil = cabecera Instagram + grid 3 col de recuerdos
+  (`rejilla_elementos_perfil.dart`); Momentos = búsqueda + chips + grid 2 col `TarjetaMomento`
+  (`rejilla_momentos.dart`). Eliminados `rejilla_momentos_perfil` y `tarjeta_momento_feed`.
+  `flutter analyze` 0 issues, tests verdes. Sin commit.

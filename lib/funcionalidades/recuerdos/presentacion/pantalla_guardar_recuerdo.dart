@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/formato/fechas.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
@@ -77,10 +78,9 @@ class _EstadoPantallaGuardarRecuerdo
     final ocupado = ref.watch(
       proveedorControladorRecuerdos.select((estado) => estado.ocupado),
     );
-    return Scaffold(
+    return PantallaCapsoul(
       appBar: AppBar(title: const Text('Guardar recuerdo')),
-      body: SafeArea(
-        child: ListView(
+      cuerpo: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
             VistaPreviaBorrador(elemento: widget.elemento),
@@ -121,7 +121,6 @@ class _EstadoPantallaGuardarRecuerdo
             ),
           ],
         ),
-      ),
     );
   }
 }

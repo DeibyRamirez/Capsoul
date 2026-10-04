@@ -67,15 +67,15 @@ class ContenedorNavegacion extends StatelessWidget {
           ),
           NavigationDestination(
             icon: Container(
-              width: 40,
-              height: 40,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
                 color: ColoresApp.acento,
                 borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
               ),
               child: const Icon(Icons.add, color: ColoresApp.sobrePrimario),
             ),
-            label: '+',
+            label: '',
           ),
           const NavigationDestination(
             icon: Icon(Icons.account_balance_outlined),

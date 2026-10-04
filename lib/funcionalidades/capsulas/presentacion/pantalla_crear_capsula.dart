@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
@@ -107,10 +108,9 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
     final total = estado.recuerdos.length;
     final puedeAgregar = !estado.llena && !estado.guardando;
 
-    return Scaffold(
+    return PantallaCapsoul(
       appBar: AppBar(title: const Text('Nueva cápsula')),
-      body: SafeArea(
-        child: ListView(
+      cuerpo: ListView(
           key: const Key('formulario-capsula'),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
@@ -187,7 +187,6 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
             ),
           ],
         ),
-      ),
     );
   }
 }

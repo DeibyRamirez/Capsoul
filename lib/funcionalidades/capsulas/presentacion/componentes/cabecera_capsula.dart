@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
-import 'cielo_nocturno.dart';
+import '../../../../nucleo/componentes/cielo_nocturno.dart';
 
 /// Cabecera del detalle: cielo nocturno, frasco, título, horizonte y
 /// candado con la fecha de apertura.

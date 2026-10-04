@@ -30,8 +30,13 @@ void main() {
 
     await tester.enterText(campo('Contraseña'), '1234567');
     await tester.enterText(campo('Confirmar contraseña'), '7654321');
-    await tester.tap(botonCrearCuenta());
+    final crear = botonCrearCuenta().last;
+    await tester.ensureVisible(crear);
+    await tester.tap(crear);
     await tester.pumpAndSettle();
+    final errorLongitud =
+        find.text('La contraseña debe tener al menos 8 caracteres').last;
+    await tester.ensureVisible(errorLongitud);
     expect(
       find.text('La contraseña debe tener al menos 8 caracteres'),
       findsOneWidget,

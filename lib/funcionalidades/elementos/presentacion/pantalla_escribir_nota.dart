@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/componentes/fondo_capsoul.dart';
+import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../dominio/elemento_borrador.dart';
 import '../dominio/limites_medios.dart';
@@ -48,10 +50,10 @@ class _EstadoPantallaEscribirNota extends State<PantallaEscribirNota> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PantallaCapsoul(
+      tipoFondo: FondoCapsoulTipo.plano,
       appBar: AppBar(title: const Text('Nota')),
-      body: SafeArea(
-        child: Padding(
+      cuerpo: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -91,7 +93,6 @@ class _EstadoPantallaEscribirNota extends State<PantallaEscribirNota> {
             ],
           ),
         ),
-      ),
     );
   }
 }

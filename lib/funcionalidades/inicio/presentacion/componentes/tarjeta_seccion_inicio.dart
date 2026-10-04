@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../nucleo/componentes/tarjeta_capsoul.dart';
 import '../../../../nucleo/tema/colores_app.dart';
-import '../../../../nucleo/tema/tema_app.dart';
 
 /// Tarjeta de la rejilla de Inicio (Recuerdos, Retos, Cápsulas, Pequeñas
 /// herencias) con conteo e ilustración.
@@ -31,78 +31,44 @@ class TarjetaSeccionInicio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final estilos = Theme.of(context).textTheme;
-    return Material(
-      color: ColoresApp.sobrePrimario,
-      borderRadius: BorderRadius.circular(TemaApp.radioGrande),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: alTocar,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: altoMinimo),
-          child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Stack(
+    return TarjetaCapsoul(
+      icono: icono,
+      titulo: titulo,
+      alTocar: alTocar,
+      altoMinimo: altoMinimo,
+      child: Stack(
+        children: [
+          Positioned(right: 0, bottom: 0, child: ilustracion),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Positioned(right: 0, bottom: 0, child: ilustracion),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: ColoresApp.primario,
-                          borderRadius:
-                              BorderRadius.circular(TemaApp.radioPequeno),
-                        ),
-                        child: Icon(icono,
-                            size: 18, color: ColoresApp.sobrePrimario),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          titulo,
-                          style: estilos.titleSmall?.copyWith(
-                            color: ColoresApp.primario,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
+              Padding(
+                padding: const EdgeInsets.only(right: 44),
+                child: Text(
+                  descripcion,
+                  style: estilos.bodySmall?.copyWith(
+                    color: ColoresApp.atenuado,
                   ),
-                  const SizedBox(height: 6),
-                  Padding(
-                    // Deja libre la ilustración de la esquina.
-                    padding: const EdgeInsets.only(right: 44),
-                    child: Text(
-                      descripcion,
-                      style: estilos.bodySmall?.copyWith(
-                        color: ColoresApp.atenuado,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '$conteo',
-                    style: estilos.titleLarge?.copyWith(
-                      color: ColoresApp.primario,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    etiquetaConteo,
-                    style: estilos.labelSmall?.copyWith(
-                      color: ColoresApp.atenuado,
-                    ),
-                  ),
-                ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '$conteo',
+                style: estilos.titleLarge?.copyWith(
+                  color: ColoresApp.primario,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                etiquetaConteo,
+                style: estilos.labelSmall?.copyWith(
+                  color: ColoresApp.atenuado,
+                ),
               ),
             ],
           ),
-        ),
-        ),
+        ],
       ),
     );
   }
@@ -130,7 +96,7 @@ class IlustracionSeccion extends StatelessWidget {
           ],
         ),
       ),
-      child: Icon(icono, color: ColoresApp.sobrePrimario, size: 28),
+      child: Icon(icono, color: ColoresApp.sobrePrimario, size: 25),
     );
   }
 }

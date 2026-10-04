@@ -49,6 +49,7 @@ dependencies:
   video_player: ^2.14.1
   just_audio: ^0.10.6
   flutter_cache_manager: ^3.4.5
+  firebase_messaging: ^16.7.0
 
 dev_dependencies:
   flutter_test:

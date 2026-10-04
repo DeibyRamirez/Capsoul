@@ -17,6 +17,16 @@ import 'falsos_recuerdos.dart';
 /// Fecha fija para las pruebas (3 oct 2026, 10:00 local).
 final DateTime ahoraPrueba = DateTime(2026, 10, 3, 10);
 
+/// Envuelve widgets de prueba desactivando animaciones infinitas (cielo).
+Widget envoltorioPrueba(Widget child) => MediaQuery(
+      data: const MediaQueryData(
+        size: Size(360, 1200),
+        devicePixelRatio: 3,
+        disableAnimations: true,
+      ),
+      child: child,
+    );
+
 /// Monta la [AppCapsoul] real (enrutador real) con repositorios falsos.
 Future<void> montarAppCapsoul(
   WidgetTester tester, {
@@ -56,7 +66,7 @@ Future<void> montarAppCapsoul(
         proveedorArchivosMedio.overrideWithValue(ArchivosMedioFalso()),
         proveedorReloj.overrideWithValue(() => ahoraPrueba),
       ],
-      child: const AppCapsoul(),
+      child: envoltorioPrueba(const AppCapsoul()),
     ),
   );
   await tester.pumpAndSettle();

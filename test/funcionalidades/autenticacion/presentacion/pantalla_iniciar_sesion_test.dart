@@ -117,7 +117,9 @@ void main() {
     );
     expect(find.text('Reenviar correo de confirmación'), findsOneWidget);
 
-    await tester.tap(find.text('Reenviar correo de confirmación'));
+    final reenviar = find.text('Reenviar correo de confirmación').last;
+    await tester.ensureVisible(reenviar);
+    await tester.tap(reenviar);
     await tester.pumpAndSettle();
 
     expect(find.text('Revisa tu correo'), findsOneWidget);

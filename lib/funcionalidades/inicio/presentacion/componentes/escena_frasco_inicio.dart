@@ -50,11 +50,17 @@ class _TextoManuscrito extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final estilo = Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: ColoresApp.primario.withValues(alpha: 0.8),
+          color: ColoresApp.sobrePrimario.withValues(alpha: 0.95),
           fontStyle: FontStyle.italic,
           fontFamily: 'serif',
           fontWeight: FontWeight.w300,
           height: 1.5,
+          shadows: const [
+            Shadow(
+              blurRadius: 4,
+              color: Color(0x40000000),
+            ),
+          ],
         );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,7 +72,7 @@ class _TextoManuscrito extends StatelessWidget {
         Icon(
           Icons.favorite_border,
           size: 16,
-          color: ColoresApp.primario.withValues(alpha: 0.7),
+          color: ColoresApp.sobrePrimario.withValues(alpha: 0.8),
         ),
       ],
     );

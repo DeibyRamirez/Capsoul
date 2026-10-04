@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/frasco_luminoso.dart';
+import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
@@ -18,14 +19,14 @@ class PantallaMisCapsulas extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final capsulas = ref.watch(proveedorMisCapsulas);
     final ahora = ref.watch(proveedorReloj)();
-    return Scaffold(
+    return PantallaCapsoul(
       appBar: AppBar(title: const Text('Mis cápsulas')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(RutasApp.crearCapsula),
         icon: const Icon(Icons.add),
         label: const Text('Nueva cápsula'),
       ),
-      body: capsulas.when(
+      cuerpo: capsulas.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _Aviso(
           mensaje: mensajeParaUsuario(error),

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
+import '../../../nucleo/componentes/cielo_nocturno.dart';
+import '../../../nucleo/componentes/fondo_capsoul.dart';
+import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../aplicacion/proveedores_inicio.dart';
@@ -23,20 +26,18 @@ class PantallaInicio extends ConsumerWidget {
         ref.watch(proveedorResumenInicio).value ?? ResumenInicio.vacio;
     final estilos = Theme.of(context).textTheme;
 
-    return Scaffold(
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              ColoresApp.acento.withValues(alpha: 0.18),
-              ColoresApp.superficie,
-            ],
+    return PantallaCapsoul(
+      tipoFondo: FondoCapsoulTipo.suave,
+      cuerpo: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 320,
+            child: CieloNocturno(brillo: 0.35, animado: true),
           ),
-        ),
-        child: SafeArea(
-          child: RefreshIndicator(
+          RefreshIndicator(
             onRefresh: () => ref.refresh(proveedorResumenInicio.future),
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -74,7 +75,7 @@ class PantallaInicio extends ConsumerWidget {
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

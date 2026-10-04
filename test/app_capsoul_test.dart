@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'ayudantes/app_prueba.dart';
@@ -38,7 +39,10 @@ void main() {
       autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
     );
 
-    await tester.tap(find.text('+'));
+    await tester.tap(find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.byIcon(Icons.add),
+    ));
     await tester.pumpAndSettle();
 
     expect(find.text('Crear'), findsOneWidget);

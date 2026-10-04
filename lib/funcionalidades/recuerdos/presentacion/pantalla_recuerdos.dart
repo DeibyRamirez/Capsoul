@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
@@ -30,14 +31,14 @@ class PantallaRecuerdos extends ConsumerWidget {
     final uso = ref.watch(proveedorUsoMedios);
     final hoy = ref.watch(proveedorReloj)();
 
-    return Scaffold(
+    return PantallaCapsoul(
       appBar: AppBar(title: const Text('Recuerdos')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _nuevo(context),
         icon: const Icon(Icons.add),
         label: const Text('Nuevo recuerdo'),
       ),
-      body: RefreshIndicator(
+      cuerpo: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(proveedorRecuerdos(filtro));
           ref.invalidate(proveedorUsoMedios);

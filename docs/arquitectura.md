@@ -161,8 +161,26 @@ sequenceDiagram
 | Presentación | `lib/funcionalidades/*/presentacion/` | Pantallas, componentes, validadores de formulario. Solo hablan con controladores. |
 | Aplicación | `lib/funcionalidades/*/aplicacion/` | Controladores (`Notifier`) y proveedores Riverpod que inyectan repositorios. |
 | Dominio | `lib/funcionalidades/*/dominio/` | Entidades (`UsuarioApp`, `PerfilUsuario`), interfaces de repositorio y fallos con mensaje en español. Sin dependencias de Supabase. |
-| Datos | `lib/funcionalidades/*/datos/` | `RepositorioAutenticacionSupabase`, `RepositorioUsuariosSupabase` + `AccesoTablaUsuarios` (y, más adelante, elementos con Cloudinary y FCM). |
-| Núcleo | `lib/nucleo/` | Arranque (`inicializarSupabase`, `inicializarFirebase` para FCM, `AppErrorArranque`), enrutador, tema, errores y componentes compartidos. |
+| Datos | `lib/funcionalidades/*/datos/` | Implementaciones Supabase/Cloudinary (`Repositorio*Supabase`, `AccesoTablas*`). |
+| Núcleo | `lib/nucleo/` | Arranque (`inicializarSupabase`, `inicializarFirebase`, `servicio_notificaciones_push`, `AppErrorArranque`), enrutador, tema, errores y componentes compartidos. |
+
+**Mapa detallado de carpetas y funcionalidades:** [`docs/03-estructura-proyecto.md`](03-estructura-proyecto.md) · **Índice de documentación:** [`docs/README.md`](README.md)
+
+### Funcionalidades en `lib/funcionalidades/`
+
+| Módulo | Estado | Pantallas clave |
+|---|---|---|
+| `autenticacion` | Hecho | login, registro, recuperar |
+| `usuarios` | Hecho | (datos de perfil) |
+| `perfil` | Hecho | Yo: cabecera Instagram + rejilla de momentos |
+| `inicio` | Hecho | frasco + conteos |
+| `momentos` | Hecho | feed vertical + nuevo + detalle |
+| `recuerdos` | Hecho | banco, detalle, elegir |
+| `elementos` | Hecho | captura foto/video/audio, nota |
+| `capsulas` | En progreso | crear, detalle |
+| `crear` | Hecho | selector desde `+` |
+| `legado` | Placeholder | Mi legado |
+| `navegacion` | Hecho | barra inferior 5 zonas |
 
 ## 7. Configuración y secretos
 
@@ -177,6 +195,7 @@ sequenceDiagram
 
 ## 8. Pendiente
 
-- Edge Functions `firmar-subida`, `firmar-medio` y `enviar-avisos` (no existen aún).
+- Edge Function `enviar-avisos` (pendiente de desplegar).
+- Registrar token FCM en `dispositivos_push` tras login.
 - Aplicar migraciones, SMTP con Resend y bajar Firebase a Spark: requieren aprobación del PO (regla 7 de `Memory.md`).
 - `firestore.rules` y `firebase.json` quedan obsoletos (borrado propuesto al PO).

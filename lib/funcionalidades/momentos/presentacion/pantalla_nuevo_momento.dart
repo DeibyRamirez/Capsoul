@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
@@ -113,10 +114,9 @@ class _EstadoPantallaNuevoMomento extends ConsumerState<PantallaNuevoMomento> {
     final mes = FiltroRecuerdos.ultimosDias(30, hoy).conTipos(_filtro.tipos);
     final anio = FiltroRecuerdos.esteAnio(hoy).conTipos(_filtro.tipos);
 
-    return Scaffold(
+    return PantallaCapsoul(
       appBar: AppBar(title: const Text('Nuevo momento')),
-      body: SafeArea(
-        child: ListView(
+      cuerpo: ListView(
           key: const Key('formulario-momento'),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
@@ -275,7 +275,6 @@ class _EstadoPantallaNuevoMomento extends ConsumerState<PantallaNuevoMomento> {
             ),
           ],
         ),
-      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
@@ -25,7 +26,7 @@ class PantallaSelectorCrear extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PantallaCapsoul(
       appBar: AppBar(
         title: const Text('Crear'),
         leading: IconButton(
@@ -34,7 +35,7 @@ class PantallaSelectorCrear extends StatelessWidget {
           onPressed: () => context.pop(),
         ),
       ),
-      body: ListView(
+      cuerpo: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _OpcionCrear(

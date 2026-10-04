@@ -29,7 +29,7 @@ class AccesoTablasMomentosSupabase implements AccesoTablasMomentos {
       'portada:elementos!momentos_portada_elemento_id_fkey($columnasRecuerdo)';
 
   static const String columnasListado =
-      '$columnasMomento, momento_elementos(count)';
+      '$columnasMomento, momento_elementos(orden, elementos($columnasRecuerdo))';
 
   static const String columnasDetalle =
       '$columnasMomento, momento_elementos(orden, elementos($columnasRecuerdo))';

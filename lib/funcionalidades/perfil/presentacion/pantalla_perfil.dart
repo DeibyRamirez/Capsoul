@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
+import '../../../nucleo/componentes/pantalla_capsoul.dart';
+import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../autenticacion/presentacion/validadores_autenticacion.dart';
+import '../../inicio/aplicacion/proveedores_inicio.dart';
+import '../../inicio/dominio/resumen_inicio.dart';
+import '../../recuerdos/aplicacion/proveedores_recuerdos.dart';
+import '../../recuerdos/dominio/filtro_recuerdos.dart';
 import '../aplicacion/controlador_perfil.dart';
+import 'componentes/encabezado_perfil.dart';
+import 'componentes/fila_destacados_perfil.dart';
+import 'componentes/rejilla_elementos_perfil.dart';
 
-/// Pestaña "Yo": perfil de la tabla `usuarios`, edición del nombre visible y
-/// cierre de sesión. No hay aviso de verificación: para tener sesión el
-/// correo ya debe estar confirmado.
+/// Pestaña "Yo": perfil con cabecera estilo Instagram y rejilla de recuerdos.
 class PantallaPerfil extends ConsumerWidget {
   const PantallaPerfil({super.key});
 
@@ -42,106 +50,126 @@ class PantallaPerfil extends ConsumerWidget {
     final perfilAsincrono = ref.watch(proveedorPerfilUsuarioActual);
     final perfil = perfilAsincrono.value;
     final ocupado = ref.watch(proveedorControladorPerfil).isLoading;
+    final resumen =
+        ref.watch(proveedorResumenInicio).value ?? ResumenInicio.vacio;
+    final recuerdosAsincrono =
+        ref.watch(proveedorRecuerdos(FiltroRecuerdos.todos));
 
     final nombre =
         perfil?.nombreVisible ?? usuarioSesion?.nombreVisible ?? 'Sin nombre';
-    final correo = perfil?.correo ?? usuarioSesion?.correo ?? '';
+    final nombreLimpio = nombre.trim();
+    final inicial =
+        nombreLimpio.isEmpty ? '?' : nombreLimpio[0].toUpperCase();
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Yo')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            if (perfilAsincrono.isLoading && perfil == null)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: LinearProgressIndicator(),
-              ),
-            _EncabezadoPerfil(nombre: nombre, correo: correo),
-            if (perfilAsincrono.hasError)
-              const Padding(
-                padding: EdgeInsets.only(top: 12),
-                child: Text(
-                  'No pudimos cargar tu perfil. Mostramos los datos de tu cuenta.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: ColoresApp.atenuado),
+    return PantallaCapsoul(
+      cuerpo: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(proveedorRecuerdos(FiltroRecuerdos.todos));
+            ref.invalidate(proveedorResumenInicio);
+            await Future.wait([
+              ref.read(proveedorRecuerdos(FiltroRecuerdos.todos).future),
+              ref.read(proveedorResumenInicio.future),
+            ]);
+          },
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _BarraSuperior(
+                  alCrear: () => context.push(RutasApp.crear),
                 ),
               ),
-            const SizedBox(height: 24),
-            Card(
-              color: ColoresApp.sobrePrimario,
-              child: ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TemaApp.radioMediano),
+              if (perfilAsincrono.isLoading && perfil == null)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: LinearProgressIndicator(),
+                  ),
                 ),
-                leading:
-                    const Icon(Icons.edit_outlined, color: ColoresApp.acento),
-                title: const Text('Editar nombre'),
-                trailing:
-                    const Icon(Icons.chevron_right, color: ColoresApp.atenuado),
-                onTap: ocupado ? null : () => _editarNombre(context, ref, nombre),
-              ),
-            ),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: ocupado
-                  ? null
-                  : () => ref
+              SliverToBoxAdapter(
+                child: EncabezadoPerfil(
+                  nombre: nombre,
+                  inicial: inicial,
+                  resumen: resumen,
+                  publicaciones: resumen.recuerdos,
+                  ocupado: ocupado,
+                  alEditar: () => _editarNombre(context, ref, nombre),
+                  alCerrarSesion: () => ref
                       .read(proveedorControladorPerfil.notifier)
                       .cerrarSesion(),
-              icon: const Icon(Icons.logout),
-              label: const Text('Cerrar sesión'),
-            ),
-          ],
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              SliverToBoxAdapter(
+                child: FilaDestacadosPerfil(
+                  alTocar: (etiqueta) => mostrarAvisoInformativo(
+                    context,
+                    '$etiqueta: próximamente',
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              recuerdosAsincrono.when(
+                loading: () => const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(48),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+                error: (_, _) => const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Text(
+                      'No pudimos cargar tus recuerdos.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: ColoresApp.atenuado),
+                    ),
+                  ),
+                ),
+                data: (lista) => SliverToBoxAdapter(
+                  child: RejillaElementosPerfil(recuerdos: lista),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
     );
   }
 }
 
-class _EncabezadoPerfil extends StatelessWidget {
-  const _EncabezadoPerfil({required this.nombre, required this.correo});
+class _BarraSuperior extends StatelessWidget {
+  const _BarraSuperior({required this.alCrear});
 
-  final String nombre;
-  final String correo;
+  final VoidCallback alCrear;
 
   @override
   Widget build(BuildContext context) {
-    final estilosTexto = Theme.of(context).textTheme;
-    final nombreLimpio = nombre.trim();
-    final inicial =
-        nombreLimpio.isEmpty ? '?' : nombreLimpio[0].toUpperCase();
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 40,
-          backgroundColor: ColoresApp.primario,
-          foregroundColor: ColoresApp.sobrePrimario,
-          child: Text(
-            inicial,
-            style: estilosTexto.headlineMedium?.copyWith(
-              color: ColoresApp.sobrePrimario,
-              fontWeight: FontWeight.w700,
+    final estilos = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
+      child: Row(
+        children: [
+          const Icon(Icons.lock_outline, size: 18, color: ColoresApp.primario),
+          const SizedBox(width: 6),
+          Text(
+            'cápsoul',
+            style: estilos.titleLarge?.copyWith(
+              color: ColoresApp.primario,
+              fontWeight: FontWeight.w800,
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          nombre,
-          textAlign: TextAlign.center,
-          style: estilosTexto.titleLarge?.copyWith(
-            color: ColoresApp.primario,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          correo,
-          textAlign: TextAlign.center,
-          style: estilosTexto.bodyMedium?.copyWith(color: ColoresApp.atenuado),
-        ),
-      ],
+          const Spacer(),
+          // IconButton(
+          //   tooltip: 'Crear',
+          //   onPressed: alCrear,
+          //   icon: const Icon(Icons.add_box_outlined),
+          // ),
+          // IconButton(
+          //   tooltip: 'Menú',
+          //   onPressed: () {},
+          //   icon: const Icon(Icons.menu),
+          // ),
+        ],
+      ),
     );
   }
 }
