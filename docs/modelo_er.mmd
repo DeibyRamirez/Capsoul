@@ -1,0 +1,145 @@
+erDiagram
+    USUARIOS ||--o{ DISPOSITIVOS_PUSH : "registra"
+    USUARIOS ||--o{ AMISTADES : "solicita"
+    USUARIOS ||--o{ AMISTADES : "recibe"
+    USUARIOS ||--o{ ELEMENTOS : "es propietario de"
+    USUARIOS ||--o{ CAPSULAS : "escribe"
+    CAPSULAS ||--o{ CAPSULA_ELEMENTOS : "contiene"
+    ELEMENTOS ||--o{ CAPSULA_ELEMENTOS : "se usa en"
+    CAPSULAS ||--|{ CAPSULA_DESTINATARIOS : "se entrega a"
+    USUARIOS |o--o{ CAPSULA_DESTINATARIOS : "es destinatario"
+    USUARIOS ||--o{ MOMENTOS : "publica"
+    MOMENTOS ||--o{ MOMENTO_ELEMENTOS : "contiene"
+    ELEMENTOS ||--o{ MOMENTO_ELEMENTOS : "se usa en"
+    USUARIOS ||--o{ HERENCIAS : "deja"
+    USUARIOS |o--o{ HERENCIAS : "es beneficiario"
+    USUARIOS |o--o{ HERENCIAS : "es persona de confianza"
+    HERENCIAS ||--o{ HERENCIA_ELEMENTOS : "contiene"
+    ELEMENTOS ||--o{ HERENCIA_ELEMENTOS : "se usa en"
+    USUARIOS ||--o{ RETOS : "crea"
+    RETOS ||--o{ RETO_PARTICIPANTES : "tiene"
+    USUARIOS ||--o{ RETO_PARTICIPANTES : "participa"
+    RETOS ||--o{ RETO_ENTREGAS : "recibe"
+    USUARIOS ||--o{ RETO_ENTREGAS : "entrega"
+    ELEMENTOS |o--o{ RETO_ENTREGAS : "evidencia"
+    USUARIOS |o--o{ NOTIFICACIONES : "recibe"
+
+    USUARIOS {
+        uuid id PK "FK a auth.users"
+        text nombre_visible "1 a 60"
+        text correo UK "privado: solo el dueno"
+        text foto_public_id "Cloudinary, opcional"
+        boolean perfil_publico "false por defecto"
+        timestamptz ultima_actividad_en
+        timestamptz creado_en
+        timestamptz actualizado_en
+    }
+    DISPOSITIVOS_PUSH {
+        uuid id PK
+        uuid usuario_id FK
+        text token_fcm UK
+        text plataforma "android o ios"
+        timestamptz ultimo_uso_en
+    }
+    AMISTADES {
+        uuid id PK
+        uuid solicitante_id FK
+        uuid receptor_id FK
+        estado_amistad estado "pendiente aceptada rechazada bloqueada"
+        boolean cercano_para_solicitante
+        boolean cercano_para_receptor
+        timestamptz respondido_en
+    }
+    ELEMENTOS {
+        uuid id PK
+        uuid propietario_id FK
+        tipo_elemento tipo "foto video audio texto"
+        text contenido_texto "solo texto"
+        text cloudinary_public_id UK
+        text cloudinary_tipo_recurso "image video raw"
+        text cloudinary_tipo_entrega "solo authenticated"
+        bigint cloudinary_version
+        bigint bytes
+        numeric duracion_segundos
+        text miniatura_public_id
+    }
+    CAPSULAS {
+        uuid id PK
+        uuid autor_id FK
+        text titulo
+        text mensaje
+        timestamptz fecha_apertura
+        estado_capsula estado "borrador programada liberada cancelada"
+        timestamptz liberada_en
+    }
+    CAPSULA_ELEMENTOS {
+        uuid capsula_id PK, FK
+        uuid elemento_id PK, FK
+        smallint orden
+    }
+    CAPSULA_DESTINATARIOS {
+        uuid id PK
+        uuid capsula_id FK
+        uuid usuario_id FK "o correo externo"
+        text correo_externo
+        timestamptz notificado_en
+        timestamptz abierta_en
+    }
+    MOMENTOS {
+        uuid id PK
+        uuid autor_id FK
+        text texto
+        visibilidad_momento visibilidad "privado cercanos amigos"
+    }
+    MOMENTO_ELEMENTOS {
+        uuid momento_id PK, FK
+        uuid elemento_id PK, FK
+        smallint orden
+    }
+    HERENCIAS {
+        uuid id PK
+        uuid propietario_id FK
+        text titulo
+        uuid beneficiario_usuario_id FK "o correo externo"
+        text beneficiario_correo
+        uuid persona_confianza_id FK
+        condicion_herencia condicion_activacion "fecha inactividad confirmacion_confianza"
+        timestamptz fecha_activacion
+        integer dias_inactividad
+        estado_herencia estado "borrador activa en_verificacion liberada revocada"
+        timestamptz liberada_en
+    }
+    HERENCIA_ELEMENTOS {
+        uuid herencia_id PK, FK
+        uuid elemento_id PK, FK
+        smallint orden
+    }
+    RETOS {
+        uuid id PK
+        uuid creador_id FK
+        text titulo
+        frecuencia_reto frecuencia "unica diaria semanal"
+        date fecha_inicio
+        date fecha_fin
+    }
+    RETO_PARTICIPANTES {
+        uuid reto_id PK, FK
+        uuid usuario_id PK, FK
+        estado_participacion estado "invitado aceptado abandonado"
+    }
+    RETO_ENTREGAS {
+        uuid id PK
+        uuid reto_id FK
+        uuid usuario_id FK
+        uuid elemento_id FK "opcional"
+        date fecha "una por dia"
+    }
+    NOTIFICACIONES {
+        uuid id PK
+        uuid usuario_id FK "o correo_destino"
+        canal_notificacion canal "push correo"
+        tipo_notificacion tipo
+        uuid referencia_id
+        estado_notificacion estado "pendiente enviada fallida"
+        smallint intentos
+    }

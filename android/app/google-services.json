@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "419185425480",
+    "project_id": "capsoul-ebea3",
+    "storage_bucket": "capsoul-ebea3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:419185425480:android:62a8123c7e942623d7ec7d",
+        "android_client_info": {
+          "package_name": "com.capsoul"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "419185425480-0js3p9s193uqgo0c0in54f344g4kesig.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5Ir4jUtmIBvUN1kRpP5Hc_-2g3UxiRV0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "419185425480-0js3p9s193uqgo0c0in54f344g4kesig.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

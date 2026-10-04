@@ -46,3 +46,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Configuración local por entorno (claves de Supabase); solo se versiona el .example
+env/*.json

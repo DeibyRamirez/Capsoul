@@ -1,4 +1,4 @@
-# capsould
+# Capsoul
 
 A new Flutter project.
 

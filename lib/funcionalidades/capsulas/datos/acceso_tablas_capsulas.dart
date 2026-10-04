@@ -1,0 +1,81 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../recuerdos/datos/mapeo_recuerdos.dart';
+
+/// Capa mínima sobre PostgREST para `capsulas` y `capsula_elementos` (existe para simular la base en pruebas sin imitar
+/// los builders encadenados de `supabase_flutter`).
+abstract interface class AccesoTablasCapsulas {
+  /// Inserta una fila en `capsulas` (la fila ya trae su `id`).
+  Future<void> insertarCapsula(Map<String, dynamic> fila);
+
+  Future<void> insertarEnlaces(List<Map<String, dynamic>> filas);
+
+  Future<void> actualizarEstadoCapsula(String id, String estado);
+
+  Future<void> eliminarCapsula(String id);
+
+  Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(String autorId);
+
+  Future<Map<String, dynamic>?> leerCapsulaConElementos(String id);
+}
+
+class AccesoTablasCapsulasSupabase implements AccesoTablasCapsulas {
+  AccesoTablasCapsulasSupabase({SupabaseClient? cliente})
+      : _clienteInyectado = cliente;
+
+  static const String columnasCapsula =
+      'id, autor_id, titulo, mensaje, fecha_apertura, estado, liberada_en, '
+      'creado_en';
+
+  static const String columnasConElementos = '$columnasCapsula, '
+      'capsula_elementos(orden, elementos($columnasRecuerdo))';
+
+  static const int limiteLista = 50;
+
+  final SupabaseClient? _clienteInyectado;
+
+  SupabaseClient get _cliente => _clienteInyectado ?? Supabase.instance.client;
+
+  // Sin `.select()`: el id lo genera el cliente y así el INSERT no depende
+  // de la política SELECT (RETURNING), que era la causa del 42501.
+  @override
+  Future<void> insertarCapsula(Map<String, dynamic> fila) async {
+    await _cliente.from('capsulas').insert(fila);
+  }
+
+  @override
+  Future<void> insertarEnlaces(List<Map<String, dynamic>> filas) async {
+    if (filas.isEmpty) return;
+    await _cliente.from('capsula_elementos').insert(filas);
+  }
+
+  @override
+  Future<void> actualizarEstadoCapsula(String id, String estado) async {
+    await _cliente.from('capsulas').update({'estado': estado}).eq('id', id);
+  }
+
+  @override
+  Future<void> eliminarCapsula(String id) async {
+    await _cliente.from('capsulas').delete().eq('id', id);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(String autorId) {
+    return _cliente
+        .from('capsulas')
+        .select(columnasCapsula)
+        .eq('autor_id', autorId)
+        .neq('estado', 'cancelada')
+        .order('creado_en', ascending: false)
+        .limit(limiteLista);
+  }
+
+  @override
+  Future<Map<String, dynamic>?> leerCapsulaConElementos(String id) {
+    return _cliente
+        .from('capsulas')
+        .select(columnasConElementos)
+        .eq('id', id)
+        .maybeSingle();
+  }
+}
