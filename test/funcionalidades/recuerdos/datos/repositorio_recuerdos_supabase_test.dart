@@ -6,9 +6,10 @@ import 'package:capsoul/funcionalidades/recuerdos/datos/mapeo_recuerdos.dart';
 import 'package:capsoul/funcionalidades/recuerdos/datos/repositorio_recuerdos_supabase.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/fallo_recuerdo.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/filtro_recuerdos.dart';
+import 'package:capsoul/funcionalidades/musica/dominio/referencia_musica.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/nuevo_recuerdo.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:capsoul/nucleo/infraestructura/traductor_errores_backend.dart';
 
 import '../../../ayudantes/falsos_capsulas.dart';
 
@@ -120,6 +121,45 @@ void main() {
     expect(recuerdo.nombre, 'Te quiero');
   });
 
+  test('guarda música de catálogo sin subir a Cloudinary', () async {
+    const pista = ReferenciaMusica(
+      idExterno: 'track-1',
+      titulo: 'Vida',
+      artista: 'Artista',
+      urlCompleta: 'https://open.spotify.com/track/1',
+      previewUrl: 'https://p.mp3',
+      uriProfundo: 'spotify:track:1',
+    );
+    const musica = ElementoBorrador(
+      idLocal: 'm1',
+      tipo: TipoElemento.musica,
+      referenciaMusica: pista,
+    );
+    final recuerdo = await repositorio.crear(
+      NuevoRecuerdo(elemento: musica, fechaRecuerdo: ahora),
+    );
+
+    expect(medios.subidos, isEmpty);
+    expect(acceso.insertadas.single, {
+      'id': 'id-1',
+      'propietario_id': 'uid-123',
+      'tipo': 'musica',
+      'titulo': null,
+      'fecha_recuerdo': '2026-10-03',
+      'musica_proveedor': 'spotify',
+      'musica_id_externo': 'track-1',
+      'musica_titulo': 'Vida',
+      'musica_artista': 'Artista',
+      'musica_preview_url': 'https://p.mp3',
+      'musica_url_completa': 'https://open.spotify.com/track/1',
+      'musica_portada_url': null,
+      'musica_uri_profundo': 'spotify:track:1',
+      'duracion_segundos': 30,
+    });
+    expect(recuerdo.tipo, TipoElemento.musica);
+    expect(recuerdo.musica?.titulo, 'Vida');
+  });
+
   test('sube la foto y guarda sus datos con el título recortado', () async {
     final recuerdo = await repositorio.crear(
       NuevoRecuerdo(elemento: foto, fechaRecuerdo: ahora, titulo: ' Playa '),
@@ -146,18 +186,18 @@ void main() {
   });
 
   test('traduce cuota, CAP03, RLS y sesión', () async {
-    acceso.falloAlInsertar = const PostgrestException(
-      message: 'cuota',
-      code: 'CAP01',
+    acceso.falloAlInsertar = const ErrorPostgrest(
+      codigo: 'CAP01',
+      mensaje: 'cuota',
     );
     await expectLater(
       repositorio.crear(NuevoRecuerdo(elemento: nota, fechaRecuerdo: ahora)),
       throwsA(isA<FalloMedios>()),
     );
 
-    acceso.falloAlBorrar = const PostgrestException(
-      message: 'en capsula',
-      code: 'CAP03',
+    acceso.falloAlBorrar = const ErrorPostgrest(
+      codigo: 'CAP03',
+      mensaje: 'en capsula',
     );
     await expectLater(
       repositorio.eliminar('x'),
@@ -167,13 +207,13 @@ void main() {
 
     expect(
       RepositorioRecuerdosSupabase.traducirError(
-        const PostgrestException(message: 'rls', code: '42501'),
+        const ErrorPostgrest(codigo: '42501', mensaje: 'rls'),
       ),
       const FalloRecuerdo.permisoDenegado(),
     );
     expect(
       RepositorioRecuerdosSupabase.traducirError(
-        const PostgrestException(message: 'jwt', code: 'PGRST303'),
+        const ErrorPostgrest(codigo: 'PGRST303', mensaje: 'jwt'),
       ),
       const FalloRecuerdo.sesionVencida(),
     );

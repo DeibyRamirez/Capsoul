@@ -1,4 +1,5 @@
 import 'package:capsoul/funcionalidades/autenticacion/datos/repositorio_autenticacion_supabase.dart';
+import 'package:capsoul/nucleo/infraestructura/proveedores/supabase/cliente_autenticacion_supabase.dart';
 import 'package:capsoul/funcionalidades/autenticacion/dominio/fallo_autenticacion.dart';
 import 'package:capsoul/funcionalidades/autenticacion/dominio/usuario_app.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,7 +35,9 @@ void main() {
     auth = _GoTrueSimulado();
     usuario = _UsuarioSimulado();
     sesion = _SesionSimulada();
-    repositorio = RepositorioAutenticacionSupabase(auth: auth);
+    repositorio = RepositorioAutenticacionSupabase(
+      ClienteAutenticacionSupabase(auth: auth),
+    );
 
     when(() => usuario.id).thenReturn('uid-1');
     when(() => usuario.email).thenReturn('ana@capsoul.app');
@@ -265,12 +268,12 @@ void main() {
 
     test('respeta una URL de confirmación inyectada', () async {
       simularReenvio();
-      final otro = RepositorioAutenticacionSupabase(
-        auth: auth,
+      final cliente = ClienteAutenticacionSupabase(auth: auth);
+
+      await cliente.reenviarCorreoConfirmacion(
+        'ana@capsoul.app',
         urlConfirmacion: 'capsoul://auth/otra',
       );
-
-      await otro.reenviarCorreoConfirmacion('ana@capsoul.app');
 
       verify(
         () => auth.resend(

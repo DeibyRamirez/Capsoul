@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../elementos/dominio/tipo_elemento.dart';
+import '../../musica/dominio/referencia_musica.dart';
 
 /// Recuerdo del banco de recuerdos: una fila de `elementos` (foto, video,
 /// nota de voz o nota) que existe por sí sola y se puede agregar a cápsulas
@@ -21,6 +22,7 @@ class Recuerdo {
     this.ancho,
     this.alto,
     this.duracion,
+    this.musica,
   });
 
   final String id;
@@ -41,7 +43,12 @@ class Recuerdo {
   final int? alto;
   final Duration? duracion;
 
+  /// Catálogo Spotify: elemento `musica` o adjunto a una foto.
+  final ReferenciaMusica? musica;
+
   static const int _caracteresNombreNota = 40;
+
+  bool get tieneMusica => musica != null;
 
   /// Foto o video: tiene imagen (miniatura) y puede ser portada.
   bool get esVisual => tipo == TipoElemento.foto || tipo == TipoElemento.video;
@@ -50,6 +57,9 @@ class Recuerdo {
   String get nombre {
     final propio = titulo?.trim();
     if (propio != null && propio.isNotEmpty) return propio;
+    if (tipo == TipoElemento.musica && musica != null) {
+      return musica!.etiquetaCorta;
+    }
     if (tipo == TipoElemento.texto) {
       final primeraLinea = (contenidoTexto ?? '').trim().split('\n').first;
       if (primeraLinea.isEmpty) return tipo.etiqueta;
@@ -77,12 +87,13 @@ class Recuerdo {
           other.bytes == bytes &&
           other.ancho == ancho &&
           other.alto == alto &&
-          other.duracion == duracion;
+          other.duracion == duracion &&
+          other.musica == musica;
 
   @override
   int get hashCode => Object.hash(id, propietarioId, tipo, fechaRecuerdo,
       creadoEn, titulo, contenidoTexto, publicId, formato, bytes, ancho, alto,
-      duracion);
+      duracion, musica);
 
   @override
   String toString() => 'Recuerdo($id, ${tipo.valorBd})';

@@ -2,11 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/identificadores/generador_ids.dart';
-import '../../../nucleo/supabase/errores_postgrest.dart';
+import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
 import '../../recuerdos/datos/mapeo_recuerdos.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
 import '../dominio/fallo_momento.dart';
@@ -157,18 +156,19 @@ class RepositorioMomentosSupabase implements RepositorioMomentos {
   @visibleForTesting
   static FalloApp traducirError(Object error) {
     if (error is FalloApp) return error;
-    if (error is PostgrestException) {
-      switch (error.code) {
+    if (error is ErrorPostgrest) {
+      switch (error.codigo) {
         case codigoPortadaInvalida:
           return const FalloMomento.portadaInvalida();
-        case ErroresPostgrest.permisoDenegado:
+        case TraductorErroresBackend.permisoDenegado:
           return const FalloMomento.permisoDenegado();
         case '23514':
           return const FalloMomento.tituloInvalido();
-        case final codigo? when ErroresPostgrest.sesionInvalida.contains(codigo):
+        case final codigo?
+            when TraductorErroresBackend.sesionInvalida.contains(codigo):
           return const FalloMomento.sesionVencida();
       }
-      debugPrint('Capsoul: PostgrestException no esperada: $error');
+      debugPrint('Capsoul: ErrorPostgrest no esperado: $error');
       return const FalloMomento.desconocido();
     }
     if (error is SocketException || error is TimeoutException) {

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../nucleo/infraestructura/proveedores_infraestructura.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../elementos/aplicacion/proveedores_elementos.dart';
@@ -19,28 +20,26 @@ import '../dominio/repositorio_urls_medio.dart';
 import '../dominio/uso_medios.dart';
 import 'cargador_medios.dart';
 
-/// Repositorio del banco de recuerdos (se sobrescribe en pruebas).
 final proveedorRepositorioRecuerdos = Provider<RepositorioRecuerdos>((ref) {
   final autenticacion = ref.watch(proveedorRepositorioAutenticacion);
   return RepositorioRecuerdosSupabase(
-    acceso: AccesoTablasRecuerdosSupabase(),
+    acceso: AccesoTablasRecuerdosPostgrest(ref.watch(proveedorClientePostgrest)),
     medios: ref.watch(proveedorRepositorioMedios),
     uidActual: () => autenticacion.usuarioActual?.uid,
     reloj: ref.watch(proveedorReloj),
   );
 });
 
-/// Entrega segura de medios (se sobrescribe en pruebas). Se recrea al
-/// cambiar de usuario para no reutilizar URLs de otra sesión.
 final proveedorRepositorioUrlsMedio = Provider<RepositorioUrlsMedio>((ref) {
   ref.watch(
     proveedorEstadoAutenticacion.select((estado) => estado.value?.uid),
   );
-  return RepositorioUrlsMedioAgrupado(solicitar: solicitarUrlsMedioSupabase);
+  final funciones = ref.watch(proveedorClienteFuncionesApi);
+  return RepositorioUrlsMedioAgrupado(
+    solicitar: (ids) => solicitarUrlsMedio(funciones, ids),
+  );
 });
 
-/// Archivos de medios en el dispositivo (se sobrescribe en pruebas). Al
-/// cerrar sesión o cambiar de cuenta se vacían.
 final proveedorArchivosMedio = Provider<ArchivosMedio>((ref) {
   final archivos = ArchivosMedioDispositivo();
   ref.listen(
@@ -52,7 +51,6 @@ final proveedorArchivosMedio = Provider<ArchivosMedio>((ref) {
   return archivos;
 });
 
-/// Caché del dispositivo + enlaces firmados vigentes.
 final proveedorCargadorMedios = Provider<CargadorMedios>(
   (ref) => CargadorMedios(
     urls: ref.watch(proveedorRepositorioUrlsMedio),
@@ -60,14 +58,11 @@ final proveedorCargadorMedios = Provider<CargadorMedios>(
   ),
 );
 
-/// Archivo local de la variante pedida (`null` si no hay o falló).
 final proveedorArchivoMedio =
     FutureProvider.autoDispose.family<File?, SolicitudMedio>(
   (ref, solicitud) => ref.watch(proveedorCargadorMedios).archivo(solicitud),
 );
 
-/// Solicitud de la [variante] del medio de [recuerdo] o `null` si no tiene
-/// (notas, recuerdos sin subir o audio sin miniatura).
 SolicitudMedio? solicitudMedioDe(Recuerdo recuerdo, VarianteMedio variante) {
   final publicId = recuerdo.publicId;
   if (publicId == null) return null;
@@ -75,23 +70,19 @@ SolicitudMedio? solicitudMedioDe(Recuerdo recuerdo, VarianteMedio variante) {
   return (idRecuerdo: recuerdo.id, publicId: publicId, variante: variante);
 }
 
-/// Recuerdos propios que pasan el filtro.
 final proveedorRecuerdos = FutureProvider.autoDispose
     .family<List<Recuerdo>, FiltroRecuerdos>(
   (ref, filtro) => ref.watch(proveedorRepositorioRecuerdos).listar(filtro),
 );
 
-/// Un recuerdo por id.
 final proveedorRecuerdo = FutureProvider.autoDispose.family<Recuerdo?, String>(
   (ref, id) => ref.watch(proveedorRepositorioRecuerdos).obtener(id),
 );
 
-/// Espacio usado de la cuota de 200 MB.
 final proveedorUsoMedios = FutureProvider.autoDispose<UsoMedios>(
   (ref) => ref.watch(proveedorRepositorioRecuerdos).leerUsoMedios(),
 );
 
-/// Filtro elegido en la pantalla Recuerdos.
 class ControladorFiltroRecuerdos extends Notifier<FiltroRecuerdos> {
   @override
   FiltroRecuerdos build() => FiltroRecuerdos.todos;

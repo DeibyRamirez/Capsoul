@@ -11,6 +11,8 @@ abstract final class RutasApp {
   static const String crearAudio = '/crear/audio';
   static const String crearEscribir = '/crear/escribir';
   static const String crearFoto = '/crear/foto';
+  static const String crearMusica = '/crear/musica';
+  static const String elegirMusica = '/recuerdos/elegir-musica';
   static const String crearCapsula = '/crear/capsula';
   static const String capsulas = '/capsulas';
   static const String recuerdos = '/recuerdos';

@@ -8,6 +8,8 @@ import '../../../../nucleo/tema/tema_app.dart';
 import '../../../elementos/dominio/elemento_borrador.dart';
 import '../../../elementos/dominio/tipo_elemento.dart';
 import '../../../elementos/dominio/validador_medios.dart';
+import '../../../musica/dominio/referencia_musica.dart';
+import '../../../musica/presentacion/componentes/reproductor_preview_musica.dart';
 
 /// Vista previa grande de lo recién capturado (antes de guardarlo).
 class VistaPreviaBorrador extends StatelessWidget {
@@ -51,10 +53,14 @@ class VistaPreviaBorrador extends StatelessWidget {
             ),
           ),
         ),
+      TipoElemento.musica => _VistaMusicaBorrador(
+          referencia: elemento.referenciaMusica,
+        ),
     };
     final detalle = switch (elemento.tipo) {
       TipoElemento.texto => '${contarCaracteres(elemento.texto ?? '')} caracteres',
       TipoElemento.foto => formatearBytes(elemento.bytes),
+      TipoElemento.musica => elemento.referenciaMusica?.etiquetaCorta ?? 'Música',
       TipoElemento.video || TipoElemento.audio =>
         '${formatearDuracion(duracion ?? Duration.zero)} · '
             '${formatearBytes(elemento.bytes)}',
@@ -82,6 +88,41 @@ class VistaPreviaBorrador extends StatelessWidget {
         Text(
           '${elemento.tipo.etiqueta} · $detalle',
           style: const TextStyle(color: ColoresApp.atenuado),
+        ),
+        if (elemento.tipo == TipoElemento.foto &&
+            elemento.referenciaMusica != null) ...[
+          const SizedBox(height: 12),
+          ReproductorPreviewMusica(referencia: elemento.referenciaMusica!),
+        ],
+      ],
+    );
+  }
+}
+
+class _VistaMusicaBorrador extends StatelessWidget {
+  const _VistaMusicaBorrador({required this.referencia});
+
+  final ReferenciaMusica? referencia;
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = referencia;
+    if (ref == null) return const _Icono(Icons.music_note_outlined);
+    final url = ref.portadaUrl;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (url != null)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(url, width: 120, height: 120, fit: BoxFit.cover),
+          )
+        else
+          const _Icono(Icons.album_outlined),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ReproductorPreviewMusica(referencia: ref),
         ),
       ],
     );

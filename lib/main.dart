@@ -5,7 +5,7 @@ import 'app_capsoul.dart';
 import 'nucleo/arranque/app_error_arranque.dart';
 import 'nucleo/firebase/arranque_firebase.dart';
 import 'nucleo/firebase/servicio_notificaciones_push.dart';
-import 'nucleo/supabase/arranque_supabase.dart';
+import 'nucleo/infraestructura/arranque_backend.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,9 +16,9 @@ Future<void> main() async {
     debugPrint('Capsoul: sigue sin Firebase (sin notificaciones push).');
   }
 
-  final problemaSupabase = await inicializarSupabase();
-  if (problemaSupabase != null) {
-    runApp(AppErrorArranque(detalle: problemaSupabase));
+  final problemaBackend = await inicializarBackend();
+  if (problemaBackend != null) {
+    runApp(AppErrorArranque(detalle: problemaBackend));
     return;
   }
   runApp(const ProviderScope(child: AppCapsoul()));

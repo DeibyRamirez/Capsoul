@@ -7,7 +7,7 @@ import 'package:capsoul/funcionalidades/elementos/dominio/fallo_medios.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:capsoul/nucleo/infraestructura/traductor_errores_backend.dart';
 
 import '../../../ayudantes/falsos_recuerdos.dart';
 
@@ -127,10 +127,10 @@ void main() {
   });
 
   test('si la cápsula no se inserta, no hay nada que deshacer', () async {
-    acceso.falloEnCapsula = const PostgrestException(
-      message: 'new row violates row-level security policy for table '
+    acceso.falloEnCapsula = const ErrorPostgrest(
+      mensaje: 'new row violates row-level security policy for table '
           '"capsulas"',
-      code: '42501',
+      codigo: '42501',
     );
 
     await expectLater(
@@ -145,9 +145,9 @@ void main() {
   });
 
   test('si fallan los enlaces, borra solo la cápsula', () async {
-    acceso.falloEnEnlaces = const PostgrestException(
-      message: 'máximo de elementos',
-      code: 'CAP02',
+    acceso.falloEnEnlaces = const ErrorPostgrest(
+      mensaje: 'máximo de elementos',
+      codigo: 'CAP02',
     );
 
     await expectLater(
@@ -165,61 +165,61 @@ void main() {
     test('cuota (CAP01), permisos, fecha y check', () {
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'cuota', code: 'CAP01'),
+          ErrorPostgrest(mensaje: 'cuota', codigo: 'CAP01'),
         ).codigo,
         FalloMedios.codigoCuotaExcedida,
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'x', code: '42501'),
+          ErrorPostgrest(mensaje: 'x', codigo: '42501'),
         ).codigo,
         FalloCapsula.codigoPermisoDenegado,
       );
       // El mensaje dice qué tabla rechazó la fila (antes siempre "cápsula").
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(
-            message: 'new row violates row-level security policy for table '
+          ErrorPostgrest(
+            mensaje: 'new row violates row-level security policy for table '
                 '"elementos"',
-            code: '42501',
+            codigo: '42501',
           ),
         ).mensaje,
         'No tienes permiso para guardar o cambiar este recuerdo.',
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(
-            message: 'new row violates row-level security policy for table '
+          ErrorPostgrest(
+            mensaje: 'new row violates row-level security policy for table '
                 '"capsula_elementos"',
-            code: '42501',
+            codigo: '42501',
           ),
         ).codigo,
         FalloCapsula.codigoPermisoEnlace,
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'JWT expired', code: 'PGRST301'),
+          ErrorPostgrest(mensaje: 'JWT expired', codigo: 'PGRST301'),
         ).codigo,
         FalloCapsula.codigoSesionVencida,
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(
-            message: 'La fecha de apertura debe estar en el futuro',
-            code: 'P0001',
+          ErrorPostgrest(
+            mensaje: 'La fecha de apertura debe estar en el futuro',
+            codigo: 'P0001',
           ),
         ).codigo,
         FalloCapsula.codigoFechaInvalida,
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'x', code: '23514'),
+          ErrorPostgrest(mensaje: 'x', codigo: '23514'),
         ).codigo,
         'dato_invalido',
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'fk', code: '23503'),
+          ErrorPostgrest(mensaje: 'fk', codigo: '23503'),
         ).codigo,
         'recuerdo_no_existe',
       );

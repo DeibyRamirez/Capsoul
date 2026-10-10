@@ -1,3 +1,4 @@
+import '../../musica/dominio/referencia_musica.dart';
 import 'tipo_elemento.dart';
 
 /// Elemento capturado en el teléfono, ya comprimido y validado, que todavía
@@ -14,6 +15,7 @@ class ElementoBorrador {
     this.alto,
     this.formato,
     this.muestrasOnda = const [],
+    this.referenciaMusica,
   });
 
   /// Identificador solo local (clave estable en listas).
@@ -36,6 +38,29 @@ class ElementoBorrador {
 
   /// Niveles 0..1 de la grabación de audio para dibujar la onda.
   final List<double> muestrasOnda;
+
+  /// Pista de catálogo: elemento `musica` o música adjunta a una foto.
+  final ReferenciaMusica? referenciaMusica;
+
+  ElementoBorrador copiarCon({
+    ReferenciaMusica? referenciaMusica,
+    bool quitarMusica = false,
+  }) =>
+      ElementoBorrador(
+        idLocal: idLocal,
+        tipo: tipo,
+        rutaArchivo: rutaArchivo,
+        texto: texto,
+        bytes: bytes,
+        duracion: duracion,
+        ancho: ancho,
+        alto: alto,
+        formato: formato,
+        muestrasOnda: muestrasOnda,
+        referenciaMusica: quitarMusica
+            ? null
+            : (referenciaMusica ?? this.referenciaMusica),
+      );
 
   static int _contador = 0;
 

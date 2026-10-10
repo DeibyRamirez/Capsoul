@@ -1,0 +1,11 @@
+# Configuración mínima del CLI (proyecto enlazado: mslcdvcmfuqopfwojxvt).
+project_id = "mslcdvcmfuqopfwojxvt"
+
+[functions.buscar-musica]
+verify_jwt = true
+
+[functions.firmar-subida]
+verify_jwt = true
+
+[functions.firmar-medio]
+verify_jwt = true

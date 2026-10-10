@@ -90,7 +90,7 @@ abstract final class TemaApp {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: ColoresApp.sobrePrimario,
+        fillColor: ColoresApp.tarjeta,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,

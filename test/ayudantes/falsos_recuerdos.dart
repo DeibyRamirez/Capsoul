@@ -30,8 +30,8 @@ Recuerdo recuerdoPrueba(
     creadoEn: dia,
     titulo: titulo,
     contenidoTexto: tipo == TipoElemento.texto ? (texto ?? 'Nota $id') : null,
-    publicId: tipo == TipoElemento.texto ? null : 'capsoul/$id',
-    bytes: tipo == TipoElemento.texto ? null : 1000,
+    publicId: tipo.usaCloudinary ? 'capsoul/$id' : null,
+    bytes: tipo.usaCloudinary ? 1000 : null,
   );
 }
 

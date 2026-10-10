@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
+
 import '../../elementos/dominio/tipo_elemento.dart';
+import '../../musica/dominio/referencia_musica.dart';
 import '../dominio/recuerdo.dart';
 
 /// Columnas de `elementos` que la app lee (también en selects anidados de
@@ -6,7 +9,9 @@ import '../dominio/recuerdo.dart';
 const String columnasRecuerdo =
     'id, propietario_id, tipo, titulo, fecha_recuerdo, creado_en, '
     'contenido_texto, cloudinary_public_id, formato, bytes, ancho, alto, '
-    'duracion_segundos';
+    'duracion_segundos, musica_proveedor, musica_id_externo, musica_titulo, '
+    'musica_artista, musica_preview_url, musica_url_completa, musica_portada_url, '
+    'musica_uri_profundo, musica_enlace_deezer';
 
 /// `2026-10-03` (fecha local, sin hora) para la columna `date`.
 String fechaParaBd(DateTime fecha) {
@@ -38,6 +43,14 @@ Recuerdo? recuerdoDesdeFila(Object? datos) {
   final fecha = fechaDesdeBd(datos['fecha_recuerdo']) ??
       DateTime(creadoEn.year, creadoEn.month, creadoEn.day);
   final duracion = datos['duracion_segundos'];
+  final musica = ReferenciaMusica.desdeFilaBd(
+    Map<dynamic, dynamic>.from(datos),
+  );
+  if (tipo == TipoElemento.musica && musica == null) {
+    debugPrint(
+      'recuerdoDesdeFila: tipo musica sin metadatos musica (id=$id)',
+    );
+  }
   return Recuerdo(
     id: id,
     propietarioId: propietario,
@@ -56,6 +69,7 @@ Recuerdo? recuerdoDesdeFila(Object? datos) {
         : (duracion is String
             ? _duracionDesdeTexto(duracion)
             : null),
+    musica: musica,
   );
 }
 

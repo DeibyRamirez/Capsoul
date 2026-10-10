@@ -28,6 +28,7 @@ import '../../funcionalidades/perfil/presentacion/pantalla_perfil.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_detalle_recuerdo.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_elegir_recuerdos.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_guardar_recuerdo.dart';
+import '../../funcionalidades/musica/presentacion/pantalla_buscar_musica.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_recuerdos.dart';
 import 'rutas_app.dart';
 
@@ -207,6 +208,11 @@ GoRouter crearEnrutadorApp({
             name: 'crear-foto',
             builder: (context, state) => const PantallaCapturarFoto(),
           ),
+          GoRoute(
+            path: 'musica',
+            name: 'crear-musica',
+            builder: (context, state) => const PantallaBuscarMusica(),
+          ),
         ],
       ),
       GoRoute(
@@ -231,6 +237,12 @@ GoRouter crearEnrutadorApp({
         builder: (context, state) => const PantallaRecuerdos(),
         routes: [
           // Las rutas fijas van antes de `:id`.
+          GoRoute(
+            path: 'elegir-musica',
+            name: 'elegir-musica',
+            builder: (context, state) =>
+                const PantallaBuscarMusica(soloSeleccion: true),
+          ),
           GoRoute(
             path: 'guardar',
             name: 'guardar-recuerdo',

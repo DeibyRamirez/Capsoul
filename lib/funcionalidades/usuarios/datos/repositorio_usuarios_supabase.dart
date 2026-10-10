@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
 
 import '../dominio/fallo_perfil_usuario.dart';
 import '../dominio/perfil_usuario.dart';
@@ -91,17 +91,18 @@ class RepositorioUsuariosSupabase implements RepositorioUsuarios {
 
   static FalloPerfilUsuario _traducirError(Object error) {
     if (error is FalloPerfilUsuario) return error;
-    if (error is PostgrestException) {
-      final codigo = switch (error.code) {
-        // insufficient_privilege (GRANT/RLS) y JWT inválido o vencido.
-        '42501' || 'PGRST301' || 'PGRST302' || 'PGRST303' =>
+    if (error is ErrorPostgrest) {
+      final codigo = switch (error.codigo) {
+        TraductorErroresBackend.permisoDenegado ||
+        'PGRST301' ||
+        'PGRST302' ||
+        'PGRST303' =>
           FalloPerfilUsuario.codigoPermisoDenegado,
-        // check_violation (p. ej. nombre_visible fuera de 1..60).
         '23514' => FalloPerfilUsuario.codigoDatoInvalido,
         _ => FalloPerfilUsuario.codigoDesconocido,
       };
       if (codigo == FalloPerfilUsuario.codigoDesconocido) {
-        debugPrint('Capsoul: PostgrestException no esperada: $error');
+        debugPrint('Capsoul: ErrorPostgrest no esperado: $error');
       }
       return FalloPerfilUsuario.desdeCodigo(codigo);
     }

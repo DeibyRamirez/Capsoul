@@ -4,12 +4,12 @@ import 'colores_app.dart';
 
 /// Degradados de marca reutilizables en fondos de pantalla.
 abstract final class DegradadosCapsoul {
-  /// Inicio, tabs y listas: acento tenue arriba → superficie.
+  /// Inicio y zonas hero: tinte muy leve arriba → superficie (sin banda blanca al final).
   static const LinearGradient suave = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Color(0x2E3D6B9A), // acento @ 18%
+      Color(0xFFEBF0F6),
       ColoresApp.superficie,
     ],
   );

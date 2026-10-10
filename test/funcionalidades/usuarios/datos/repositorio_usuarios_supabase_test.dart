@@ -3,7 +3,7 @@ import 'package:capsoul/funcionalidades/usuarios/datos/repositorio_usuarios_supa
 import 'package:capsoul/funcionalidades/usuarios/dominio/fallo_perfil_usuario.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:capsoul/nucleo/infraestructura/traductor_errores_backend.dart';
 
 class _AccesoSimulado extends Mock implements AccesoTablaUsuarios {}
 
@@ -106,7 +106,7 @@ void main() {
 
   test('un 42501 de Postgres se traduce a permiso_denegado', () {
     when(() => acceso.actualizarNombreVisible(any(), any())).thenThrow(
-      const PostgrestException(message: 'permission denied', code: '42501'),
+      const ErrorPostgrest(mensaje: 'permission denied', codigo: '42501'),
     );
 
     expect(
@@ -117,7 +117,7 @@ void main() {
 
   test('un CHECK violado se traduce a dato_invalido', () {
     when(() => acceso.actualizarNombreVisible(any(), any())).thenThrow(
-      const PostgrestException(message: 'check violation', code: '23514'),
+      const ErrorPostgrest(mensaje: 'check violation', codigo: '23514'),
     );
 
     expect(

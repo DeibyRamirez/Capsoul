@@ -20,6 +20,7 @@ class BotonesAgregarElemento extends StatelessWidget {
     TipoElemento.video: Icons.videocam_outlined,
     TipoElemento.audio: Icons.mic_none_outlined,
     TipoElemento.texto: Icons.edit_outlined,
+    TipoElemento.musica: Icons.music_note_outlined,
   };
 
   @override

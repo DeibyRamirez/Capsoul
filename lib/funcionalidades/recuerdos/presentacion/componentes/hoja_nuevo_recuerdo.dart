@@ -5,6 +5,7 @@ import '../../../../nucleo/enrutador/rutas_app.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../elementos/dominio/elemento_borrador.dart';
 import '../../../elementos/dominio/tipo_elemento.dart';
+import '../../../musica/dominio/referencia_musica.dart';
 import '../../dominio/recuerdo.dart';
 
 /// Ruta de la pantalla de captura de cada tipo.
@@ -13,6 +14,7 @@ String rutaCaptura(TipoElemento tipo) => switch (tipo) {
       TipoElemento.video => RutasApp.crearVideo,
       TipoElemento.audio => RutasApp.crearAudio,
       TipoElemento.texto => RutasApp.crearEscribir,
+      TipoElemento.musica => RutasApp.crearMusica,
     };
 
 IconData iconoDeTipo(TipoElemento tipo) => switch (tipo) {
@@ -20,6 +22,7 @@ IconData iconoDeTipo(TipoElemento tipo) => switch (tipo) {
       TipoElemento.video => Icons.videocam_outlined,
       TipoElemento.audio => Icons.mic_none_outlined,
       TipoElemento.texto => Icons.edit_outlined,
+      TipoElemento.musica => Icons.music_note_outlined,
     };
 
 /// Captura un elemento de [tipo] y abre "Guardar recuerdo". Devuelve el
@@ -28,7 +31,18 @@ Future<Recuerdo?> capturarRecuerdo(
   BuildContext context,
   TipoElemento tipo,
 ) async {
-  final borrador = await context.push<ElementoBorrador>(rutaCaptura(tipo));
+  final ElementoBorrador? borrador;
+  if (tipo == TipoElemento.musica) {
+    final ref = await context.push<ReferenciaMusica>(RutasApp.crearMusica);
+    if (ref == null || !context.mounted) return null;
+    borrador = ElementoBorrador(
+      idLocal: ElementoBorrador.nuevoIdLocal(),
+      tipo: TipoElemento.musica,
+      referenciaMusica: ref,
+    );
+  } else {
+    borrador = await context.push<ElementoBorrador>(rutaCaptura(tipo));
+  }
   if (borrador == null || !context.mounted) return null;
   return context.push<Recuerdo>(RutasApp.guardarRecuerdo, extra: borrador);
 }

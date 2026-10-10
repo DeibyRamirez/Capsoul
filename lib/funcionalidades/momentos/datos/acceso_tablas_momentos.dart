@@ -1,18 +1,13 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
+import '../../../nucleo/infraestructura/cliente_postgrest.dart';
 import '../../recuerdos/datos/mapeo_recuerdos.dart';
 
-/// Capa mínima sobre PostgREST para `momentos` y `momento_elementos` (se
-/// simula en pruebas).
 abstract interface class AccesoTablasMomentos {
-  /// Inserta el momento (ya trae su `id`; sin RETURNING).
   Future<void> insertarMomento(Map<String, dynamic> fila);
 
   Future<void> insertarEnlaces(List<Map<String, dynamic>> filas);
 
   Future<void> actualizarPortada(String id, String? elementoId);
 
-  /// Devuelve cuántas filas se borraron (0 si RLS lo impidió).
   Future<int> eliminarMomento(String id);
 
   Future<List<Map<String, dynamic>>> listarDeAutor(String autorId);
@@ -20,9 +15,8 @@ abstract interface class AccesoTablasMomentos {
   Future<Map<String, dynamic>?> leerConRecuerdos(String id);
 }
 
-class AccesoTablasMomentosSupabase implements AccesoTablasMomentos {
-  AccesoTablasMomentosSupabase({SupabaseClient? cliente})
-      : _clienteInyectado = cliente;
+class AccesoTablasMomentosPostgrest implements AccesoTablasMomentos {
+  AccesoTablasMomentosPostgrest(this._cliente);
 
   static const String columnasMomento =
       'id, autor_id, titulo, texto, creado_en, '
@@ -36,32 +30,32 @@ class AccesoTablasMomentosSupabase implements AccesoTablasMomentos {
 
   static const int limiteLista = 100;
 
-  final SupabaseClient? _clienteInyectado;
-
-  SupabaseClient get _cliente => _clienteInyectado ?? Supabase.instance.client;
+  final ClientePostgrest _cliente;
 
   @override
   Future<void> insertarMomento(Map<String, dynamic> fila) async {
-    await _cliente.from('momentos').insert(fila);
+    await _cliente.from('momentos').insertar(fila);
   }
 
   @override
   Future<void> insertarEnlaces(List<Map<String, dynamic>> filas) async {
     if (filas.isEmpty) return;
-    await _cliente.from('momento_elementos').insert(filas);
+    await _cliente.from('momento_elementos').insertarMuchos(filas);
   }
 
   @override
   Future<void> actualizarPortada(String id, String? elementoId) async {
     await _cliente
         .from('momentos')
-        .update({'portada_elemento_id': elementoId}).eq('id', id);
+        .actualizar({'portada_elemento_id': elementoId})
+        .eq('id', id)
+        .ejecutar();
   }
 
   @override
   Future<int> eliminarMomento(String id) async {
     final borradas =
-        await _cliente.from('momentos').delete().eq('id', id).select('id');
+        await _cliente.from('momentos').eliminar().eq('id', id).select('id');
     return borradas.length;
   }
 
@@ -69,17 +63,18 @@ class AccesoTablasMomentosSupabase implements AccesoTablasMomentos {
   Future<List<Map<String, dynamic>>> listarDeAutor(String autorId) {
     return _cliente
         .from('momentos')
-        .select(columnasListado)
+        .seleccionar(columnasListado)
         .eq('autor_id', autorId)
-        .order('creado_en', ascending: false)
-        .limit(limiteLista);
+        .order('creado_en', ascendente: false)
+        .limit(limiteLista)
+        .ejecutar();
   }
 
   @override
   Future<Map<String, dynamic>?> leerConRecuerdos(String id) {
     return _cliente
         .from('momentos')
-        .select(columnasDetalle)
+        .seleccionar(columnasDetalle)
         .eq('id', id)
         .maybeSingle();
   }

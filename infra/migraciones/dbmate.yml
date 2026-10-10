@@ -1,0 +1,9 @@
+# Configuración de dbmate para aplicar las migraciones SQL de Capsoul
+# en un VPS con PostgreSQL. Ver docs/migraciones.md.
+#
+# Uso:
+#   export DATABASE_URL="postgres://usuario:clave@host:5432/capsoul?sslmode=disable"
+#   dbmate -d infra/migraciones/db up
+
+schema_file: infra/migraciones/schema.sql
+migrations_dir: infra/migraciones/sql

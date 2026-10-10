@@ -30,6 +30,12 @@ class MiniaturaRecuerdo extends StatelessWidget {
         ?imagenFirmada,
         if (recuerdo.tipo == TipoElemento.video)
           Center(child: _IconoReproducir(tamano: tamanoIcono)),
+        if (recuerdo.tieneMusica)
+          const Positioned(
+            right: 6,
+            top: 6,
+            child: Icon(Icons.music_note, color: ColoresApp.sobrePrimario, size: 20),
+          ),
       ],
     );
   }
@@ -73,6 +79,7 @@ class _Fondo extends StatelessWidget {
             ),
           ),
         ),
+      TipoElemento.musica => _PortadaMusica(recuerdo: recuerdo, tamanoIcono: tamanoIcono),
       TipoElemento.foto || TipoElemento.video => DecoratedBox(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -91,6 +98,31 @@ class _Fondo extends StatelessWidget {
         ),
     };
   }
+}
+
+class _PortadaMusica extends StatelessWidget {
+  const _PortadaMusica({required this.recuerdo, required this.tamanoIcono});
+
+  final Recuerdo recuerdo;
+  final double tamanoIcono;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = recuerdo.musica?.portadaUrl;
+    if (url != null) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _iconoFallback(tamanoIcono),
+      );
+    }
+    return _iconoFallback(tamanoIcono);
+  }
+
+  Widget _iconoFallback(double tamano) => ColoredBox(
+        color: ColoresApp.acento.withValues(alpha: 0.2),
+        child: Icon(Icons.music_note, size: tamano, color: ColoresApp.primario),
+      );
 }
 
 class _IconoReproducir extends StatelessWidget {

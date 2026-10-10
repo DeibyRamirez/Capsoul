@@ -20,8 +20,9 @@ Referencias visuales: `pantalla_inicio.dart`, `pantalla_detalle_capsula.dart`.
 |-------|-----|-----|
 | `ColoresApp.primario` | `#1B2A4A` | AppBar, chips de icono, botones filled, texto principal |
 | `ColoresApp.acento` | `#3D6B9A` | FAB, enlaces, degradados, indicador de navegación |
-| `ColoresApp.superficie` | `#F5F7FA` | Fondo plano, final del degradado suave |
-| `ColoresApp.sobrePrimario` | `#FFFFFF` | Texto sobre primario, tarjetas, campos |
+| `ColoresApp.superficie` | `#F5F7FA` | Fondo plano por defecto en pantallas estándar |
+| `ColoresApp.tarjeta` | `#FFFFFF` | Campos rellenos y tarjetas sobre `superficie` |
+| `ColoresApp.sobrePrimario` | `#FFFFFF` | Texto sobre primario |
 | `ColoresApp.sobreSuperficie` | `#1A1A2E` | Texto sobre superficie clara |
 | `ColoresApp.atenuado` | `#6B7280` | Subtítulos, metadatos |
 | `ColoresApp.vidrioCupula` | `#33FFFFFF` | Efectos de vidrio |
@@ -67,14 +68,14 @@ Implementados en `DegradadosCapsoul` y `FondoCapsoul`.
 
 ### 2. Suave (`FondoCapsoulTipo.suave`)
 
-- Gradiente: `acento @ 18% → superficie`.
+- Gradiente muy sutil: `#EBF0F6 → superficie` (sin salto a blanco puro al final del scroll).
 - Sin partículas (rendimiento).
-- **Dónde:** Inicio, tabs (Momentos, Perfil, Legado), listas, formularios.
+- **Dónde:** Inicio y pantallas que pasen `tipoFondo: suave` explícitamente.
 
 ### 3. Plano (`FondoCapsoulTipo.plano`)
 
-- Color sólido `superficie` o negro según contexto.
-- **Dónde:** captura de cámara/audio, notas (UI funcional).
+- Color sólido `superficie`.
+- **Dónde:** default de `PantallaCapsoul`, formularios (guardar recuerdo), captura, notas.
 
 ---
 

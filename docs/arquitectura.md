@@ -3,7 +3,9 @@
 > Versión 2.0 · 2026-10-02 · Reemplaza la versión basada en Firebase (Auth, Firestore, Storage y Cloud Functions).
 > Decisión del PO: **Supabase** (Auth, Postgres con RLS, RPC, Edge Functions, Cron) + **Cloudinary** (medios privados).
 > **Firebase queda solo para FCM**, en plan **Spark**. Modelo de datos: [`docs/modelo_er.md`](modelo_er.md).
-> Migraciones: [`supabase/migrations/`](../supabase/migrations/).
+> Migraciones: [`supabase/migrations/`](../supabase/migrations/) · VPS: [`docs/migraciones.md`](migraciones.md).
+> Infraestructura desacoplada en [`lib/nucleo/infraestructura/`](../lib/nucleo/infraestructura/) (`BACKEND=supabase|vps`).
+> API VPS documentada en [`api/openapi.yaml`](../api/openapi.yaml).
 
 ## 1. Vista general
 

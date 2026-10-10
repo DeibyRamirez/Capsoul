@@ -2,11 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/identificadores/generador_ids.dart';
-import '../../../nucleo/supabase/errores_postgrest.dart';
+import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
 import '../../elementos/dominio/fallo_medios.dart';
 import '../../recuerdos/datos/mapeo_recuerdos.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
@@ -177,19 +176,20 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   @visibleForTesting
   static FalloApp traducirError(Object error) {
     if (error is FalloApp) return error;
-    if (error is PostgrestException) {
-      switch (error.code) {
+    if (error is ErrorPostgrest) {
+      switch (error.codigo) {
         case codigoCuotaExcedida:
           return const FalloMedios.cuotaExcedida();
         case codigoMaximoElementos:
           return const FalloCapsula.demasiadosElementos();
-        case ErroresPostgrest.permisoDenegado:
+        case TraductorErroresBackend.permisoDenegado:
           return falloPermisoPorTabla(
-            ErroresPostgrest.tablaDeViolacionRls(error.message),
+            TraductorErroresBackend.tablaDeViolacionRls(error.mensaje),
           );
-        case final codigo? when ErroresPostgrest.sesionInvalida.contains(codigo):
+        case final codigo?
+            when TraductorErroresBackend.sesionInvalida.contains(codigo):
           return const FalloCapsula.sesionVencida();
-        case 'P0001' when error.message.contains('fecha de apertura'):
+        case 'P0001' when error.mensaje.contains('fecha de apertura'):
           return const FalloCapsula.fechaInvalida();
         case '23514':
           return const FalloCapsula(
@@ -202,7 +202,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
             'Uno de los recuerdos ya no existe. Quítalo y vuelve a intentarlo.',
           );
       }
-      debugPrint('Capsoul: PostgrestException no esperada: $error');
+      debugPrint('Capsoul: ErrorPostgrest no esperado: $error');
       return const FalloCapsula.desconocido();
     }
     if (error is SocketException || error is TimeoutException) {

@@ -1,28 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../nucleo/infraestructura/cliente_funciones_api.dart';
 import '../dominio/cache_enlaces_medio.dart';
 import '../dominio/enlace_medio.dart';
 import '../dominio/repositorio_urls_medio.dart';
 import '../dominio/url_medio.dart';
 
-/// Pide a `firmar-medio` las URLs de varios recuerdos de una vez.
 typedef SolicitarUrlsMedio = Future<List<UrlMedio>> Function(List<String> ids);
 
-/// [RepositorioUrlsMedio] que reutiliza los enlaces vigentes de
-/// [CacheEnlacesMedio] (por `public_id` y variante) y, para los que faltan o
-/// están por vencer, junta en una sola llamada los ids pedidos en el mismo
-/// ciclo (una rejilla entera).
 class RepositorioUrlsMedioAgrupado implements RepositorioUrlsMedio {
   RepositorioUrlsMedioAgrupado({
-    required this._solicitar,
+    required SolicitarUrlsMedio solicitar,
     DateTime Function()? reloj,
     CacheEnlacesMedio? cache,
-  }) : cache = cache ?? CacheEnlacesMedio(reloj: reloj);
+  })  : _solicitar = solicitar,
+        cache = cache ?? CacheEnlacesMedio(reloj: reloj);
 
-  /// Máximo de ids por llamada (igual que la Edge Function).
   static const int maximoPorLlamada = 60;
 
   final SolicitarUrlsMedio _solicitar;
@@ -51,8 +46,6 @@ class RepositorioUrlsMedioAgrupado implements RepositorioUrlsMedio {
     _publicIdsPendientes[idRecuerdo] = publicId;
     if (!_programado) {
       _programado = true;
-      // Timer de 0: corre después de que el frame actual pida todas sus
-      // miniaturas.
       Timer(Duration.zero, _enviar);
     }
     return completer.future;
@@ -90,16 +83,8 @@ class RepositorioUrlsMedioAgrupado implements RepositorioUrlsMedio {
   }
 }
 
-/// Llama a la Edge Function `firmar-medio` con el JWT de la sesión.
-Future<List<UrlMedio>> solicitarUrlsMedioSupabase(
-  List<String> ids, {
-  SupabaseClient? cliente,
-}) async {
-  final respuesta = await (cliente ?? Supabase.instance.client)
-      .functions
-      .invoke('firmar-medio', body: {'elemento_ids': ids});
-  final datos = respuesta.data;
-  final medios = datos is Map ? datos['medios'] : null;
-  if (medios is! List) return const [];
-  return [for (final medio in medios) ?UrlMedio.desdeJson(medio)];
-}
+Future<List<UrlMedio>> solicitarUrlsMedio(
+  ClienteFuncionesApi funciones,
+  List<String> ids,
+) =>
+    funciones.firmarMedio(ids);

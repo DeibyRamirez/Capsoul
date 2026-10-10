@@ -26,6 +26,9 @@
 | Escribir nota | Usuario | `pantalla_escribir_nota.dart` | `RepositorioRecuerdosSupabase` |
 | Ver banco de recuerdos | Usuario | `pantalla_recuerdos.dart` | `RepositorioRecuerdosSupabase` |
 | Ver detalle de recuerdo | Usuario | `pantalla_detalle_recuerdo.dart` | `RepositorioUrlsMedio` + `firmar-medio` |
+| Buscar y guardar música | Usuario | `pantalla_buscar_musica.dart` | `buscar-musica` + `RepositorioRecuerdosSupabase` |
+| Añadir música a una foto | Usuario | `pantalla_guardar_recuerdo.dart` | Mismos metadatos `musica_*` en `elementos` |
+| Escuchar preview / abrir en Spotify | Usuario | detalle del recuerdo | `just_audio` + `url_launcher` |
 
 ## Momentos
 

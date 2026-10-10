@@ -105,3 +105,12 @@ sequenceDiagram
 | **Momentos** | Feed vertical: cada tarjeta = un momento con carrusel horizontal de recuerdos |
 
 Ambas leen `proveedorMomentos`; el filtro en memoria (`proveedorFiltroMomentos`) solo aplica en Perfil.
+
+## 7. Música (Spotify, elemento `musica`)
+
+1. La app invoca la Edge Function `buscar-musica` (JWT del usuario).
+2. El servidor obtiene un token Spotify (Client Credentials) y devuelve metadatos + `previewUrl`.
+3. El usuario guarda un recuerdo `musica` o adjunta la pista a una `foto` (columnas `musica_*` en `elementos`).
+4. La reproducción en la app usa `preview_url`; “Escuchar completa” abre Spotify (`url_launcher`).
+
+**Archivos:** `funcionalidades/musica/`, migración `20261005000005_capsoul_musica.sql`, `supabase/functions/buscar-musica/`

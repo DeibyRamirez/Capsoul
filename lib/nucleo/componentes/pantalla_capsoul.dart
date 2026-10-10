@@ -7,7 +7,7 @@ class PantallaCapsoul extends StatelessWidget {
   const PantallaCapsoul({
     super.key,
     required this.cuerpo,
-    this.tipoFondo = FondoCapsoulTipo.suave,
+    this.tipoFondo = FondoCapsoulTipo.plano,
     this.mostrarCieloAnimado = false,
     this.brilloCielo = 1,
     this.appBar,

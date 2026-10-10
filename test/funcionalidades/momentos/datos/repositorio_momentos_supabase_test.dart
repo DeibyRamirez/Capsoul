@@ -4,7 +4,7 @@ import 'package:capsoul/funcionalidades/momentos/datos/repositorio_momentos_supa
 import 'package:capsoul/funcionalidades/momentos/dominio/fallo_momento.dart';
 import 'package:capsoul/funcionalidades/momentos/dominio/nuevo_momento.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:capsoul/nucleo/infraestructura/traductor_errores_backend.dart';
 
 import '../../../ayudantes/falsos_recuerdos.dart';
 
@@ -91,7 +91,7 @@ void main() {
 
   test('si falla la portada (CAP04) borra el momento', () async {
     acceso.falloEnPortada =
-        const PostgrestException(message: 'portada', code: 'CAP04');
+        const ErrorPostgrest(mensaje: 'portada', codigo: 'CAP04');
     await expectLater(
       repositorio.crear(NuevoMomento(
         titulo: 'Viaje',

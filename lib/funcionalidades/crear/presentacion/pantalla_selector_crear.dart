@@ -76,6 +76,12 @@ class PantallaSelectorCrear extends StatelessWidget {
             subtitulo: 'Guarda una imagen especial',
             alTocar: () => _nuevoRecuerdo(context, TipoElemento.foto),
           ),
+          _OpcionCrear(
+            icono: Icons.music_note_outlined,
+            titulo: 'Música',
+            subtitulo: 'Busca una canción y guárdala como recuerdo',
+            alTocar: () => _nuevoRecuerdo(context, TipoElemento.musica),
+          ),
         ],
       ),
     );

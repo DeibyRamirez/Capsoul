@@ -1,28 +1,30 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:capsoul/funcionalidades/elementos/datos/cliente_firma_subida.dart';
 import 'package:capsoul/funcionalidades/elementos/datos/repositorio_medios_cloudinary.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/elemento_borrador.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/fallo_medios.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
+import 'package:capsoul/funcionalidades/recuerdos/dominio/url_medio.dart';
+import 'package:capsoul/nucleo/infraestructura/cliente_funciones_api.dart';
+import 'package:capsoul/nucleo/infraestructura/proveedores/supabase/cliente_almacenamiento_cloudinary.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-class _FirmasFalsas implements ClienteFirmaSubida {
+class _FuncionesFalsas implements ClienteFuncionesApi {
   FalloMedios? fallo;
   final List<TipoElemento> pedidas = [];
 
   @override
-  Future<FirmaSubida> solicitarFirma({
+  Future<FirmaSubida> firmarSubida({
     required TipoElemento tipo,
     required int bytes,
     Duration? duracion,
     String? formato,
   }) async {
     final error = fallo;
-    if (error != null) throw error;
+    if (error != null) throw ErrorFuncionesApi(estado: 404);
     pedidas.add(tipo);
     return const FirmaSubida(
       urlSubida: 'https://api.cloudinary.com/v1_1/nube/image/upload',
@@ -35,6 +37,18 @@ class _FirmasFalsas implements ClienteFirmaSubida {
       },
     );
   }
+
+  @override
+  Future<List<UrlMedio>> firmarMedio(List<String> idsElemento) async =>
+      const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> buscarMusica({
+    required String consulta,
+    int limite = 10,
+    String mercado = 'CO',
+  }) async =>
+      const [];
 }
 
 void main() {
@@ -75,8 +89,11 @@ void main() {
         200,
       );
     });
-    final repositorio =
-        RepositorioMediosCloudinary(_FirmasFalsas(), clienteHttp: cliente);
+    final almacenamiento = ClienteAlmacenamientoCloudinary(clienteHttp: cliente);
+    final repositorio = RepositorioMediosCloudinary(
+      funciones: _FuncionesFalsas(),
+      almacenamiento: almacenamiento,
+    );
 
     final medio = await repositorio.subir(foto);
 
@@ -96,9 +113,11 @@ void main() {
       llamadas++;
       return http.Response('', 200);
     });
-    final firmas = _FirmasFalsas()..fallo = const FalloMedios.subidaNoDisponible();
-    final repositorio =
-        RepositorioMediosCloudinary(firmas, clienteHttp: cliente);
+    final funciones = _FuncionesFalsas()..fallo = const FalloMedios.subidaNoDisponible();
+    final repositorio = RepositorioMediosCloudinary(
+      funciones: funciones,
+      almacenamiento: ClienteAlmacenamientoCloudinary(clienteHttp: cliente),
+    );
 
     await expectLater(
       repositorio.subir(foto),
@@ -113,8 +132,10 @@ void main() {
 
   test('un error de Cloudinary se traduce a subida fallida', () async {
     final cliente = MockClient((_) async => http.Response('{}', 401));
-    final repositorio =
-        RepositorioMediosCloudinary(_FirmasFalsas(), clienteHttp: cliente);
+    final repositorio = RepositorioMediosCloudinary(
+      funciones: _FuncionesFalsas(),
+      almacenamiento: ClienteAlmacenamientoCloudinary(clienteHttp: cliente),
+    );
 
     await expectLater(
       repositorio.subir(foto),
@@ -126,15 +147,15 @@ void main() {
     );
   });
 
-  test('rechaza una respuesta que no sea de entrega authenticated', () {
-    expect(
-      RepositorioMediosCloudinary.medioDesdeRespuesta({
-        'public_id': 'p',
-        'resource_type': 'image',
-        'type': 'upload',
-        'bytes': 1,
-      }),
-      isNull,
+  test('rechaza una respuesta que no sea de entrega authenticated', () async {
+    final almacenamiento = ClienteAlmacenamientoCloudinary();
+    await expectLater(
+      almacenamiento.subirArchivo(
+        rutaLocal: foto.rutaArchivo!,
+        urlSubida: 'https://api.cloudinary.com/v1_1/nube/image/upload',
+        parametrosFirma: const {},
+      ),
+      throwsA(isA<FalloMedios>()),
     );
   });
 }

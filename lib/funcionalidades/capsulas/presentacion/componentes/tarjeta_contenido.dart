@@ -6,6 +6,7 @@ import '../../../../nucleo/tema/tema_app.dart';
 import '../../../elementos/dominio/tipo_elemento.dart';
 import '../../../elementos/dominio/validador_medios.dart';
 import '../../../recuerdos/dominio/recuerdo.dart';
+import '../../../recuerdos/presentacion/componentes/miniatura_recuerdo.dart';
 import '../../../recuerdos/presentacion/componentes/miniatura_recuerdo_firmada.dart';
 
 /// Tarjeta de un recuerdo en "Contenido": video (con duración), nota de voz
@@ -110,6 +111,7 @@ class _Portada extends StatelessWidget {
             ),
           ),
         ),
+      TipoElemento.musica => MiniaturaRecuerdo(recuerdo: elemento),
     };
   }
 }

@@ -1,0 +1,223 @@
+openapi: 3.0.3
+info:
+  title: Capsoul API
+  description: API HTTP de Capsoul para firmar medios (Cloudinary) y autenticación en modo VPS.
+  version: 1.0.0
+servers:
+  - url: https://api.tudominio.com
+    description: Producción VPS
+  - url: http://localhost:8080
+    description: Desarrollo local
+paths:
+  /v1/medios/firmar-subida:
+    post:
+      summary: Firma una subida a Cloudinary
+      operationId: firmarSubida
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudFirmarSubida'
+      responses:
+        '200':
+          description: Firma válida por 1 hora
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaFirmarSubida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '422':
+          $ref: '#/components/responses/ErrorValidacion'
+  /v1/musica/buscar:
+    post:
+      summary: Busca pistas en Spotify (modo VPS)
+      operationId: buscarMusica
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [consulta]
+              properties:
+                consulta:
+                  type: string
+                limite:
+                  type: integer
+                mercado:
+                  type: string
+      responses:
+        '200':
+          description: Lista normalizada de pistas
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '501':
+          description: No implementado en el VPS
+  /v1/medios/firmar-entrega:
+    post:
+      summary: Firma URLs temporales de entrega de medios
+      operationId: firmarMedio
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudFirmarMedio'
+      responses:
+        '200':
+          description: URLs firmadas por elemento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaFirmarMedio'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+  /v1/auth/registro:
+    post:
+      summary: Registra un usuario (solo modo VPS)
+      operationId: registrarUsuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudRegistro'
+      responses:
+        '201':
+          description: Cuenta creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaAuth'
+  /v1/auth/iniciar-sesion:
+    post:
+      summary: Inicia sesión y devuelve JWT (solo modo VPS)
+      operationId: iniciarSesion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudInicioSesion'
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespuestaAuth'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    NoAutenticado:
+      description: JWT ausente o inválido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorApi'
+    ErrorValidacion:
+      description: Datos inválidos o cuota excedida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorApi'
+  schemas:
+    SolicitudFirmarSubida:
+      type: object
+      required: [tipo, bytes]
+      properties:
+        tipo:
+          type: string
+          enum: [foto, video, audio, texto]
+        bytes:
+          type: integer
+        duracion_segundos:
+          type: number
+        formato:
+          type: string
+    RespuestaFirmarSubida:
+      type: object
+      required: [url_subida, parametros]
+      properties:
+        url_subida:
+          type: string
+          format: uri
+        parametros:
+          type: object
+          additionalProperties:
+            type: string
+    SolicitudFirmarMedio:
+      type: object
+      required: [elemento_ids]
+      properties:
+        elemento_ids:
+          type: array
+          maxItems: 60
+          items:
+            type: string
+            format: uuid
+    RespuestaFirmarMedio:
+      type: object
+      properties:
+        medios:
+          type: array
+          items:
+            type: object
+    SolicitudRegistro:
+      type: object
+      required: [nombre, correo, contrasena]
+      properties:
+        nombre:
+          type: string
+        correo:
+          type: string
+          format: email
+        contrasena:
+          type: string
+        url_confirmacion:
+          type: string
+    SolicitudInicioSesion:
+      type: object
+      required: [correo, contrasena]
+      properties:
+        correo:
+          type: string
+        contrasena:
+          type: string
+    RespuestaAuth:
+      type: object
+      properties:
+        token:
+          type: string
+        sesion_iniciada:
+          type: boolean
+        usuario:
+          type: object
+          properties:
+            uid:
+              type: string
+            correo:
+              type: string
+            nombre_visible:
+              type: string
+            correo_verificado:
+              type: boolean
+    ErrorApi:
+      type: object
+      properties:
+        codigo:
+          type: string
+        mensaje:
+          type: string
