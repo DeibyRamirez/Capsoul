@@ -15,4 +15,10 @@ abstract interface class RepositorioUsuarios {
     required String uid,
     required String nombreVisible,
   });
+
+  /// Fija `nombre_usuario` la primera vez (RPC `establecer_mi_nombre_usuario`).
+  Future<void> establecerNombreUsuario({
+    required String uid,
+    required String nombreUsuario,
+  });
 }

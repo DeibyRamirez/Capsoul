@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
+import '../../../nucleo/firebase/escucha_tokens_push.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../autenticacion/dominio/fallo_autenticacion.dart';
 import '../../usuarios/aplicacion/proveedores_usuarios.dart';
@@ -40,7 +41,15 @@ class ControladorPerfil extends Notifier<AsyncValue<void>> {
 
   Future<bool> cerrarSesion() {
     final autenticacion = ref.read(proveedorRepositorioAutenticacion);
-    return _ejecutar(autenticacion.cerrarSesion);
+    final dispositivos = ref.read(proveedorRepositorioDispositivosPush);
+    return _ejecutar(() async {
+      try {
+        await dispositivos.eliminarTodosLosTokensDelUsuario();
+      } catch (_) {
+        // Si falla la red, igual cerramos la sesión local.
+      }
+      await autenticacion.cerrarSesion();
+    });
   }
 
   Future<bool> _ejecutar(Future<void> Function() accion) async {

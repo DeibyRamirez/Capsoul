@@ -5,6 +5,8 @@ abstract interface class AccesoTablaUsuarios {
   Future<Map<String, dynamic>?> leerFila(String id);
 
   Future<int> actualizarNombreVisible(String id, String nombreVisible);
+
+  Future<void> establecerNombreUsuarioRpc(String nombreUsuario);
 }
 
 class AccesoTablaUsuariosPostgrest implements AccesoTablaUsuarios {
@@ -13,7 +15,7 @@ class AccesoTablaUsuariosPostgrest implements AccesoTablaUsuarios {
   static const String tabla = 'usuarios';
 
   static const String columnas =
-      'id, nombre_visible, correo, foto_public_id, perfil_publico, creado_en';
+      'id, nombre_visible, nombre_usuario, correo, foto_public_id, perfil_publico, creado_en';
 
   final ClientePostgrest _cliente;
 
@@ -34,5 +36,13 @@ class AccesoTablaUsuariosPostgrest implements AccesoTablaUsuarios {
         .eq('id', id)
         .select('id');
     return filas.length;
+  }
+
+  @override
+  Future<void> establecerNombreUsuarioRpc(String nombreUsuario) async {
+    await _cliente.rpc(
+      'establecer_mi_nombre_usuario',
+      parametros: {'p_arroba': nombreUsuario},
+    );
   }
 }

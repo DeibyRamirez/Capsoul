@@ -134,4 +134,76 @@ void main() {
       emitsError(isA<FalloPerfilUsuario>()),
     );
   });
+
+  test(
+    'establecerNombreUsuario con el mismo @ ya fijado no llama al RPC',
+    () async {
+      when(() => acceso.leerFila('uid-1')).thenAnswer(
+        (_) async => {
+          ...filaAna,
+          'nombre_usuario': 'ana',
+        },
+      );
+
+      await repositorio.establecerNombreUsuario(
+        uid: 'uid-1',
+        nombreUsuario: 'ana',
+      );
+
+      verifyNever(() => acceso.establecerNombreUsuarioRpc(any()));
+    },
+  );
+
+  test(
+    'establecerNombreUsuario con @ distinto al ya fijado lanza ya_fijado',
+    () {
+      when(() => acceso.leerFila('uid-1')).thenAnswer(
+        (_) async => {
+          ...filaAna,
+          'nombre_usuario': 'ana',
+        },
+      );
+
+      expect(
+        () => repositorio.establecerNombreUsuario(
+          uid: 'uid-1',
+          nombreUsuario: 'otro',
+        ),
+        lanzaFalloPerfil(FalloPerfilUsuario.codigoNombreUsuarioYaFijado),
+      );
+    },
+  );
+
+  test(
+    'establecerNombreUsuario recupera si el RPC dice ya_fijado pero el perfil tiene @',
+    () async {
+      var lecturas = 0;
+      when(() => acceso.leerFila('uid-1')).thenAnswer((_) async {
+        lecturas++;
+        if (lecturas == 1) {
+          return {
+            ...filaAna,
+            'nombre_usuario': null,
+          };
+        }
+        return {
+          ...filaAna,
+          'nombre_usuario': 'nuevo',
+        };
+      });
+      when(() => acceso.establecerNombreUsuarioRpc('nuevo')).thenThrow(
+        const ErrorPostgrest(
+          mensaje: 'nombre_usuario_ya_fijado',
+          codigo: 'P0001',
+        ),
+      );
+
+      await repositorio.establecerNombreUsuario(
+        uid: 'uid-1',
+        nombreUsuario: 'nuevo',
+      );
+
+      verify(() => acceso.establecerNombreUsuarioRpc('nuevo')).called(1);
+    },
+  );
 }

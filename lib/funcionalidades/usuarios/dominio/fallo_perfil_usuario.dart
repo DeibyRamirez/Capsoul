@@ -11,6 +11,12 @@ class FalloPerfilUsuario implements FalloApp {
       codigoSinRed => 'Sin conexión. Revisa tu internet e inténtalo de nuevo.',
       codigoNoEncontrado => 'No encontramos tu perfil.',
       codigoDatoInvalido => 'El nombre debe tener entre 1 y 60 caracteres.',
+      codigoNombreUsuarioInvalido =>
+        'El usuario @ debe tener entre 3 y 30 caracteres (letras, números o _).',
+      codigoNombreUsuarioOcupado =>
+        'Ese usuario @ ya está en uso. Prueba otro.',
+      codigoNombreUsuarioYaFijado =>
+        'Tu usuario @ ya está definido y no se puede cambiar aquí.',
       _ => kMensajeErrorInesperado,
     };
     return FalloPerfilUsuario._(codigo, mensaje);
@@ -20,6 +26,9 @@ class FalloPerfilUsuario implements FalloApp {
   static const String codigoSinRed = 'sin_red';
   static const String codigoNoEncontrado = 'no_encontrado';
   static const String codigoDatoInvalido = 'dato_invalido';
+  static const String codigoNombreUsuarioInvalido = 'nombre_usuario_invalido';
+  static const String codigoNombreUsuarioOcupado = 'nombre_usuario_ocupado';
+  static const String codigoNombreUsuarioYaFijado = 'nombre_usuario_ya_fijado';
 
   /// Código usado cuando el error no se reconoce.
   static const String codigoDesconocido = 'desconocido';

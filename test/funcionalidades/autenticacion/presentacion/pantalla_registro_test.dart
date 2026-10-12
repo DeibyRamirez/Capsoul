@@ -21,9 +21,12 @@ void main() {
     );
     await abrirRegistro(tester);
 
-    await tester.tap(botonCrearCuenta());
+    final crearVacio = botonCrearCuenta().last;
+    await tester.ensureVisible(crearVacio);
+    await tester.tap(crearVacio);
     await tester.pumpAndSettle();
     expect(find.text('Ingresa tu nombre'), findsOneWidget);
+    expect(find.text('Elige tu usuario con @'), findsOneWidget);
     expect(find.text('Ingresa tu correo electrónico'), findsOneWidget);
     expect(find.text('Ingresa una contraseña'), findsOneWidget);
     expect(find.text('Confirma tu contraseña'), findsOneWidget);
@@ -46,10 +49,13 @@ void main() {
 
   Future<void> llenarFormulario(WidgetTester tester) async {
     await tester.enterText(campo('Nombre'), ' Ana María ');
+    await tester.enterText(campo('Usuario'), 'anamaria');
     await tester.enterText(campo('Correo electrónico'), 'ana@capsoul.app');
     await tester.enterText(campo('Contraseña'), 'secreta123');
     await tester.enterText(campo('Confirmar contraseña'), 'secreta123');
-    await tester.tap(botonCrearCuenta());
+    final crear = botonCrearCuenta().last;
+    await tester.ensureVisible(crear);
+    await tester.tap(crear);
     await tester.pumpAndSettle();
   }
 
