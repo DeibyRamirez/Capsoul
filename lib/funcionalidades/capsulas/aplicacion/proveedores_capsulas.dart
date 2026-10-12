@@ -12,6 +12,7 @@ final proveedorRepositorioCapsulas = Provider<RepositorioCapsulas>((ref) {
   return RepositorioCapsulasSupabase(
     acceso: AccesoTablasCapsulasPostgrest(ref.watch(proveedorClientePostgrest)),
     uidActual: () => autenticacion.usuarioActual?.uid,
+    correoActual: () => autenticacion.usuarioActual?.correo,
   );
 });
 

@@ -28,9 +28,11 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   RepositorioCapsulasSupabase({
     required this._acceso,
     required this._uidActual,
+    String? Function()? correoActual,
     DateTime Function()? reloj,
     GeneradorIds? generarId,
-  })  : _reloj = reloj ?? DateTime.now,
+  })  : _correoActual = correoActual ?? (() => null),
+        _reloj = reloj ?? DateTime.now,
         _generarId = generarId ?? generarIdAleatorio;
 
   /// SQLSTATE propios de la migración 000003.
@@ -39,6 +41,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
 
   final AccesoTablasCapsulas _acceso;
   final String? Function() _uidActual;
+  final String? Function() _correoActual;
   final DateTime Function() _reloj;
   final GeneradorIds _generarId;
 
@@ -46,8 +49,14 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   Future<String> crearCapsula(NuevaCapsula nueva) async {
     final uid = _uidActual();
     if (uid == null) throw const FalloCapsula.sinSesion();
-    final fallo = ValidadorCapsula.validar(nueva, ahora: _reloj());
+    final fallo = ValidadorCapsula.validar(
+      nueva,
+      ahora: _reloj(),
+      correoAutor: _correoActual(),
+    );
     if (fallo != null) throw fallo;
+
+    final correoDestinatario = nueva.correoDestinatario.trim();
 
     final idCapsula = _generarId();
     var insertada = false;
@@ -69,6 +78,12 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
             'elemento_id': nueva.recuerdos[i].id,
             'orden': i,
           },
+      ]);
+      await _acceso.insertarDestinatarios([
+        {
+          'capsula_id': idCapsula,
+          'correo_externo': correoDestinatario,
+        },
       ]);
       await _acceso.actualizarEstadoCapsula(
         idCapsula,

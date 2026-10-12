@@ -6,6 +6,8 @@ abstract interface class AccesoTablasCapsulas {
 
   Future<void> insertarEnlaces(List<Map<String, dynamic>> filas);
 
+  Future<void> insertarDestinatarios(List<Map<String, dynamic>> filas);
+
   Future<void> actualizarEstadoCapsula(String id, String estado);
 
   Future<void> eliminarCapsula(String id);
@@ -38,6 +40,12 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
   Future<void> insertarEnlaces(List<Map<String, dynamic>> filas) async {
     if (filas.isEmpty) return;
     await _cliente.from('capsula_elementos').insertarMuchos(filas);
+  }
+
+  @override
+  Future<void> insertarDestinatarios(List<Map<String, dynamic>> filas) async {
+    if (filas.isEmpty) return;
+    await _cliente.from('capsula_destinatarios').insertarMuchos(filas);
   }
 
   @override

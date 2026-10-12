@@ -16,9 +16,11 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   final List<String> operaciones = [];
   final List<Map<String, dynamic>> capsulas = [];
   final List<Map<String, dynamic>> enlaces = [];
+  final List<Map<String, dynamic>> destinatarios = [];
   final List<String> capsulasBorradas = [];
   Object? falloEnCapsula;
   Object? falloEnEnlaces;
+  Object? falloEnDestinatarios;
   Map<String, dynamic>? filaLeida;
 
   @override
@@ -35,6 +37,14 @@ class _AccesoFalso implements AccesoTablasCapsulas {
     final fallo = falloEnEnlaces;
     if (fallo != null) throw fallo;
     enlaces.addAll(filas);
+  }
+
+  @override
+  Future<void> insertarDestinatarios(List<Map<String, dynamic>> filas) async {
+    operaciones.add('destinatarios');
+    final fallo = falloEnDestinatarios;
+    if (fallo != null) throw fallo;
+    destinatarios.addAll(filas);
   }
 
   @override
@@ -67,6 +77,7 @@ void main() {
         mensaje: '  ',
         fechaApertura: DateTime.utc(2046, 8, 13, 13),
         recuerdos: recuerdos,
+        correoDestinatario: 'jacobo@example.com',
       );
 
   setUp(() {
@@ -88,6 +99,7 @@ void main() {
     expect(acceso.operaciones, [
       'capsula:borrador',
       'enlaces',
+      'destinatarios',
       'estado:programada',
     ]);
     expect(acceso.capsulas.single['id'], 'id-1');
@@ -98,6 +110,12 @@ void main() {
     expect(acceso.enlaces, [
       {'capsula_id': 'id-1', 'elemento_id': 'r-foto', 'orden': 0},
       {'capsula_id': 'id-1', 'elemento_id': 'r-nota', 'orden': 1},
+    ]);
+    expect(acceso.destinatarios, [
+      {
+        'capsula_id': 'id-1',
+        'correo_externo': 'jacobo@example.com',
+      },
     ]);
   });
 
