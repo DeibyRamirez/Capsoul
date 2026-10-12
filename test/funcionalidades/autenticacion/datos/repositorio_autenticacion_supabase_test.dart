@@ -163,6 +163,7 @@ void main() {
 
       final resultado = await repositorio.registrarUsuario(
         nombre: 'Ana María',
+        nombreUsuario: 'anamaria',
         correo: 'ana@capsoul.app',
         contrasena: 'secreta123',
       );
@@ -171,7 +172,10 @@ void main() {
         () => auth.signUp(
           email: 'ana@capsoul.app',
           password: 'secreta123',
-          data: {'nombre_visible': 'Ana María'},
+          data: {
+            'nombre_visible': 'Ana María',
+            'nombre_usuario': 'anamaria',
+          },
           emailRedirectTo: 'capsoul://auth/confirmar',
         ),
       ).called(1);
@@ -185,6 +189,7 @@ void main() {
 
       final resultado = await repositorio.registrarUsuario(
         nombre: 'Ana',
+        nombreUsuario: 'ana',
         correo: 'ana@capsoul.app',
         contrasena: 'secreta123',
       );
@@ -212,6 +217,7 @@ void main() {
       expect(
         () => repositorio.registrarUsuario(
           nombre: 'Ana',
+          nombreUsuario: 'ana',
           correo: 'ana@capsoul.app',
           contrasena: 'secreta123',
         ),

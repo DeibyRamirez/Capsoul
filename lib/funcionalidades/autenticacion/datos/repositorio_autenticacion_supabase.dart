@@ -40,12 +40,14 @@ class RepositorioAutenticacionSupabase implements RepositorioAutenticacion {
   @override
   Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
+    required String nombreUsuario,
     required String correo,
     required String contrasena,
   }) {
     return _proteger(
       () => _cliente.registrarUsuario(
         nombre: nombre,
+        nombreUsuario: nombreUsuario,
         correo: correo,
         contrasena: contrasena,
         urlConfirmacion: ConfiguracionBackend.urlConfirmacion,

@@ -71,6 +71,7 @@ class ClienteAutenticacionJwt implements ClienteAutenticacion {
   @override
   Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
+    required String nombreUsuario,
     required String correo,
     required String contrasena,
     required String urlConfirmacion,
@@ -80,6 +81,7 @@ class ClienteAutenticacionJwt implements ClienteAutenticacion {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'nombre': nombre,
+        'nombre_usuario': nombreUsuario,
         'correo': correo,
         'contrasena': contrasena,
         'url_confirmacion': urlConfirmacion,

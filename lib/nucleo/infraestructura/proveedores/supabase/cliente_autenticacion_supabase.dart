@@ -11,6 +11,7 @@ class ClienteAutenticacionSupabase implements ClienteAutenticacion {
   ClienteAutenticacionSupabase({GoTrueClient? auth}) : _authInyectado = auth;
 
   static const String claveNombreVisible = 'nombre_visible';
+  static const String claveNombreUsuario = 'nombre_usuario';
 
   final GoTrueClient? _authInyectado;
 
@@ -53,6 +54,7 @@ class ClienteAutenticacionSupabase implements ClienteAutenticacion {
   @override
   Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
+    required String nombreUsuario,
     required String correo,
     required String contrasena,
     required String urlConfirmacion,
@@ -61,7 +63,10 @@ class ClienteAutenticacionSupabase implements ClienteAutenticacion {
         final respuesta = await _auth.signUp(
           email: correo,
           password: contrasena,
-          data: {claveNombreVisible: nombre},
+          data: {
+            claveNombreVisible: nombre,
+            claveNombreUsuario: nombreUsuario,
+          },
           emailRedirectTo: urlConfirmacion,
         );
         final usuario = respuesta.user;

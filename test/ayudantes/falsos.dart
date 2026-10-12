@@ -11,6 +11,7 @@ import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/url_medio.dart';
 import 'package:capsoul/funcionalidades/usuarios/dominio/repositorio_usuarios.dart';
 import 'package:capsoul/nucleo/infraestructura/cliente_almacenamiento.dart';
+import 'package:capsoul/nucleo/firebase/repositorio_dispositivos_push.dart';
 import 'package:capsoul/nucleo/infraestructura/cliente_autenticacion.dart';
 import 'package:capsoul/nucleo/infraestructura/cliente_funciones_api.dart';
 import 'package:capsoul/nucleo/infraestructura/cliente_postgrest.dart';
@@ -22,6 +23,22 @@ const usuarioPrueba = UsuarioApp(
   nombreVisible: 'Ana',
   correoVerificado: true,
 );
+
+/// Push en memoria (pruebas de widget).
+class RegistroDispositivosPushFalso implements RegistroDispositivosPush {
+  int llamadasBorrarTodos = 0;
+
+  @override
+  Future<void> registrarToken(String tokenFcm) async {}
+
+  @override
+  Future<void> eliminarToken(String tokenFcm) async {}
+
+  @override
+  Future<void> eliminarTodosLosTokensDelUsuario() async {
+    llamadasBorrarTodos++;
+  }
+}
 
 /// [RepositorioAutenticacion] en memoria para pruebas de widgets (sin
 /// Supabase).
@@ -97,6 +114,7 @@ class RepositorioAutenticacionFalso implements RepositorioAutenticacion {
   @override
   Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
+    required String nombreUsuario,
     required String correo,
     required String contrasena,
   }) async {
@@ -190,6 +208,21 @@ class RepositorioUsuariosFalso implements RepositorioUsuarios {
       );
     }
     perfiles[uid] = actual.copiarCon(nombreVisible: nombreVisible);
+    _cambios.add(null);
+  }
+
+  @override
+  Future<void> establecerNombreUsuario({
+    required String uid,
+    required String nombreUsuario,
+  }) async {
+    final actual = perfiles[uid];
+    if (actual == null) {
+      throw FalloPerfilUsuario.desdeCodigo(
+        FalloPerfilUsuario.codigoNoEncontrado,
+      );
+    }
+    perfiles[uid] = actual.copiarCon(nombreUsuario: nombreUsuario);
     _cambios.add(null);
   }
 }
@@ -388,7 +421,7 @@ class ClienteAlmacenamientoFalso implements ClienteAlmacenamiento {
 
 /// [ClienteAutenticacion] en memoria para pruebas de infraestructura.
 class ClienteAutenticacionFalso implements ClienteAutenticacion {
-  ClienteAutenticacionFalso({UsuarioApp? usuario}) : _usuario = usuario;
+  ClienteAutenticacionFalso({this._usuario});
 
   UsuarioApp? _usuario;
   String? _token;
@@ -424,6 +457,7 @@ class ClienteAutenticacionFalso implements ClienteAutenticacion {
   @override
   Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
+    required String nombreUsuario,
     required String correo,
     required String contrasena,
     required String urlConfirmacion,

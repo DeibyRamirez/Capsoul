@@ -47,6 +47,7 @@ abstract interface class ClienteAutenticacion {
 
   Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
+    required String nombreUsuario,
     required String correo,
     required String contrasena,
     required String urlConfirmacion,

@@ -11,11 +11,10 @@ import '../../configuracion_backend.dart';
 /// [ClienteFuncionesApi] que llama a la API Capsoul en el VPS.
 class ClienteFuncionesHttp implements ClienteFuncionesApi {
   ClienteFuncionesHttp({
-    required ClienteAutenticacion autenticacion,
+    required this._autenticacion,
     http.Client? clienteHttp,
     String? urlBase,
-  })  : _autenticacion = autenticacion,
-        _http = clienteHttp ?? http.Client(),
+  })  : _http = clienteHttp ?? http.Client(),
         _urlBase = (urlBase ?? ConfiguracionBackend.apiBaseUrl).trim();
 
   final ClienteAutenticacion _autenticacion;

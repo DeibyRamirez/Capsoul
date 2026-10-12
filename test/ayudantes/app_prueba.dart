@@ -1,21 +1,33 @@
 import 'package:capsoul/app_capsoul.dart';
+import 'package:capsoul/funcionalidades/amistades/aplicacion/proveedores_amistades.dart';
 import 'package:capsoul/funcionalidades/autenticacion/aplicacion/proveedores_autenticacion.dart';
 import 'package:capsoul/funcionalidades/capsulas/aplicacion/proveedores_capsulas.dart';
 import 'package:capsoul/funcionalidades/inicio/aplicacion/proveedores_inicio.dart';
 import 'package:capsoul/funcionalidades/momentos/aplicacion/proveedores_momentos.dart';
 import 'package:capsoul/funcionalidades/recuerdos/aplicacion/proveedores_recuerdos.dart';
 import 'package:capsoul/funcionalidades/usuarios/aplicacion/proveedores_usuarios.dart';
+import 'package:capsoul/funcionalidades/usuarios/dominio/perfil_usuario.dart';
+import 'package:capsoul/nucleo/firebase/escucha_tokens_push.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'falsos.dart';
+import 'falsos_amistades.dart';
 import 'falsos_capsulas.dart';
 import 'falsos_momentos.dart';
 import 'falsos_recuerdos.dart';
 
 /// Fecha fija para las pruebas (3 oct 2026, 10:00 local).
 final DateTime ahoraPrueba = DateTime(2026, 10, 3, 10);
+
+RepositorioUsuariosFalso _usuariosPruebaPorDefecto() => RepositorioUsuariosFalso()
+  ..perfiles[usuarioPrueba.uid] = PerfilUsuario(
+    uid: usuarioPrueba.uid,
+    nombreVisible: usuarioPrueba.nombreVisible!,
+    correo: usuarioPrueba.correo!,
+    nombreUsuario: 'ana',
+  );
 
 /// Envuelve widgets de prueba desactivando animaciones infinitas (cielo).
 Widget envoltorioPrueba(Widget child) => MediaQuery(
@@ -36,6 +48,7 @@ Future<void> montarAppCapsoul(
   RepositorioCapsulasFalso? capsulas,
   RepositorioRecuerdosFalso? recuerdos,
   RepositorioMomentosFalso? momentos,
+  RepositorioAmistadesFalso? amistades,
 }) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 3;
@@ -46,7 +59,7 @@ Future<void> montarAppCapsoul(
       overrides: [
         proveedorRepositorioAutenticacion.overrideWithValue(autenticacion),
         proveedorRepositorioUsuarios.overrideWithValue(
-          usuarios ?? RepositorioUsuariosFalso(),
+          usuarios ?? _usuariosPruebaPorDefecto(),
         ),
         proveedorRepositorioResumenInicio.overrideWithValue(
           resumen ?? RepositorioResumenInicioFalso(),
@@ -65,6 +78,12 @@ Future<void> montarAppCapsoul(
         ),
         proveedorArchivosMedio.overrideWithValue(ArchivosMedioFalso()),
         proveedorReloj.overrideWithValue(() => ahoraPrueba),
+        proveedorRepositorioDispositivosPush.overrideWithValue(
+          RegistroDispositivosPushFalso(),
+        ),
+        proveedorRepositorioAmistades.overrideWithValue(
+          amistades ?? RepositorioAmistadesFalso(),
+        ),
       ],
       child: envoltorioPrueba(const AppCapsoul()),
     ),

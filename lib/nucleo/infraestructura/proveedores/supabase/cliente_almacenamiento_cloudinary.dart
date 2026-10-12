@@ -57,7 +57,6 @@ class ClienteAlmacenamientoCloudinary implements ClienteAlmacenamiento {
     }
   }
 
-  @visibleForTesting
   static MedioSubido? _medioDesdeRespuesta(Object? datos) {
     if (datos is! Map) return null;
     final publicId = datos['public_id'];
