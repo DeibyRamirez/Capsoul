@@ -22,4 +22,10 @@ abstract interface class RepositorioRecuerdos {
   Future<void> eliminar(String id);
 
   Future<UsoMedios> leerUsoMedios();
+
+  Future<void> actualizarMetadatos(
+    String id, {
+    String? titulo,
+    DateTime? fechaRecuerdo,
+  });
 }

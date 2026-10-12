@@ -62,6 +62,31 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   @override
   Future<Map<String, dynamic>?> leerCapsulaConElementos(String id) async =>
       filaLeida;
+
+  @override
+  Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios) async {
+    operaciones.add('actualizar:$id');
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> leerCapsulasRecibidas() async => [];
+
+  @override
+  Future<void> marcarCapsulaAbierta(String idCapsula) async {
+    operaciones.add('abierta:$idCapsula');
+  }
+
+  @override
+  Future<void> eliminarEnlacesDeCapsula(String capsulaId) async {
+    operaciones.add('borrar-enlaces:$capsulaId');
+    enlaces.removeWhere((e) => e['capsula_id'] == capsulaId);
+  }
+
+  @override
+  Future<void> eliminarDestinatariosDeCapsula(String capsulaId) async {
+    operaciones.add('borrar-destinatarios:$capsulaId');
+    destinatarios.removeWhere((e) => e['capsula_id'] == capsulaId);
+  }
 }
 
 void main() {
@@ -77,7 +102,7 @@ void main() {
         mensaje: '  ',
         fechaApertura: DateTime.utc(2046, 8, 13, 13),
         recuerdos: recuerdos,
-        correoDestinatario: 'jacobo@example.com',
+        destinatariosUsuarioIds: const ['uid-amigo'],
       );
 
   setUp(() {
@@ -114,9 +139,51 @@ void main() {
     expect(acceso.destinatarios, [
       {
         'capsula_id': 'id-1',
-        'correo_externo': 'jacobo@example.com',
+        'usuario_id': 'uid-amigo',
       },
     ]);
+  });
+
+  test('inserta varios destinatarios', () async {
+    await repositorio.crearCapsula(
+      NuevaCapsula(
+        titulo: 'Grupo',
+        fechaApertura: DateTime.utc(2046, 8, 13, 13),
+        recuerdos: [nota],
+        destinatariosUsuarioIds: const ['uid-a', 'uid-b'],
+      ),
+    );
+    expect(acceso.destinatarios, [
+      {'capsula_id': 'id-1', 'usuario_id': 'uid-a'},
+      {'capsula_id': 'id-1', 'usuario_id': 'uid-b'},
+    ]);
+  });
+
+  test('actualizar editable reemplaza enlaces y destinatarios', () async {
+    await repositorio.crearCapsula(nueva([foto]));
+    await repositorio.actualizarCapsulaEditable(
+      'id-1',
+      titulo: 'Nuevo título',
+      mensaje: 'Hola',
+      fechaApertura: DateTime.utc(2047, 1, 1, 10),
+      idsRecuerdosOrdenados: ['r-nota'],
+      destinatariosUsuarioIds: const ['uid-amigo', 'uid-otro'],
+    );
+    expect(acceso.operaciones, contains('borrar-enlaces:id-1'));
+    expect(acceso.operaciones, contains('borrar-destinatarios:id-1'));
+    expect(
+      acceso.enlaces.where((e) => e['capsula_id'] == 'id-1'),
+      [
+        {'capsula_id': 'id-1', 'elemento_id': 'r-nota', 'orden': 0},
+      ],
+    );
+    expect(
+      acceso.destinatarios.where((d) => d['capsula_id'] == 'id-1'),
+      [
+        {'capsula_id': 'id-1', 'usuario_id': 'uid-amigo'},
+        {'capsula_id': 'id-1', 'usuario_id': 'uid-otro'},
+      ],
+    );
   });
 
   test('valida antes de escribir nada', () async {

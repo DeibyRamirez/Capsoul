@@ -95,6 +95,13 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
   Future<int> contarCapsulasSelladas(String id) async => selladas[id] ?? 0;
 
   @override
+  Future<void> actualizarMetadatos(
+    String id, {
+    String? titulo,
+    DateTime? fechaRecuerdo,
+  }) async {}
+
+  @override
   Future<void> eliminar(String id) async {
     _fallarSiToca();
     eliminados.add(id);

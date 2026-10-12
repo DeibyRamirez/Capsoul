@@ -21,7 +21,7 @@ void main() {
           for (var i = 0; i < elementos; i++)
             recuerdoPrueba('n$i', tipo: TipoElemento.texto),
         ],
-        correoDestinatario: 'destino@example.com',
+        destinatariosUsuarioIds: const ['amigo-uid'],
       );
 
   test('una cápsula completa es válida', () {
@@ -83,38 +83,40 @@ void main() {
     );
   });
 
-  test('el correo del destinatario es obligatorio y válido', () {
+  test('los destinatarios (amigos) son obligatorios y no puede ser el autor', () {
     expect(
       ValidadorCapsula.validar(
-        capsula().copyWith(correoDestinatario: ''),
+        capsula().copyWith(destinatariosUsuarioIds: const []),
         ahora: ahora,
       )?.codigo,
       FalloCapsula.codigoDestinatarioInvalido,
     );
     expect(
       ValidadorCapsula.validar(
-        capsula().copyWith(correoDestinatario: 'no-es-correo'),
+        capsula().copyWith(destinatariosUsuarioIds: const ['yo-uid']),
         ahora: ahora,
-      )?.codigo,
-      FalloCapsula.codigoDestinatarioInvalido,
-    );
-    expect(
-      ValidadorCapsula.validar(
-        capsula().copyWith(correoDestinatario: 'yo@capsoul.app'),
-        ahora: ahora,
-        correoAutor: 'yo@capsoul.app',
+        uidAutor: 'yo-uid',
       )?.codigo,
       FalloCapsula.codigoDestinatarioPropio,
+    );
+    expect(
+      ValidadorCapsula.validarDestinatarios(
+        const ['a', 'a', 'b'],
+        uidAutor: 'yo',
+      ),
+      isNull,
     );
   });
 }
 
 extension on NuevaCapsula {
-  NuevaCapsula copyWith({String? correoDestinatario}) => NuevaCapsula(
+  NuevaCapsula copyWith({List<String>? destinatariosUsuarioIds}) =>
+      NuevaCapsula(
         titulo: titulo,
         mensaje: mensaje,
         fechaApertura: fechaApertura,
         recuerdos: recuerdos,
-        correoDestinatario: correoDestinatario ?? this.correoDestinatario,
+        destinatariosUsuarioIds:
+            destinatariosUsuarioIds ?? this.destinatariosUsuarioIds,
       );
 }

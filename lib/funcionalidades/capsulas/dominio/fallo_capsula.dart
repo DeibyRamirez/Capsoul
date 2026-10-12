@@ -18,11 +18,11 @@ class FalloCapsula implements FalloApp {
 
   const FalloCapsula.destinatarioInvalido()
       : this(codigoDestinatarioInvalido,
-            'Ingresa el correo de quien recibirá la cápsula.');
+            'Elige al menos un amigo que recibirá la cápsula.');
 
   const FalloCapsula.destinatarioPropio()
       : this(codigoDestinatarioPropio,
-            'La cápsula debe ir a otra persona; usa un correo distinto al tuyo.');
+            'La cápsula debe ir a otra persona.');
 
   const FalloCapsula.demasiadosElementos()
       : this(codigoDemasiadosElementos,

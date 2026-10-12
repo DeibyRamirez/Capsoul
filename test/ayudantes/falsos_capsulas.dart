@@ -1,4 +1,5 @@
 import 'package:capsoul/funcionalidades/capsulas/dominio/capsula.dart';
+import 'package:capsoul/funcionalidades/capsulas/dominio/capsula_recibida.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/estado_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/nueva_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/repositorio_capsulas.dart';
@@ -55,6 +56,66 @@ class RepositorioCapsulasFalso implements RepositorioCapsulas {
 
   @override
   Future<Capsula?> obtenerCapsula(String id) async => capsulas[id];
+
+  final List<CapsulaRecibida> recibidas = [];
+  final List<({String id, String titulo, String? mensaje, DateTime fecha, List<String> recuerdos, List<String> destinatarios})>
+      actualizaciones = [];
+
+  @override
+  Future<List<CapsulaRecibida>> listarRecibidas() async => recibidas;
+
+  @override
+  Future<void> marcarAbierta(String idCapsula) async {}
+
+  @override
+  Future<void> actualizarMetadatosCapsula(
+    String id, {
+    required String titulo,
+    String? mensaje,
+    required DateTime fechaApertura,
+  }) async {}
+
+  @override
+  Future<void> actualizarCapsulaEditable(
+    String id, {
+    required String titulo,
+    String? mensaje,
+    required DateTime fechaApertura,
+    required List<String> idsRecuerdosOrdenados,
+    required List<String> destinatariosUsuarioIds,
+  }) async {
+    actualizaciones.add((
+      id: id,
+      titulo: titulo,
+      mensaje: mensaje,
+      fecha: fechaApertura,
+      recuerdos: idsRecuerdosOrdenados,
+      destinatarios: destinatariosUsuarioIds,
+    ));
+    final existente = capsulas[id];
+    if (existente != null) {
+      capsulas[id] = Capsula(
+        id: existente.id,
+        autorId: existente.autorId,
+        titulo: titulo.trim(),
+        mensaje: mensaje,
+        fechaApertura: fechaApertura,
+        estado: existente.estado,
+        liberadaEn: existente.liberadaEn,
+        creadoEn: existente.creadoEn,
+        elementos: existente.elementos,
+        destinatariosUsuarioIds: destinatariosUsuarioIds,
+      );
+    }
+  }
+
+  @override
+  Future<void> cancelarCapsula(String id) async {}
+
+  @override
+  Future<void> eliminarCapsula(String id) async {
+    capsulas.remove(id);
+  }
 }
 
 /// [RepositorioMedios] que devuelve una subida fija o lanza [fallo].

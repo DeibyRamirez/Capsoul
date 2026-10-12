@@ -46,4 +46,12 @@ class RepositorioMomentosFalso implements RepositorioMomentos {
     eliminados.add(id);
     momentos.remove(id);
   }
+
+  @override
+  Future<void> actualizarMetadatos(
+    String id, {
+    required String titulo,
+    String? descripcion,
+    String? portadaId,
+  }) async {}
 }

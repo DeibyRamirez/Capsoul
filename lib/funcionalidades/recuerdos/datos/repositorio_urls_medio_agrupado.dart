@@ -12,11 +12,10 @@ typedef SolicitarUrlsMedio = Future<List<UrlMedio>> Function(List<String> ids);
 
 class RepositorioUrlsMedioAgrupado implements RepositorioUrlsMedio {
   RepositorioUrlsMedioAgrupado({
-    required SolicitarUrlsMedio solicitar,
+    required this._solicitar,
     DateTime Function()? reloj,
     CacheEnlacesMedio? cache,
-  })  : _solicitar = solicitar,
-        cache = cache ?? CacheEnlacesMedio(reloj: reloj);
+  }) : cache = cache ?? CacheEnlacesMedio(reloj: reloj);
 
   static const int maximoPorLlamada = 60;
 

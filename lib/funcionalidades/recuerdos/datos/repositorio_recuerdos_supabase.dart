@@ -156,6 +156,29 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
   }
 
   @override
+  Future<void> actualizarMetadatos(
+    String id, {
+    String? titulo,
+    DateTime? fechaRecuerdo,
+  }) async {
+    _uid();
+    final cambios = <String, dynamic>{};
+    if (titulo != null) {
+      final limpio = titulo.trim();
+      cambios['titulo'] = limpio.isEmpty ? null : limpio;
+    }
+    if (fechaRecuerdo != null) {
+      cambios['fecha_recuerdo'] = fechaParaBd(fechaRecuerdo);
+    }
+    if (cambios.isEmpty) return;
+    try {
+      await _acceso.actualizar(id, cambios);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
   Future<void> eliminar(String id) async {
     _uid();
     int borradas;

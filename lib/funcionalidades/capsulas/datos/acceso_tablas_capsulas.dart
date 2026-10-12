@@ -15,6 +15,16 @@ abstract interface class AccesoTablasCapsulas {
   Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(String autorId);
 
   Future<Map<String, dynamic>?> leerCapsulaConElementos(String id);
+
+  Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios);
+
+  Future<List<Map<String, dynamic>>> leerCapsulasRecibidas();
+
+  Future<void> marcarCapsulaAbierta(String idCapsula);
+
+  Future<void> eliminarEnlacesDeCapsula(String capsulaId);
+
+  Future<void> eliminarDestinatariosDeCapsula(String capsulaId);
 }
 
 class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
@@ -26,6 +36,9 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
 
   static const String columnasConElementos = '$columnasCapsula, '
       'capsula_elementos(orden, elementos($columnasRecuerdo))';
+
+  static const String columnasConElementosYDestinatarios =
+      '$columnasConElementos, capsula_destinatarios(usuario_id)';
 
   static const int limiteLista = 50;
 
@@ -78,8 +91,48 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
   Future<Map<String, dynamic>?> leerCapsulaConElementos(String id) {
     return _cliente
         .from('capsulas')
-        .seleccionar(columnasConElementos)
+        .seleccionar(columnasConElementosYDestinatarios)
         .eq('id', id)
         .maybeSingle();
+  }
+
+  @override
+  Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios) async {
+    await _cliente.from('capsulas').actualizar(cambios).eq('id', id).ejecutar();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> leerCapsulasRecibidas() async {
+    final filas = await _cliente.rpc('capsulas_recibidas');
+    return [
+      for (final fila in filas)
+        if (fila is Map<String, dynamic>) fila,
+    ];
+  }
+
+  @override
+  Future<void> marcarCapsulaAbierta(String idCapsula) async {
+    await _cliente.rpc(
+      'marcar_capsula_abierta',
+      parametros: {'p_capsula': idCapsula},
+    );
+  }
+
+  @override
+  Future<void> eliminarEnlacesDeCapsula(String capsulaId) async {
+    await _cliente
+        .from('capsula_elementos')
+        .eliminar()
+        .eq('capsula_id', capsulaId)
+        .ejecutar();
+  }
+
+  @override
+  Future<void> eliminarDestinatariosDeCapsula(String capsulaId) async {
+    await _cliente
+        .from('capsula_destinatarios')
+        .eliminar()
+        .eq('capsula_id', capsulaId)
+        .ejecutar();
   }
 }

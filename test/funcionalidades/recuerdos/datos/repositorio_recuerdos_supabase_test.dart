@@ -53,6 +53,9 @@ class _AccesoFalso implements AccesoTablasRecuerdos {
   Future<int> contarCapsulasSelladas(String id) async => 2;
 
   @override
+  Future<void> actualizar(String id, Map<String, dynamic> cambios) async {}
+
+  @override
   Future<int> eliminar(String id) async {
     final fallo = falloAlBorrar;
     if (fallo != null) throw fallo;

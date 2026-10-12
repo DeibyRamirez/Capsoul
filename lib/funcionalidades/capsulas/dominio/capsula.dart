@@ -16,6 +16,7 @@ class Capsula {
     this.fechaApertura,
     this.liberadaEn,
     this.elementos = const [],
+    this.destinatariosUsuarioIds = const [],
   });
 
   final String id;
@@ -30,6 +31,9 @@ class Capsula {
   /// Recuerdos de la cápsula, ordenados por `capsula_elementos.orden`.
   final List<Recuerdo> elementos;
 
+  /// Destinatarios registrados (`capsula_destinatarios.usuario_id`).
+  final List<String> destinatariosUsuarioIds;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -42,11 +46,22 @@ class Capsula {
           other.estado == estado &&
           other.liberadaEn == liberadaEn &&
           other.creadoEn == creadoEn &&
-          listEquals(other.elementos, elementos);
+          listEquals(other.elementos, elementos) &&
+          listEquals(other.destinatariosUsuarioIds, destinatariosUsuarioIds);
 
   @override
-  int get hashCode => Object.hash(id, autorId, titulo, mensaje, fechaApertura,
-      estado, liberadaEn, creadoEn, Object.hashAll(elementos));
+  int get hashCode => Object.hash(
+        id,
+        autorId,
+        titulo,
+        mensaje,
+        fechaApertura,
+        estado,
+        liberadaEn,
+        creadoEn,
+        Object.hashAll(elementos),
+        Object.hashAll(destinatariosUsuarioIds),
+      );
 
   @override
   String toString() => 'Capsula($id, $titulo, ${estado.valorBd})';

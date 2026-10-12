@@ -10,10 +10,9 @@ import '../../../nucleo/infraestructura/cliente_funciones_api.dart';
 /// [RepositorioMedios] con subida firmada directa a Cloudinary.
 class RepositorioMediosCloudinary implements RepositorioMedios {
   RepositorioMediosCloudinary({
-    required ClienteFuncionesApi funciones,
-    required ClienteAlmacenamiento almacenamiento,
-  })  : _funciones = funciones,
-        _almacenamiento = almacenamiento;
+    required this._funciones,
+    required this._almacenamiento,
+  });
 
   final ClienteFuncionesApi _funciones;
   final ClienteAlmacenamiento _almacenamiento;
@@ -31,7 +30,7 @@ class RepositorioMediosCloudinary implements RepositorioMedios {
         duracion: elemento.duracion,
         formato: elemento.formato,
       );
-      return _almacenamiento.subirArchivo(
+      return await _almacenamiento.subirArchivo(
         rutaLocal: ruta,
         urlSubida: firma.urlSubida,
         parametrosFirma: firma.parametros,

@@ -8,6 +8,8 @@ abstract interface class AccesoTablasMomentos {
 
   Future<void> actualizarPortada(String id, String? elementoId);
 
+  Future<void> actualizarMomento(String id, Map<String, dynamic> cambios);
+
   Future<int> eliminarMomento(String id);
 
   Future<List<Map<String, dynamic>>> listarDeAutor(String autorId);
@@ -50,6 +52,11 @@ class AccesoTablasMomentosPostgrest implements AccesoTablasMomentos {
         .actualizar({'portada_elemento_id': elementoId})
         .eq('id', id)
         .ejecutar();
+  }
+
+  @override
+  Future<void> actualizarMomento(String id, Map<String, dynamic> cambios) async {
+    await _cliente.from('momentos').actualizar(cambios).eq('id', id).ejecutar();
   }
 
   @override

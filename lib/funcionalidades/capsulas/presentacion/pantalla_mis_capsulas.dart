@@ -20,11 +20,15 @@ class PantallaMisCapsulas extends ConsumerWidget {
     final capsulas = ref.watch(proveedorMisCapsulas);
     final ahora = ref.watch(proveedorReloj)();
     return PantallaCapsoul(
-      appBar: AppBar(title: const Text('Mis cápsulas')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(RutasApp.crearCapsula),
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva cápsula'),
+      appBar: AppBar(
+        title: const Text('Mis cápsulas'),
+        actions: [
+          IconButton(
+            tooltip: 'Cápsulas para mí',
+            onPressed: () => context.push(RutasApp.capsulasRecibidas),
+            icon: const Icon(Icons.inbox_outlined),
+          ),
+        ],
       ),
       cuerpo: capsulas.when(
         loading: () => const Center(child: CircularProgressIndicator()),

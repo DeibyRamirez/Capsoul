@@ -98,6 +98,30 @@ class RepositorioMomentosSupabase implements RepositorioMomentos {
   }
 
   @override
+  Future<void> actualizarMetadatos(
+    String id, {
+    required String titulo,
+    String? descripcion,
+    String? portadaId,
+  }) async {
+    _uid();
+    final largo = titulo.trim().length;
+    if (largo < 1 || largo > ValidadorMomento.caracteresMaxTitulo) {
+      throw const FalloMomento.tituloInvalido();
+    }
+    final texto = descripcion?.trim();
+    try {
+      await _acceso.actualizarMomento(id, {
+        'titulo': titulo.trim(),
+        'texto': (texto == null || texto.isEmpty) ? null : texto,
+      });
+      if (portadaId != null) await _acceso.actualizarPortada(id, portadaId);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
   Future<void> eliminar(String id) async {
     _uid();
     int borradas;

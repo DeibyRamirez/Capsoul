@@ -10,6 +10,7 @@ import '../../elementos/dominio/fallo_medios.dart';
 import '../../recuerdos/datos/mapeo_recuerdos.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
 import '../dominio/capsula.dart';
+import '../dominio/capsula_recibida.dart';
 import '../dominio/estado_capsula.dart';
 import '../dominio/fallo_capsula.dart';
 import '../dominio/nueva_capsula.dart';
@@ -28,11 +29,9 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   RepositorioCapsulasSupabase({
     required this._acceso,
     required this._uidActual,
-    String? Function()? correoActual,
     DateTime Function()? reloj,
     GeneradorIds? generarId,
-  })  : _correoActual = correoActual ?? (() => null),
-        _reloj = reloj ?? DateTime.now,
+  })  : _reloj = reloj ?? DateTime.now,
         _generarId = generarId ?? generarIdAleatorio;
 
   /// SQLSTATE propios de la migración 000003.
@@ -41,7 +40,6 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
 
   final AccesoTablasCapsulas _acceso;
   final String? Function() _uidActual;
-  final String? Function() _correoActual;
   final DateTime Function() _reloj;
   final GeneradorIds _generarId;
 
@@ -52,11 +50,13 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     final fallo = ValidadorCapsula.validar(
       nueva,
       ahora: _reloj(),
-      correoAutor: _correoActual(),
+      uidAutor: _uidActual(),
     );
     if (fallo != null) throw fallo;
 
-    final correoDestinatario = nueva.correoDestinatario.trim();
+    final destinatarios = [
+      for (final id in nueva.destinatariosUsuarioIds) id.trim(),
+    ];
 
     final idCapsula = _generarId();
     var insertada = false;
@@ -80,10 +80,11 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
           },
       ]);
       await _acceso.insertarDestinatarios([
-        {
-          'capsula_id': idCapsula,
-          'correo_externo': correoDestinatario,
-        },
+        for (final usuarioId in destinatarios)
+          {
+            'capsula_id': idCapsula,
+            'usuario_id': usuarioId,
+          },
       ]);
       await _acceso.actualizarEstadoCapsula(
         idCapsula,
@@ -129,6 +130,140 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     }
   }
 
+  @override
+  Future<List<CapsulaRecibida>> listarRecibidas() async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    try {
+      final filas = await _acceso.leerCapsulasRecibidas();
+      return [
+        for (final fila in filas) ?CapsulaRecibida.desdeFilaRpc(fila),
+      ];
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> marcarAbierta(String idCapsula) async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    try {
+      await _acceso.marcarCapsulaAbierta(idCapsula);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> actualizarMetadatosCapsula(
+    String id, {
+    required String titulo,
+    String? mensaje,
+    required DateTime fechaApertura,
+  }) async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    final falloTitulo = ValidadorCapsula.validarTitulo(titulo);
+    if (falloTitulo != null) throw falloTitulo;
+    final falloFecha = ValidadorCapsula.validarFecha(
+      fechaApertura,
+      ahora: _reloj(),
+    );
+    if (falloFecha != null) throw falloFecha;
+    final textoMensaje = mensaje?.trim();
+    try {
+      await _acceso.actualizarCapsula(id, {
+        'titulo': titulo.trim(),
+        'mensaje': (textoMensaje == null || textoMensaje.isEmpty)
+            ? null
+            : textoMensaje,
+        'fecha_apertura': fechaApertura.toUtc().toIso8601String(),
+      });
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> actualizarCapsulaEditable(
+    String id, {
+    required String titulo,
+    String? mensaje,
+    required DateTime fechaApertura,
+    required List<String> idsRecuerdosOrdenados,
+    required List<String> destinatariosUsuarioIds,
+  }) async {
+    final uid = _uidActual();
+    if (uid == null) throw const FalloCapsula.sinSesion();
+
+    final recuerdos = idsRecuerdosOrdenados;
+    final falloTitulo = ValidadorCapsula.validarTitulo(titulo);
+    if (falloTitulo != null) throw falloTitulo;
+    final falloFecha = ValidadorCapsula.validarFecha(
+      fechaApertura,
+      ahora: _reloj(),
+    );
+    if (falloFecha != null) throw falloFecha;
+    final falloCantidad = ValidadorCapsula.validarCantidad(recuerdos.length);
+    if (falloCantidad != null) throw falloCantidad;
+    final falloDest = ValidadorCapsula.validarDestinatarios(
+      destinatariosUsuarioIds,
+      uidAutor: uid,
+    );
+    if (falloDest != null) throw falloDest;
+
+    final textoMensaje = mensaje?.trim();
+    try {
+      await _acceso.actualizarCapsula(id, {
+        'titulo': titulo.trim(),
+        'mensaje': (textoMensaje == null || textoMensaje.isEmpty)
+            ? null
+            : textoMensaje,
+        'fecha_apertura': fechaApertura.toUtc().toIso8601String(),
+      });
+      await _acceso.eliminarEnlacesDeCapsula(id);
+      await _acceso.insertarEnlaces([
+        for (var i = 0; i < recuerdos.length; i++)
+          {
+            'capsula_id': id,
+            'elemento_id': recuerdos[i],
+            'orden': i,
+          },
+      ]);
+      await _acceso.eliminarDestinatariosDeCapsula(id);
+      final destinatarios = [
+        for (final usuarioId in destinatariosUsuarioIds) usuarioId.trim(),
+      ];
+      await _acceso.insertarDestinatarios([
+        for (final usuarioId in destinatarios)
+          {
+            'capsula_id': id,
+            'usuario_id': usuarioId,
+          },
+      ]);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> cancelarCapsula(String id) async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    try {
+      await _acceso.actualizarEstadoCapsula(id, EstadoCapsula.cancelada.valorBd);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> eliminarCapsula(String id) async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    try {
+      await _acceso.eliminarCapsula(id);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
   /// Falla cerrado: una fila sin id, autor, título, estado o fecha de
   /// creación válidos se descarta. Los elementos mal formados se omiten.
   @visibleForTesting
@@ -152,6 +287,13 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       if (enlaces is List)
         for (final enlace in enlaces) ?recuerdoDesdeEnlace(enlace),
     ]..sort((a, b) => a.$1.compareTo(b.$1));
+    final filasDest = fila['capsula_destinatarios'];
+    final destinatarios = <String>[
+      if (filasDest is List)
+        for (final filaDest in filasDest)
+          if (filaDest is Map)
+            if (filaDest['usuario_id'] is String) filaDest['usuario_id'] as String,
+    ];
     return Capsula(
       id: id,
       autorId: autorId,
@@ -162,6 +304,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       liberadaEn: _fecha(fila['liberada_en']),
       creadoEn: creadoEn,
       elementos: List.unmodifiable([for (final (_, r) in ordenados) r]),
+      destinatariosUsuarioIds: List.unmodifiable(destinatarios),
     );
   }
 

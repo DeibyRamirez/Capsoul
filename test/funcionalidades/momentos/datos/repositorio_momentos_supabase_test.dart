@@ -38,6 +38,11 @@ class _AccesoFalso implements AccesoTablasMomentos {
   }
 
   @override
+  Future<void> actualizarMomento(String id, Map<String, dynamic> cambios) async {
+    operaciones.add('actualizar:$id');
+  }
+
+  @override
   Future<int> eliminarMomento(String id) async {
     borrados.add(id);
     return filasBorradas;

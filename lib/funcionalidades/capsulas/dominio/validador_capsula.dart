@@ -11,9 +11,6 @@ abstract final class ValidadorCapsula {
   /// Margen que exige el trigger `privado.validar_capsula`.
   static const Duration margenMinimoApertura = Duration(minutes: 1);
 
-  static final RegExp _patronCorreo =
-      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-
   static FalloCapsula? validarTitulo(String titulo) {
     final caracteres = contarCaracteres(titulo.trim());
     if (caracteres < 1 || caracteres > caracteresMaxTitulo) {
@@ -37,20 +34,20 @@ abstract final class ValidadorCapsula {
     return null;
   }
 
-  static FalloCapsula? validarCorreoDestinatario(
-    String correo, {
-    String? correoAutor,
+  static FalloCapsula? validarDestinatarios(
+    List<String> destinatariosUsuarioIds, {
+    String? uidAutor,
   }) {
-    final normalizado = correo.trim();
-    if (normalizado.isEmpty || !_patronCorreo.hasMatch(normalizado)) {
-      return const FalloCapsula.destinatarioInvalido();
+    final ids = <String>{};
+    for (final raw in destinatariosUsuarioIds) {
+      final id = raw.trim();
+      if (id.isEmpty) return const FalloCapsula.destinatarioInvalido();
+      if (!ids.add(id)) continue;
+      if (uidAutor != null && uidAutor.isNotEmpty && uidAutor == id) {
+        return const FalloCapsula.destinatarioPropio();
+      }
     }
-    final autor = correoAutor?.trim();
-    if (autor != null &&
-        autor.isNotEmpty &&
-        autor.toLowerCase() == normalizado.toLowerCase()) {
-      return const FalloCapsula.destinatarioPropio();
-    }
+    if (ids.isEmpty) return const FalloCapsula.destinatarioInvalido();
     return null;
   }
 
@@ -58,15 +55,12 @@ abstract final class ValidadorCapsula {
   static FalloCapsula? validar(
     NuevaCapsula nueva, {
     required DateTime ahora,
-    String? correoAutor,
+    String? uidAutor,
   }) {
     return validarTitulo(nueva.titulo) ??
         validarFecha(nueva.fechaApertura, ahora: ahora) ??
         validarCantidad(nueva.recuerdos.length) ??
-        validarCorreoDestinatario(
-          nueva.correoDestinatario,
-          correoAutor: correoAutor,
-        );
+        validarDestinatarios(nueva.destinatariosUsuarioIds, uidAutor: uidAutor);
   }
 
   /// Primer día que se puede elegir en el selector de fecha (mañana).

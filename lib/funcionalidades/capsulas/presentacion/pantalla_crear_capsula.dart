@@ -14,13 +14,14 @@ import '../../recuerdos/presentacion/componentes/hoja_nuevo_recuerdo.dart';
 import '../../recuerdos/presentacion/pantalla_elegir_recuerdos.dart';
 import '../aplicacion/controlador_crear_capsula.dart';
 import '../aplicacion/proveedores_capsulas.dart';
-import '../dominio/apertura_capsula.dart';
 import '../dominio/validador_capsula.dart';
 import 'componentes/botones_agregar_elemento.dart';
+import 'componentes/elegir_fecha_hora_apertura.dart';
+import 'componentes/selector_destinatarios_amigos.dart';
 import 'componentes/tarjeta_recuerdo_elegido.dart';
 
 /// Formulario "Nueva cápsula": recuerdos del banco (hasta 10), título,
-/// mensaje, fecha de apertura futura y correo del destinatario.
+/// mensaje, fecha de apertura futura y amigo destinatario.
 class PantallaCrearCapsula extends ConsumerStatefulWidget {
   const PantallaCrearCapsula({super.key});
 
@@ -32,13 +33,10 @@ class PantallaCrearCapsula extends ConsumerStatefulWidget {
 class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
   final _titulo = TextEditingController();
   final _mensaje = TextEditingController();
-  final _destinatario = TextEditingController();
-
   @override
   void dispose() {
     _titulo.dispose();
     _mensaje.dispose();
-    _destinatario.dispose();
     super.dispose();
   }
 
@@ -67,27 +65,17 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
 
   Future<void> _elegirFecha() async {
     final ahora = ref.read(proveedorReloj)();
-    final primerDia = ValidadorCapsula.primerDiaSeleccionable(ahora);
     final actual = ref.read(proveedorControladorCrearCapsula).fechaApertura;
-    final elegida = await showDatePicker(
-      context: context,
-      helpText: 'Fecha de apertura',
-      cancelText: 'Cancelar',
-      confirmText: 'Elegir',
-      firstDate: primerDia,
-      lastDate: DateTime(ahora.year + 100, 12, 31),
-      initialDate: actual ?? DateTime(ahora.year + 1, ahora.month, ahora.day),
+    final elegida = await elegirFechaHoraApertura(
+      context,
+      ahora: ahora,
+      fechaActual: actual,
     );
-    if (elegida == null || !mounted) return;
-    // Se abre a las 8:00 (hora local) del día elegido.
-    _controlador.elegirFecha(
-      DateTime(elegida.year, elegida.month, elegida.day, 8),
-    );
+    if (elegida != null && mounted) _controlador.elegirFecha(elegida);
   }
 
   Future<void> _guardar() async {
     FocusScope.of(context).unfocus();
-    _controlador.actualizarCorreoDestinatario(_destinatario.text);
     final id = await _controlador.guardar(
       titulo: _titulo.text,
       mensaje: _mensaje.text,
@@ -175,24 +163,14 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
             ),
             const SizedBox(height: 16),
             _CampoFecha(
-              texto: fecha == null
-                  ? 'Elige cuándo se abrirá'
-                  : 'Se abrirá el ${formatearFechaCorta(fecha)}',
+              texto: textoFechaHoraApertura(fecha),
               alTocar: estado.guardando ? null : _elegirFecha,
             ),
             const SizedBox(height: 16),
-            TextField(
-              key: const Key('campo-destinatario'),
-              controller: _destinatario,
-              enabled: !estado.guardando,
-              keyboardType: TextInputType.emailAddress,
-              autocorrect: false,
-              onChanged: _controlador.actualizarCorreoDestinatario,
-              decoration: const InputDecoration(
-                labelText: 'Destinatario',
-                hintText: 'Correo de quien recibirá la cápsula',
-                prefixIcon: Icon(Icons.person_outline),
-              ),
+            SelectorDestinatariosAmigos(
+              seleccionados: estado.destinatariosUsuarioIds,
+              deshabilitado: estado.guardando,
+              alCambiar: _controlador.elegirDestinatarios,
             ),
             const SizedBox(height: 28),
             BotonPrincipal(

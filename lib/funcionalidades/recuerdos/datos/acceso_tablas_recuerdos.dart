@@ -18,6 +18,8 @@ abstract interface class AccesoTablasRecuerdos {
 
   Future<int> eliminar(String id);
 
+  Future<void> actualizar(String id, Map<String, dynamic> cambios);
+
   Future<Map<String, dynamic>?> leerUsoMedios();
 }
 
@@ -71,6 +73,11 @@ class AccesoTablasRecuerdosPostgrest implements AccesoTablasRecuerdos {
         .inFilter('capsulas.estado', const ['programada', 'liberada'])
         .ejecutar();
     return filas.length;
+  }
+
+  @override
+  Future<void> actualizar(String id, Map<String, dynamic> cambios) async {
+    await _cliente.from('elementos').actualizar(cambios).eq('id', id).ejecutar();
   }
 
   @override
