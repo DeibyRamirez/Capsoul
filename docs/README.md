@@ -12,6 +12,7 @@
 | 4 | [04-flujos-criticos.md](04-flujos-criticos.md) | Arranque, auth, medios, cápsulas, momentos |
 | 5 | [05-casos-de-uso.md](05-casos-de-uso.md) | Actor → caso de uso → pantalla → repositorio |
 | 6 | [06-integraciones.md](06-integraciones.md) | Supabase, Cloudinary, FCM, Resend, secretos |
+| — | [08-musica-producto-y-licencias.md](08-musica-producto-y-licencias.md) | Música (Spotify/Deezer), producción y decisiones para el PO |
 | 7 | [07-patrones-y-convenciones.md](07-patrones-y-convenciones.md) | Riverpod, go_router, nomenclatura, reglas de código |
 | 8 | [modelo_er.md](modelo_er.md) | Modelo entidad-relación de Postgres (v1.3) |
 

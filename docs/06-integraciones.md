@@ -31,6 +31,8 @@ Ver [`supabase/migrations/`](../supabase/migrations/) y [`modelo_er.md`](modelo_
 
 ## Spotify (catálogo y búsqueda)
 
+Resumen para producto y licencias: [08-musica-producto-y-licencias.md](08-musica-producto-y-licencias.md).
+
 - La app **no** usa la sesión Premium del usuario para buscar: la Edge Function `buscar-musica` usa **Client Credentials** (`SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` en secretos de Supabase).
 - En **modo desarrollo** del Dashboard de Spotify, la cuenta **dueña de la app** debe tener **Premium** activo; si no, `/v1/search` puede responder `403`.
 - Parámetro `limit` en búsqueda: máximo **10** por petición (límite de Spotify en development mode desde 2026). La función y el cliente envían hasta 10 resultados.
