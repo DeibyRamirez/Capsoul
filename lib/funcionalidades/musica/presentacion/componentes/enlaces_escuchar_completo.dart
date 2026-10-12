@@ -97,7 +97,7 @@ class _BotonPlataforma extends StatelessWidget {
   });
 
   final String etiqueta;
-  final IconData icono;
+  final FaIconData icono;
   final Color color;
   final VoidCallback alPresionar;
 
