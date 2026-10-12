@@ -38,7 +38,6 @@ void main() {
 
     expect(find.text('Tu banco de recuerdos'), findsOneWidget);
     expect(find.textContaining('Aún no tienes recuerdos'), findsOneWidget);
-    expect(find.text('Nuevo recuerdo'), findsOneWidget);
   });
 
   testWidgets('lista recuerdos y filtra por tipo', (tester) async {
@@ -63,11 +62,10 @@ void main() {
 
   testWidgets('escribir una nota la guarda con título y fecha', (tester) async {
     final recuerdos = await _montar(tester);
-    await _abrirRecuerdos(tester);
-
-    await tester.tap(find.text('Nuevo recuerdo'));
+    // Los recuerdos nuevos se crean desde el selector central "Crear".
+    _enrutador(tester).push(RutasApp.crear);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ListTile, 'Nota'));
+    await tester.tap(find.text('Escribir'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('campo-nota')), 'Hola futuro');
     await tester.tap(find.text('Guardar nota'));

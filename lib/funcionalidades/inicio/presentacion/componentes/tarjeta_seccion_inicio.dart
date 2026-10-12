@@ -62,9 +62,7 @@ class TarjetaSeccionInicio extends StatelessWidget {
               ),
               Text(
                 etiquetaConteo,
-                style: estilos.labelSmall?.copyWith(
-                  color: ColoresApp.atenuado,
-                ),
+                style: estilos.labelSmall?.copyWith(color: ColoresApp.atenuado),
               ),
             ],
           ),
@@ -90,13 +88,10 @@ class IlustracionSeccion extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            ColoresApp.acento.withValues(alpha: 0.35),
-            ColoresApp.primario.withValues(alpha: 0.85),
-          ],
+          colors: [ColoresApp.fondoInicio, ColoresApp.bordeTarjeta],
         ),
       ),
-      child: Icon(icono, color: ColoresApp.sobrePrimario, size: 25),
+      child: Icon(icono, color: ColoresApp.primario, size: 25),
     );
   }
 }

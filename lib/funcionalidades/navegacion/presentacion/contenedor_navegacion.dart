@@ -69,9 +69,10 @@ class ContenedorNavegacion extends StatelessWidget {
             icon: Container(
               width: 50,
               height: 50,
-              decoration: BoxDecoration(
-                color: ColoresApp.acento,
-                borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
+              decoration: const BoxDecoration(
+                color: ColoresApp.primario,
+                shape: BoxShape.circle,
+                boxShadow: TemaApp.sombraTarjeta,
               ),
               child: const Icon(Icons.add, color: ColoresApp.sobrePrimario),
             ),

@@ -86,7 +86,7 @@ class PantallaDetalleMomento extends ConsumerWidget {
                         tooltip: 'Borrar momento',
                         icon: const Icon(
                           Icons.delete_outline,
-                          color: ColoresApp.sobrePrimario,
+                          color: ColoresApp.textoPrincipal,
                         ),
                         onPressed: () => _borrar(context, ref, m),
                       )

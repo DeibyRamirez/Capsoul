@@ -8,10 +8,7 @@ import '../abrir_plataformas_musica.dart';
 
 /// Accesos externos para escuchar la pista completa (no preview in-app).
 class EnlacesEscucharCompleto extends StatelessWidget {
-  const EnlacesEscucharCompleto({
-    super.key,
-    required this.referencia,
-  });
+  const EnlacesEscucharCompleto({super.key, required this.referencia});
 
   final ReferenciaMusica referencia;
 
@@ -26,10 +23,8 @@ class EnlacesEscucharCompleto extends StatelessWidget {
         Text(
           'Escuchar canción completa',
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: esquema.onSurface,
-              ),
+          style: Theme.of(context).textTheme.titleSmall
+              ?.copyWith(fontWeight: FontWeight.w600, color: esquema.onSurface),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -40,7 +35,7 @@ class EnlacesEscucharCompleto extends StatelessWidget {
             _BotonPlataforma(
               etiqueta: 'Spotify',
               icono: FontAwesomeIcons.spotify,
-              color: const Color(0xFF1DB954),
+              color: ColoresApp.spotify,
               alPresionar: () => _abrir(
                 context,
                 'Spotify',
@@ -50,17 +45,14 @@ class EnlacesEscucharCompleto extends StatelessWidget {
             _BotonPlataforma(
               etiqueta: 'Deezer',
               icono: FontAwesomeIcons.deezer,
-              color: const Color(0xFFA238FF),
-              alPresionar: () => _abrir(
-                context,
-                'Deezer',
-                () => abrirEnDeezer(referencia),
-              ),
+              color: ColoresApp.appleMusic,
+              alPresionar: () =>
+                  _abrir(context, 'Deezer', () => abrirEnDeezer(referencia)),
             ),
             _BotonPlataforma(
               etiqueta: 'YouTube',
               icono: FontAwesomeIcons.youtube,
-              color: const Color(0xFFFF0000),
+              color: ColoresApp.youtube,
               alPresionar: () => _abrir(
                 context,
                 'YouTube',
@@ -121,10 +113,8 @@ class _BotonPlataforma extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   etiqueta,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: ColoresApp.atenuado,
-                        fontSize: 10,
-                      ),
+                  style: Theme.of(context).textTheme.labelSmall
+                      ?.copyWith(color: ColoresApp.atenuado, fontSize: 10),
                 ),
               ],
             ),

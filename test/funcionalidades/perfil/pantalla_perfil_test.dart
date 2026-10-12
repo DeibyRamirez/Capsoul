@@ -19,6 +19,7 @@ void main() {
       uid: 'uid-123',
       nombreVisible: 'Ana Supabase',
       correo: 'ana@capsoul.app',
+      nombreUsuario: 'ana',
     );
 
   Future<void> abrirPerfil(WidgetTester tester) async {

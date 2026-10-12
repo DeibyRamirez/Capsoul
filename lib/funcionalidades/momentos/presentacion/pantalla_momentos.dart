@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
-import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../aplicacion/proveedor_filtro_momentos.dart';
@@ -29,12 +27,6 @@ class PantallaMomentos extends ConsumerWidget {
     );
 
     return PantallaCapsoul(
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'nuevo-momento',
-        onPressed: () => context.push(RutasApp.nuevoMomento),
-        icon: const Icon(Icons.add),
-        label: const Text('Nuevo momento'),
-      ),
       cuerpo: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(proveedorMomentos);

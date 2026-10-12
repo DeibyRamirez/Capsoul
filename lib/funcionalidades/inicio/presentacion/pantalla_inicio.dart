@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
-import '../../../nucleo/componentes/cielo_nocturno.dart';
 import '../../../nucleo/componentes/fondo_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
@@ -28,54 +27,43 @@ class PantallaInicio extends ConsumerWidget {
 
     return PantallaCapsoul(
       tipoFondo: FondoCapsoulTipo.suave,
-      cuerpo: Stack(
-        children: [
-          const Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 320,
-            child: CieloNocturno(brillo: 0.35, animado: true),
-          ),
-          RefreshIndicator(
-            onRefresh: () => ref.refresh(proveedorResumenInicio.future),
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              children: [
-                EncabezadoInicio(
-                  alTocarCampana: () => mostrarAvisoInformativo(
-                    context,
-                    'Los avisos llegarán pronto.',
-                  ),
-                ),
-                const EscenaFrascoInicio(),
-                Center(
-                  child: FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(220, 52),
-                      shape: const StadiumBorder(),
-                    ),
-                    onPressed: () => context.push(RutasApp.crear),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Guardar algo hoy'),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '¿Qué quieres dejar para el futuro?',
-                  textAlign: TextAlign.center,
-                  style: estilos.bodyMedium?.copyWith(
-                    color: ColoresApp.atenuado,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                _RejillaSecciones(resumen: resumen),
-                const SizedBox(height: 16),
-                const BannerFraseInicio(),
-              ],
+      cuerpo: RefreshIndicator(
+        onRefresh: () => ref.refresh(proveedorResumenInicio.future),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            EncabezadoInicio(
+              alTocarCampana: () => mostrarAvisoInformativo(
+                context,
+                'Los avisos llegarán pronto.',
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            const EscenaFrascoInicio(),
+            const SizedBox(height: 20),
+            Center(
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(220, 48),
+                  shape: const StadiumBorder(),
+                ),
+                onPressed: () => context.push(RutasApp.crear),
+                icon: const Icon(Icons.add),
+                label: const Text('Guardar algo hoy'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '¿Qué quieres dejar para el futuro?',
+              textAlign: TextAlign.center,
+              style: estilos.bodySmall?.copyWith(color: ColoresApp.atenuado),
+            ),
+            const SizedBox(height: 20),
+            _RejillaSecciones(resumen: resumen),
+            const SizedBox(height: 16),
+            const BannerFraseInicio(),
+          ],
+        ),
       ),
     );
   }
@@ -148,7 +136,7 @@ class _RejillaSecciones extends StatelessWidget {
     return Column(
       children: [
         _FilaTarjetas(izquierda: tarjetas[0], derecha: tarjetas[1]),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _FilaTarjetas(izquierda: tarjetas[2], derecha: tarjetas[3]),
       ],
     );
@@ -172,7 +160,7 @@ class _FilaTarjetas extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: izquierda),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(child: derecha),
         ],
       ),

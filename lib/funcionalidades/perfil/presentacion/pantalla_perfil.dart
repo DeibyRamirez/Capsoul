@@ -15,7 +15,6 @@ import '../../recuerdos/aplicacion/proveedores_recuerdos.dart';
 import '../../recuerdos/dominio/filtro_recuerdos.dart';
 import '../aplicacion/controlador_perfil.dart';
 import 'componentes/encabezado_perfil.dart';
-import 'componentes/fila_destacados_perfil.dart';
 import 'componentes/rejilla_elementos_perfil.dart';
 
 /// Pestaña "Yo": perfil con cabecera estilo Instagram y rejilla de recuerdos.
@@ -88,6 +87,7 @@ class PantallaPerfil extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: EncabezadoPerfil(
                   nombre: nombre,
+                  nombreUsuario: perfil?.nombreUsuario,
                   inicial: inicial,
                   resumen: resumen,
                   publicaciones: resumen.recuerdos,
@@ -100,13 +100,24 @@ class PantallaPerfil extends ConsumerWidget {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
               SliverToBoxAdapter(
-                child: FilaDestacadosPerfil(
-                  alTocar: (etiqueta) => mostrarAvisoInformativo(
-                    context,
-                    '$etiqueta: próximamente',
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: ListTile(
+                    leading: const Icon(Icons.people_outline),
+                    title: const Text('Amigos e invitaciones'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(RutasApp.amigos),
                   ),
                 ),
               ),
+              // SliverToBoxAdapter(
+              //   child: FilaDestacadosPerfil(
+              //     alTocar: (etiqueta) => mostrarAvisoInformativo(
+              //       context,
+              //       '$etiqueta: próximamente',
+              //     ),
+              //   ),
+              // ),
               const SliverToBoxAdapter(child: SizedBox(height: 8)),
               recuerdosAsincrono.when(
                 loading: () => const SliverToBoxAdapter(

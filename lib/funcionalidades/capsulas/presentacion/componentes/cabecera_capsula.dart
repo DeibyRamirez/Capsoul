@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../../nucleo/tema/colores_app.dart';
+import '../../../../nucleo/tema/degradados_capsoul.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../../../nucleo/componentes/cielo_nocturno.dart';
 
-/// Cabecera del detalle: cielo nocturno, frasco, título, horizonte y
+/// Cabecera del detalle sobre fondo claro: boton atras y una tarjeta
+/// medianoche con el cielo de luciernagas, frasco, título, horizonte y
 /// candado con la fecha de apertura.
 class CabeceraCapsula extends StatelessWidget {
   const CabeceraCapsula({
@@ -32,73 +34,77 @@ class CabeceraCapsula extends StatelessWidget {
     final horizonte = this.horizonte;
     final fechaApertura = this.fechaApertura;
     final cuentaRegresiva = this.cuentaRegresiva;
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        bottom: Radius.circular(TemaApp.radioGrande),
-      ),
-      child: CieloNocturno(
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 4, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const BackButton(color: blanco),
-                Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              titulo,
-                              style: estilos.headlineMedium?.copyWith(
-                                color: blanco,
-                                fontFamily: 'serif',
-                                fontWeight: FontWeight.w500,
-                              ),
+    return DecoratedBox(
+      decoration: const BoxDecoration(gradient: DegradadosCapsoul.suave),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const BackButton(color: ColoresApp.textoPrincipal),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(TemaApp.radioGrande),
+                  child: CieloNocturno(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 16, 10, 16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  titulo,
+                                  style: estilos.headlineMedium?.copyWith(
+                                    color: blanco,
+                                    fontFamily: TemaApp.fuenteTitulos,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (horizonte != null) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    horizonte,
+                                    style: estilos.titleMedium?.copyWith(
+                                      color: blanco.withValues(alpha: 0.85),
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 20),
+                                if (fechaApertura != null)
+                                  _FilaCandado(
+                                    fecha: fechaApertura,
+                                    sellada: sellada,
+                                  ),
+                                if (cuentaRegresiva != null) ...[
+                                  const SizedBox(height: 8),
+                                  DefaultTextStyle.merge(
+                                    style: estilos.bodySmall?.copyWith(
+                                      color: blanco.withValues(alpha: 0.8),
+                                    ),
+                                    child: cuentaRegresiva,
+                                  ),
+                                ],
+                              ],
                             ),
-                            if (horizonte != null) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                horizonte,
-                                style: estilos.titleMedium?.copyWith(
-                                  color: blanco.withValues(alpha: 0.85),
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 20),
-                            if (fechaApertura != null)
-                              _FilaCandado(
-                                fecha: fechaApertura,
-                                sellada: sellada,
-                              ),
-                            if (cuentaRegresiva != null) ...[
-                              const SizedBox(height: 8),
-                              DefaultTextStyle.merge(
-                                style: estilos.bodySmall?.copyWith(
-                                  color: blanco.withValues(alpha: 0.8),
-                                ),
-                                child: cuentaRegresiva,
-                              ),
-                            ],
-                          ],
-                        ),
+                          ),
+                          FrascoLuminoso(
+                            tamano: 116,
+                            brillo: sellada ? 0.55 : 0.95,
+                            conCandado: sellada,
+                          ),
+                        ],
                       ),
-                      FrascoLuminoso(
-                        tamano: 130,
-                        brillo: sellada ? 0.55 : 0.95,
-                        conCandado: sellada,
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -117,15 +123,21 @@ class _FilaCandado extends StatelessWidget {
     const blanco = ColoresApp.sobrePrimario;
     return Row(
       children: [
-        Icon(sellada ? Icons.lock_outline : Icons.lock_open_outlined,
-            color: blanco, size: 22),
+        Icon(
+          sellada ? Icons.lock_outline : Icons.lock_open_outlined,
+          color: blanco,
+          size: 22,
+        ),
         const SizedBox(width: 10),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               sellada ? 'Abrir en' : 'Se abrió el',
-              style: TextStyle(color: blanco.withValues(alpha: 0.8), fontSize: 12),
+              style: TextStyle(
+                color: blanco.withValues(alpha: 0.8),
+                fontSize: 12,
+              ),
             ),
             Text(
               fecha,

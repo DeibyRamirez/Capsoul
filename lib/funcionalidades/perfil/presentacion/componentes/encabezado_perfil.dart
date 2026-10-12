@@ -9,6 +9,7 @@ class EncabezadoPerfil extends StatelessWidget {
   const EncabezadoPerfil({
     super.key,
     required this.nombre,
+    this.nombreUsuario,
     required this.inicial,
     required this.resumen,
     required this.publicaciones,
@@ -18,6 +19,7 @@ class EncabezadoPerfil extends StatelessWidget {
   });
 
   final String nombre;
+  final String? nombreUsuario;
   final String inicial;
   final ResumenInicio resumen;
   final int publicaciones;
@@ -34,7 +36,7 @@ class EncabezadoPerfil extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0x2E3D6B9A),
+            ColoresApp.fondoInicio,
             ColoresApp.superficie,
           ],
           stops: [0, 1],
@@ -95,6 +97,13 @@ class EncabezadoPerfil extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
+          if (nombreUsuario != null && nombreUsuario!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              '@$nombreUsuario',
+              style: estilos.bodyMedium?.copyWith(color: ColoresApp.atenuado),
+            ),
+          ],
           const SizedBox(height: 4),
           const Text(
             'Guardo hoy lo que alguien amará mañana.',

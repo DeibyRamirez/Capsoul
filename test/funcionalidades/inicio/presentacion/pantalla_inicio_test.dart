@@ -1,5 +1,4 @@
 import 'package:capsoul/funcionalidades/inicio/dominio/resumen_inicio.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../ayudantes/app_prueba.dart';
@@ -56,6 +55,6 @@ void main() {
 
     expect(find.text('Mis cápsulas'), findsOneWidget);
     expect(find.textContaining('Aún no tienes cápsulas'), findsOneWidget);
-    expect(find.byType(FloatingActionButton), findsOneWidget);
+    expect(find.byTooltip('Cápsulas para mí'), findsOneWidget);
   });
 }
