@@ -52,3 +52,6 @@ env/*.json
 
 # Caché local del CLI de Supabase
 supabase/.temp/
+
+# Tokens de CLI/herramientas
+.env

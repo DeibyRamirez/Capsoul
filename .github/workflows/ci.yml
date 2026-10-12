@@ -1,0 +1,28 @@
+name: CI Capsoul
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  deno:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+      - run: deno test supabase/functions/firmar-medio/
+      - run: deno test supabase/functions/firmar-subida/
+      - run: deno test supabase/functions/buscar-musica/
+      - run: deno test supabase/functions/enviar-avisos/
