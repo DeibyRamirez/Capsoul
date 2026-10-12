@@ -10,7 +10,9 @@ import '../../funcionalidades/autenticacion/presentacion/pantalla_recuperar_cont
 import '../../funcionalidades/autenticacion/presentacion/pantalla_registro.dart';
 import '../../funcionalidades/autenticacion/presentacion/pantalla_revisa_tu_correo.dart';
 import '../../funcionalidades/capsulas/presentacion/pantalla_crear_capsula.dart';
+import '../../funcionalidades/capsulas/presentacion/pantalla_editar_capsula.dart';
 import '../../funcionalidades/capsulas/presentacion/pantalla_detalle_capsula.dart';
+import '../../funcionalidades/capsulas/presentacion/pantalla_capsulas_recibidas.dart';
 import '../../funcionalidades/capsulas/presentacion/pantalla_mis_capsulas.dart';
 import '../../funcionalidades/crear/presentacion/pantalla_selector_crear.dart';
 import '../../funcionalidades/elementos/dominio/elemento_borrador.dart';
@@ -24,7 +26,10 @@ import '../../funcionalidades/momentos/presentacion/pantalla_detalle_momento.dar
 import '../../funcionalidades/momentos/presentacion/pantalla_momentos.dart';
 import '../../funcionalidades/momentos/presentacion/pantalla_nuevo_momento.dart';
 import '../../funcionalidades/navegacion/presentacion/contenedor_navegacion.dart';
+import '../../funcionalidades/amistades/presentacion/pantalla_amigos.dart';
+import '../../funcionalidades/perfil/aplicacion/controlador_perfil.dart';
 import '../../funcionalidades/perfil/presentacion/pantalla_perfil.dart';
+import '../../funcionalidades/usuarios/presentacion/pantalla_elegir_nombre_usuario.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_detalle_recuerdo.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_elegir_recuerdos.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_guardar_recuerdo.dart';
@@ -46,6 +51,9 @@ final proveedorEnrutadorApp = Provider<GoRouter>((ref) {
     proveedorModoRecuperacion,
     (_, _) => notificadorRefresco.refrescar(),
   );
+  ref.listen(proveedorPerfilUsuarioActual, (_, _) {
+    notificadorRefresco.refrescar();
+  });
 
   bool haySesion() {
     final estado = ref.read(proveedorEstadoAutenticacion);
@@ -59,6 +67,11 @@ final proveedorEnrutadorApp = Provider<GoRouter>((ref) {
     notificadorRefresco: notificadorRefresco,
     haySesion: haySesion,
     enModoRecuperacion: () => ref.read(proveedorModoRecuperacion),
+    necesitaNombreUsuario: () {
+      final perfil = ref.read(proveedorPerfilUsuarioActual).value;
+      return perfil?.necesitaNombreUsuario ?? false;
+    },
+    perfilCargando: () => ref.read(proveedorPerfilUsuarioActual).isLoading,
   );
   ref.onDispose(enrutador.dispose);
   return enrutador;
@@ -72,6 +85,8 @@ GoRouter crearEnrutadorApp({
   required Listenable notificadorRefresco,
   required bool Function() haySesion,
   bool Function()? enModoRecuperacion,
+  bool Function()? necesitaNombreUsuario,
+  bool Function()? perfilCargando,
 }) {
   final claveNavegadorRaiz = GlobalKey<NavigatorState>();
 
@@ -79,11 +94,22 @@ GoRouter crearEnrutadorApp({
     navigatorKey: claveNavegadorRaiz,
     initialLocation: RutasApp.inicio,
     refreshListenable: notificadorRefresco,
-    redirect: (context, state) => resolverRedireccionAutenticacion(
-      sesionIniciada: haySesion(),
-      ubicacion: state.matchedLocation,
-      modoRecuperacion: enModoRecuperacion?.call() ?? false,
-    ),
+    redirect: (context, state) {
+      final ubicacion = state.matchedLocation;
+      final sesion = haySesion();
+      final auth = resolverRedireccionAutenticacion(
+        sesionIniciada: sesion,
+        ubicacion: ubicacion,
+        modoRecuperacion: enModoRecuperacion?.call() ?? false,
+      );
+      if (auth != null) return auth;
+      return resolverRedireccionNombreUsuario(
+        sesionIniciada: sesion,
+        ubicacion: ubicacion,
+        necesitaNombreUsuario: necesitaNombreUsuario?.call() ?? false,
+        perfilCargando: perfilCargando?.call() ?? false,
+      );
+    },
     routes: [
       GoRoute(
         path: RutasApp.raiz,
@@ -116,6 +142,11 @@ GoRouter crearEnrutadorApp({
         path: RutasApp.nuevaContrasena,
         name: 'nueva-contrasena',
         builder: (context, state) => const PantallaNuevaContrasena(),
+      ),
+      GoRoute(
+        path: RutasApp.elegirNombreUsuario,
+        name: 'elegir-usuario',
+        builder: (context, state) => const PantallaElegirNombreUsuario(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navegacionRamas) {
@@ -172,6 +203,14 @@ GoRouter crearEnrutadorApp({
                 path: RutasApp.yo,
                 name: 'yo',
                 builder: (context, state) => const PantallaPerfil(),
+                routes: [
+                  GoRoute(
+                    path: 'amigos',
+                    name: 'amigos',
+                    parentNavigatorKey: claveNavegadorRaiz,
+                    builder: (context, state) => const PantallaAmigos(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -222,11 +261,25 @@ GoRouter crearEnrutadorApp({
         builder: (context, state) => const PantallaMisCapsulas(),
         routes: [
           GoRoute(
+            path: 'recibidas',
+            name: 'capsulas-recibidas',
+            builder: (context, state) => const PantallaCapsulasRecibidas(),
+          ),
+          GoRoute(
             path: ':id',
             name: 'detalle-capsula',
             builder: (context, state) => PantallaDetalleCapsula(
               idCapsula: state.pathParameters['id'] ?? '',
             ),
+            routes: [
+              GoRoute(
+                path: 'editar',
+                name: 'editar-capsula',
+                builder: (context, state) => PantallaEditarCapsula(
+                  idCapsula: state.pathParameters['id'] ?? '',
+                ),
+              ),
+            ],
           ),
         ],
       ),

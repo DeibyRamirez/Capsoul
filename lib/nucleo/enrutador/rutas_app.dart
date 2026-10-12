@@ -1,3 +1,5 @@
+import '../enlaces/enlace_capsoul.dart';
+
 /// Rutas de go_router usadas en toda la app.
 abstract final class RutasApp {
   static const String raiz = '/';
@@ -6,6 +8,7 @@ abstract final class RutasApp {
   static const String nuevoMomento = '/momentos/nuevo';
   static const String legado = '/legado';
   static const String yo = '/yo';
+  static const String amigos = '/yo/amigos';
   static const String crear = '/crear';
   static const String crearVideo = '/crear/video';
   static const String crearAudio = '/crear/audio';
@@ -15,6 +18,7 @@ abstract final class RutasApp {
   static const String elegirMusica = '/recuerdos/elegir-musica';
   static const String crearCapsula = '/crear/capsula';
   static const String capsulas = '/capsulas';
+  static const String capsulasRecibidas = '/capsulas/recibidas';
   static const String recuerdos = '/recuerdos';
   static const String guardarRecuerdo = '/recuerdos/guardar';
   static const String elegirRecuerdos = '/recuerdos/elegir';
@@ -27,6 +31,7 @@ abstract final class RutasApp {
   /// Contraseña nueva tras abrir el enlace de recuperación (hay sesión
   /// temporal).
   static const String nuevaContrasena = '/nueva-contrasena';
+  static const String elegirNombreUsuario = '/elegir-usuario';
 
   static const Set<String> rutasAutenticacion = {
     iniciarSesion,
@@ -38,6 +43,12 @@ abstract final class RutasApp {
   /// Ubicación del detalle de la cápsula [id].
   static String detalleCapsulaDe(String id) =>
       '$capsulas/${Uri.encodeComponent(id)}';
+
+  static String editarCapsulaDe(String id) =>
+      '${detalleCapsulaDe(id)}/editar';
+
+  /// Deep link fase 1: capsoul://capsula/{id}
+  static String enlaceCapsulaDe(String id) => EnlaceCapsoul.capsula(id);
 
   /// Ubicación del detalle del momento [id].
   static String detalleMomentoDe(String id) =>
@@ -87,5 +98,24 @@ String? resolverRedireccionAutenticacion({
   if (esRutaAutenticacion || ubicacion == RutasApp.raiz) {
     return RutasApp.inicio;
   }
+  return null;
+}
+
+/// Si falta `nombre_usuario`, obliga a [RutasApp.elegirNombreUsuario].
+///
+/// Con [perfilCargando], no redirige hasta conocer el perfil (evita mandar a
+/// inicio con caché desactualizada tras fijar el @).
+String? resolverRedireccionNombreUsuario({
+  required bool sesionIniciada,
+  required String ubicacion,
+  required bool necesitaNombreUsuario,
+  bool perfilCargando = false,
+}) {
+  if (!sesionIniciada) return null;
+  if (perfilCargando) return null;
+  if (ubicacion == RutasApp.elegirNombreUsuario) {
+    return necesitaNombreUsuario ? null : RutasApp.inicio;
+  }
+  if (necesitaNombreUsuario) return RutasApp.elegirNombreUsuario;
   return null;
 }
