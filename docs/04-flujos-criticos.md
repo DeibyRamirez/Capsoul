@@ -68,7 +68,18 @@ sequenceDiagram
 
 **Archivos:** `funcionalidades/elementos/`, `funcionalidades/recuerdos/`, `supabase/functions/firmar-subida/`
 
-## 4. Apertura de cápsula (destinatario)
+## 4. Crear y programar una cápsula (autor)
+
+1. El autor elige recuerdos del banco o captura nuevos, título, mensaje y **fecha de apertura** futura.
+2. Indica el **correo del destinatario** (usuario Capsoul o invitado externo).
+3. El cliente inserta la cápsula en `borrador`, enlaza `capsula_elementos`, inserta `capsula_destinatarios` (`correo_externo`) y pasa a `programada`.
+4. Si el destinatario se registra con ese correo, el trigger `vincular_invitaciones_correo` asocia `usuario_id`.
+
+**Pendiente en app:** listado y apertura como destinatario (`capsulas_recibidas`). Ver §4.1.
+
+**Archivos:** `funcionalidades/capsulas/`, tabla `capsula_destinatarios` en migración inicial.
+
+## 4.1. Apertura de cápsula (destinatario)
 
 1. `rpc capsulas_recibidas()` — feed sin título hasta liberar.
 2. Tras `fecha_apertura`, estado `liberada`.

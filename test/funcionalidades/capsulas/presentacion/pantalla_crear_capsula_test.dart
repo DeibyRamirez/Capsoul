@@ -53,8 +53,7 @@ Future<void> _agregarNota(WidgetTester tester, String texto) async {
 }
 
 void main() {
-  testWidgets('el formulario tiene destinatario deshabilitado (Próximamente)',
-      (tester) async {
+  testWidgets('el formulario pide el correo del destinatario', (tester) async {
     await montarAppCapsoul(
       tester,
       autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
@@ -62,13 +61,12 @@ void main() {
     await _abrirNuevaCapsula(tester);
 
     expect(find.text('Nueva cápsula'), findsOneWidget);
-    expect(find.text('Recuerdos (0/10)'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('Destinatario'), 200, scrollable: _listaFormulario());
     final destinatario = tester.widget<TextField>(
       find.byKey(const Key('campo-destinatario')),
     );
-    expect(destinatario.enabled, isFalse);
-    expect(find.text('Próximamente'), findsOneWidget);
+    expect(destinatario.enabled, isTrue);
+    expect(find.text('Próximamente'), findsNothing);
   });
 
   testWidgets('no guarda sin fecha de apertura y lo explica', (tester) async {
@@ -102,6 +100,11 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('campo-titulo')), 'Para Jacobo');
     await tester.enterText(find.byKey(const Key('campo-mensaje')), 'Ábrela grande');
+    await _tocar(tester, find.byKey(const Key('campo-destinatario')));
+    await tester.enterText(
+      find.byKey(const Key('campo-destinatario')),
+      'jacobo@example.com',
+    );
     await _tocar(tester, find.byKey(const Key('campo-fecha')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Elegir'));
@@ -117,6 +120,7 @@ void main() {
     expect(nueva.fechaApertura, DateTime(2027, 10, 3, 8));
     expect(nueva.recuerdos.single.tipo, TipoElemento.texto);
     expect(nueva.recuerdos.single.contenidoTexto, 'Te quiero, Jacobo');
+    expect(nueva.correoDestinatario, 'jacobo@example.com');
     // Tras guardar abre el detalle.
     expect(find.text('Abrir en'), findsOneWidget);
     expect(find.text('Para Jacobo'), findsOneWidget);
@@ -133,6 +137,11 @@ void main() {
     await _abrirNuevaCapsula(tester);
     await _agregarNota(tester, 'Hola');
     await tester.enterText(find.byKey(const Key('campo-titulo')), 'Para mí');
+    await _tocar(tester, find.byKey(const Key('campo-destinatario')));
+    await tester.enterText(
+      find.byKey(const Key('campo-destinatario')),
+      'otro@example.com',
+    );
     await _tocar(tester, find.byKey(const Key('campo-fecha')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Elegir'));

@@ -20,7 +20,7 @@ import 'componentes/botones_agregar_elemento.dart';
 import 'componentes/tarjeta_recuerdo_elegido.dart';
 
 /// Formulario "Nueva cápsula": recuerdos del banco (hasta 10), título,
-/// mensaje, fecha de apertura futura y destinatario (próximamente).
+/// mensaje, fecha de apertura futura y correo del destinatario.
 class PantallaCrearCapsula extends ConsumerStatefulWidget {
   const PantallaCrearCapsula({super.key});
 
@@ -32,11 +32,13 @@ class PantallaCrearCapsula extends ConsumerStatefulWidget {
 class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
   final _titulo = TextEditingController();
   final _mensaje = TextEditingController();
+  final _destinatario = TextEditingController();
 
   @override
   void dispose() {
     _titulo.dispose();
     _mensaje.dispose();
+    _destinatario.dispose();
     super.dispose();
   }
 
@@ -85,6 +87,7 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
 
   Future<void> _guardar() async {
     FocusScope.of(context).unfocus();
+    _controlador.actualizarCorreoDestinatario(_destinatario.text);
     final id = await _controlador.guardar(
       titulo: _titulo.text,
       mensaje: _mensaje.text,
@@ -178,7 +181,19 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
               alTocar: estado.guardando ? null : _elegirFecha,
             ),
             const SizedBox(height: 16),
-            const _CampoDestinatario(),
+            TextField(
+              key: const Key('campo-destinatario'),
+              controller: _destinatario,
+              enabled: !estado.guardando,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              onChanged: _controlador.actualizarCorreoDestinatario,
+              decoration: const InputDecoration(
+                labelText: 'Destinatario',
+                hintText: 'Correo de quien recibirá la cápsula',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+            ),
             const SizedBox(height: 28),
             BotonPrincipal(
               etiqueta: 'Guardar cápsula',
@@ -255,37 +270,18 @@ class _CampoFecha extends StatelessWidget {
         labelText: 'Fecha de apertura',
         contentPadding: EdgeInsets.zero,
       ),
-      child: ListTile(
-        key: const Key('campo-fecha'),
-        leading: const Icon(Icons.lock_clock_outlined, color: ColoresApp.acento),
-        title: Text(texto),
-        trailing: const Icon(Icons.calendar_month_outlined),
-        onTap: alTocar,
-      ),
-    );
-  }
-}
-
-class _CampoDestinatario extends StatelessWidget {
-  const _CampoDestinatario();
-
-  @override
-  Widget build(BuildContext context) {
-    return const TextField(
-      key: Key('campo-destinatario'),
-      enabled: false,
-      decoration: InputDecoration(
-        labelText: 'Destinatario',
-        hintText: 'Correo o persona de Capsoul',
-        prefixIcon: Icon(Icons.person_outline),
-        suffixIcon: Padding(
-          padding: EdgeInsets.only(right: 8),
-          child: Chip(
-            label: Text('Próximamente'),
-            visualDensity: VisualDensity.compact,
-          ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: ListTile(
+          key: const Key('campo-fecha'),
+          leading:
+              const Icon(Icons.lock_clock_outlined, color: ColoresApp.acento),
+          title: Text(texto),
+          trailing: const Icon(Icons.calendar_month_outlined),
+          onTap: alTocar,
         ),
       ),
     );
   }
 }
+

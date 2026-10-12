@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
+import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../elementos/dominio/limites_medios.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
@@ -16,6 +17,7 @@ class EstadoCrearCapsula {
   const EstadoCrearCapsula({
     this.recuerdos = const [],
     this.fechaApertura,
+    this.correoDestinatario = '',
     this.guardando = false,
     this.error,
   });
@@ -23,6 +25,7 @@ class EstadoCrearCapsula {
   /// Recuerdos elegidos, en el orden en que se guardarán.
   final List<Recuerdo> recuerdos;
   final DateTime? fechaApertura;
+  final String correoDestinatario;
   final bool guardando;
   final FalloApp? error;
 
@@ -38,6 +41,7 @@ class EstadoCrearCapsula {
   EstadoCrearCapsula copiarCon({
     List<Recuerdo>? recuerdos,
     DateTime? fechaApertura,
+    String? correoDestinatario,
     bool? guardando,
     FalloApp? error,
     bool limpiarError = false,
@@ -45,6 +49,7 @@ class EstadoCrearCapsula {
     return EstadoCrearCapsula(
       recuerdos: recuerdos ?? this.recuerdos,
       fechaApertura: fechaApertura ?? this.fechaApertura,
+      correoDestinatario: correoDestinatario ?? this.correoDestinatario,
       guardando: guardando ?? this.guardando,
       error: limpiarError ? null : (error ?? this.error),
     );
@@ -99,6 +104,10 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
     state = state.copiarCon(fechaApertura: fecha, limpiarError: true);
   }
 
+  void actualizarCorreoDestinatario(String correo) {
+    state = state.copiarCon(correoDestinatario: correo, limpiarError: true);
+  }
+
   /// Valida y guarda. Devuelve el id de la cápsula o `null` si falló (el
   /// fallo queda en [EstadoCrearCapsula.error]).
   Future<String?> guardar({required String titulo, String? mensaje}) async {
@@ -109,13 +118,22 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
       state = state.copiarCon(error: const FalloCapsula.fechaInvalida());
       return null;
     }
+    final correoAutor = ref
+        .read(proveedorRepositorioAutenticacion)
+        .usuarioActual
+        ?.correo;
     final nueva = NuevaCapsula(
       titulo: titulo,
       mensaje: mensaje,
       fechaApertura: fecha,
       recuerdos: state.recuerdos,
+      correoDestinatario: state.correoDestinatario,
     );
-    final fallo = ValidadorCapsula.validar(nueva, ahora: ahora);
+    final fallo = ValidadorCapsula.validar(
+      nueva,
+      ahora: ahora,
+      correoAutor: correoAutor,
+    );
     if (fallo != null) {
       state = state.copiarCon(error: fallo);
       return null;

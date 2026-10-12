@@ -169,15 +169,18 @@ class _EstadoPantallaGuardarRecuerdo
                 labelText: 'Fecha del recuerdo',
                 contentPadding: EdgeInsets.zero,
               ),
-              child: ListTile(
-                key: const Key('campo-fecha-recuerdo'),
-                leading: const Icon(
-                  Icons.event_outlined,
-                  color: ColoresApp.acento,
+              child: Material(
+                type: MaterialType.transparency,
+                child: ListTile(
+                  key: const Key('campo-fecha-recuerdo'),
+                  leading: const Icon(
+                    Icons.event_outlined,
+                    color: ColoresApp.acento,
+                  ),
+                  title: Text(formatearFechaCorta(_fecha)),
+                  trailing: const Icon(Icons.calendar_month_outlined),
+                  onTap: ocupado ? null : _elegirFecha,
                 ),
-                title: Text(formatearFechaCorta(_fecha)),
-                trailing: const Icon(Icons.calendar_month_outlined),
-                onTap: ocupado ? null : _elegirFecha,
               ),
             ),
             const SizedBox(height: 28),

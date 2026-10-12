@@ -154,6 +154,7 @@ void main() {
       'musica_url_completa': 'https://open.spotify.com/track/1',
       'musica_portada_url': null,
       'musica_uri_profundo': 'spotify:track:1',
+      'musica_enlace_deezer': null,
       'duracion_segundos': 30,
     });
     expect(recuerdo.tipo, TipoElemento.musica);
