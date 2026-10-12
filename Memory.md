@@ -38,6 +38,8 @@
 8. **Claves fuera del repo.** Supabase URL y anon/publishable key solo por `--dart-define-from-file=env/dev.json`
    (`env/*.json` ignorado; plantilla en `env/dev.json.example`). Nunca `service_role`, `sb_secret_` ni el
    API secret de Cloudinary en el cliente.
+9. **Comunicación 100 % en español (PO, 2026-10-12).** Todo lo de Capsoul va en español: comunicación con el PO,
+   reportes, commits (tipo incluido, nunca `feat`/`fix`) y comentarios. No se usa inglés.
 
 ## 3. Stack y dependencias
 
@@ -163,14 +165,19 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 
 Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 
-- [ ] PO: aplicar `…000002_capsoul_programar_trabajos.sql` (requiere extensiones `pg_cron` y `pg_net`, y en Vault
-      `project_url` y `llave_cron`).
+- [ ] PO: la 000002 está registrada en `schema_migrations`, pero en remoto solo existen los jobs `capsoul-liberar-capsulas`
+      y `capsoul-activar-herencias` (verificado el 2026-10-12). Falta `capsoul-enviar-avisos` y Vault está vacío
+      (`project_url`, `llave_cron`).
+- [ ] PO: los objetos de **000007–000010** ya existen en remoto (tabla `pendientes_borrado_medio`, `invitaciones_amistad`,
+      `usuarios.nombre_usuario`, GRANT por columnas de `capsulas`), pero **no están registrados** en
+      `supabase_migrations.schema_migrations` (solo 000001–000006). Comparar con los archivos y registrarlas, sin reaplicar.
 - [ ] Director: actualizar RF-05 en Drive si hace falta (no existe en el repo; la copia 02 v1.2 ya pide confirmación
       obligatoria y la pantalla "Revisa tu correo").
 - [ ] Llamar `registrar_actividad()` (RPC) al abrir la app, para herencias por inactividad.
 - [ ] PO: revisar la rama `funcionalidad/capsulas` y autorizar push / PR a `develop`.
-- [ ] Huérfanos en Cloudinary: si falla el insert tras subir, el medio queda en Cloudinary (la app compensa solo en
-      la BD). Falta limpieza en servidor (tarea programada o webhook). Los 4 huérfanos del 2026-10-03 ya se borraron.
+- [ ] Huérfanos en Cloudinary: la 000008 crea la cola `privado.pendientes_borrado_medio` (trigger `after delete` en
+      `elementos`), pero **falta el procesador** (Edge Function protegida o job, idempotente, por lotes, Admin API de
+      Cloudinary con secretos en `Deno.env`) y cubrir subidas sin fila en `elementos`. Los 4 huérfanos del 2026-10-03 ya se borraron.
 - [ ] Probar con un medio real la miniatura por Download API + `transformation` (foto y, sobre todo, video `so_0`):
       se verificó con un recurso `upload` de ejemplo (480 px) y la firma contra recursos inexistentes, no con un
       derivado eager `authenticated`. La Download API no pasa por la CDN (Cloudinary cobra el doble de ancho de
@@ -182,11 +189,12 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] El tamaño declarado no lo puede imponer la firma de Cloudinary: valorar verificación posterior (webhook
       `notification_url` o revisión en `firmar-medio`).
 - [ ] `miniatura_public_id` queda en null (eager crea la miniatura derivada; falta guardarla/servirla).
-- [ ] Destinatarios de cápsula (campo visible y deshabilitado, "Próximamente").
 - [ ] `pruebas_rls_capsoul.sql` inserta una foto sin `bytes`: con la 000003 esa línea fallará por el check (esperado).
 - [ ] iOS: verificar en Mac la compilación con camera/record (deployment target) y los permisos.
 - [ ] Borrar `firestore.rules` y `firebase.json` y desactivar Firebase Auth/Firestore/Storage en la consola (decisión del PO).
-- [ ] Edge Functions `firmar-subida`, `firmar-medio` y `enviar-avisos`.
+- [ ] Edge Function `enviar-avisos` (DEV-100): **fuera de los commits** y sin desplegar. Antes hay que validar la cabecera del
+      cron contra un secreto (hoy `verify_jwt = false` sin comprobación), migrar de FCM legacy (`fcm/send`) a HTTP v1 con
+      cuenta de servicio, no devolver errores internos y reclamar filas de forma atómica.
 - [ ] PO: probar en dispositivo lo que falta del flujo (login sin confirmar → reenviar; recuperar → enlace → nueva
       contraseña; editar nombre, cerrar sesión, sesión persistente). Registro e inicio de sesión con correo: OK.
 - [ ] Vigilar el límite de Resend (plan gratuito, 100 correos/día) y el rate limit de correos de Supabase Auth.
@@ -195,6 +203,9 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] S1-07: instalar packs oficiales de skills (ver `.cursor/skills/README.md`).
 - [ ] FCM (`firebase_messaging`) · CI.
 - [ ] Revisar si se abre PR `develop` → `main`.
+- [ ] UI para **editar momentos y recuerdos** (los repositorios ya tienen `actualizarMetadatos`; falta pantalla).
+- [ ] `infra/scripts/sincronizar_migraciones.ps1` solo copia los archivos: no añade marcadores `-- migrate:up/down` y
+      sobrescribiría las copias de 000006 y 000010 que ya los tienen. Las copias de 000007–000009 siguen sin marcadores dbmate.
 
 ## 7. Decisiones (ADR corto)
 
@@ -232,7 +243,7 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - **2026-10-03** Guardado de cápsula: subir medios → insertar `elementos` → cápsula en `borrador` → `capsula_elementos`
   → `programada`; si falla, se borran cápsula y elementos. `public_id` `capsoul/<uuid>` (sin uid), `type=authenticated`,
   eager de miniatura (video con `eager_async`), `allowed_formats` firmado.
-- **2026-10-03** Fecha de apertura: solo días futuros (desde mañana), a las 8:00 hora local. Material en español
+- **2026-10-03** Fecha de apertura: solo días futuros (desde mañana); desde 2026-10-12 también **hora** elegible en crear/editar cápsula (hora local). Material en español
   (`flutter_localizations`, `es_CO`).
 - **2026-10-03** Inserts con id generado en el cliente (`uuid`) y **sin RETURNING**: el error al guardar venía de
   que RETURNING exige política SELECT; la 000004 añade las políticas `*_leer` (elementos, momentos, enlaces).
@@ -346,3 +357,16 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   (`rejilla_elementos_perfil.dart`); Momentos = búsqueda + chips + grid 2 col `TarjetaMomento`
   (`rejilla_momentos.dart`). Eliminados `rejilla_momentos_perfil` y `tarjeta_momento_feed`.
   `flutter analyze` 0 issues, tests verdes. Sin commit.
+- **2026-10-12** Regla 9: todo en español (comunicación, reportes, commits y comentarios), por instrucción del PO. Se creó `.env` (solo CLI) con `SUPABASE_ACCESS_TOKEN` vacío y se agregó `.env` a `.gitignore`, sin commit.
+- **2026-10-12** Plan maestro `todo.md` (implementación local, **sin commit/push/deploy** salvo autorización PO): baseline analyze 0; DEV-97 sesión en `flutter_secure_storage`; CRUD cápsulas/recuerdos/momentos en repos; migraciones **000007** (GRANT columnas) y **000008** (cola `pendientes_borrado_medio`); prueba SQL `pruebas_liberar_capsulas.sql`; Edge **`enviar-avisos`** + `config.toml`; FCM → `dispositivos_push` (`EscuchaTokensPush`, borrado al cerrar sesión); UI destinatario (`/capsulas/recibidas`, `marcar_abierta`); editar/cancelar/eliminar cápsula; CI `.github/workflows/ci.yml`; docs VPS y CHECK música. **Remoto pendiente PO:** aplicar migraciones 000002/000007/000008, desplegar `enviar-avisos`, Vault/cron, secretos FCM/Resend. `flutter test` 230 OK.
+- **2026-10-12** Plan compartir cápsulas y amigos (friends_only): migración **000009** (`invitaciones_amistad`, `mis_amigos`, destinatario por `usuario_id` + RLS amistad); feature `amistades/` y selector de amigo en crear cápsula; deep links fase 1 (`EscuchaEnlacesApp`, `capsoul://capsula` / `capsoul://amistad`); docs `04-flujos-criticos` §4.2–4.3, `05-casos-de-uso`, `enlaces-app-fase2.md`. **PO:** aplicar 000009 y cron 000002 (`docs/migraciones.md`, `infra/scripts/aplicar_cron_parcial_capsoul.sql`).
+- **2026-10-12** Amistades por **@** (sustituto principal del enlace de invitación): migración **000010** (`nombre_usuario`, `resolver_usuario_por_arroba`, `enviar_solicitud_amistad`, `establecer_mi_nombre_usuario`); registro + `/elegir-usuario`; búsqueda exacta en `pantalla_amigos`; filtro @ en crear cápsula. Deep links `capsoul://auth/*` se mantienen; `capsoul://amistad` solo compatibilidad. **PO:** aplicar 000010 en remoto.
+- **2026-10-12** Restyle UI al sistema de diseño claro (`docs/design_system_for_flutter.md`, aprobado por el PO): tokens nuevos en `ColoresApp` (primario #1B316B, degradado #E2EDF8→#F4F8FC, borde #D6E4F0, texto #111E38/#5A6E94, nav #8FA1C2, dorado, medianoche #132247), `TemaApp` con Poppins/Playfair (assets OFL en `assets/fonts`), botones píldora 48, tarjetas con borde y sombra; luciérnagas (`CieloNocturno`, sin tocar) dentro de tarjetas medianoche en Inicio, auth y detalle de cápsula; `docs/Design.md` actualizado. Sin commit.
+- **2026-10-12** Cierre verificación auth/medios/cápsulas: destinatarios **múltiples** (checkbox) en crear; **editar** cápsula con recuerdos, destinatarios y metadatos (`actualizarCapsulaEditable`, lectura `capsula_destinatarios`); selector de **fecha y hora**; componentes `selector_destinatarios_amigos.dart` y `elegir_fecha_hora_apertura.dart`. Pruebas en `capsulas/` ampliadas. **PO (dispositivo):** flujo crear → editar → destinatario en «Para mí»; subida real con `firmar-subida`.
+- **2026-10-12** Auditoría previa al push y correcciones aprobadas por el PO: `flutter analyze` **0 issues** y `flutter test`
+  **245** en verde. La creación queda centralizada en el selector «Crear» (se quitaron los FAB comentados de Mis cápsulas,
+  Momentos y Recuerdos y el `_nuevo` sin uso); las pruebas de Inicio y Recuerdos se adaptaron a ese flujo. Inicializadores
+  privados en repositorios de amistades y cápsulas, `@override` en `RepositorioDispositivosPush`, imports sin uso.
+  Estado remoto verificado (solo lectura): 000001–000006 registradas; objetos de 000007–000010 presentes sin registrar;
+  funciones `firmar-subida` v2, `firmar-medio` v3, `buscar-musica` v7 (todas con JWT); cron con 2 jobs; Vault vacío.
+  `enviar-avisos` queda fuera de los commits (pendiente de seguridad y FCM v1). Commits locales en `develop`, **sin push**.

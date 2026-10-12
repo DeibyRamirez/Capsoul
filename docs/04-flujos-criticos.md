@@ -71,23 +71,45 @@ sequenceDiagram
 ## 4. Crear y programar una cápsula (autor)
 
 1. El autor elige recuerdos del banco o captura nuevos, título, mensaje y **fecha de apertura** futura.
-2. Indica el **correo del destinatario** (usuario Capsoul o invitado externo).
-3. El cliente inserta la cápsula en `borrador`, enlaza `capsula_elementos`, inserta `capsula_destinatarios` (`correo_externo`) y pasa a `programada`.
-4. Si el destinatario se registra con ese correo, el trigger `vincular_invitaciones_correo` asocia `usuario_id`.
+2. Elige **uno o más destinatarios** entre amigos aceptados (`mis_amigos` / selector en crear y editar cápsula). No hay búsqueda global de usuarios.
+3. El cliente inserta la cápsula en `borrador`, enlaza `capsula_elementos`, inserta filas en `capsula_destinatarios` con **`usuario_id`** (RLS exige amistad aceptada con el autor) y pasa a `programada`. La fecha de apertura incluye **día y hora** (hora local).
+4. El destinatario ve la cápsula en **Para mí** vía `capsulas_recibidas()` sin depender de vincular correo.
 
-**Pendiente en app:** listado y apertura como destinatario (`capsulas_recibidas`). Ver §4.1.
-
-**Archivos:** `funcionalidades/capsulas/`, tabla `capsula_destinatarios` en migración inicial.
+**Archivos:** `funcionalidades/capsulas/`, `funcionalidades/amistades/`, migración `20261009000009_capsoul_amistad_compartir.sql`.
 
 ## 4.1. Apertura de cápsula (destinatario)
 
-1. `rpc capsulas_recibidas()` — feed sin título hasta liberar.
-2. Tras `fecha_apertura`, estado `liberada`.
-3. `select` cápsula + elementos (RLS).
+1. `rpc capsulas_recibidas()` — feed (metadatos también en `programada`; contenido completo tras liberar).
+2. Tras `fecha_apertura`, el servidor pasa a `liberada` con `privado.liberar_capsulas_vencidas()` (requiere cron **000002** en remoto; ver [migraciones.md](migraciones.md)).
+3. `select` cápsula + elementos (RLS: destinatario en `programada` o `liberada`).
 4. `firmar-medio` → URL temporal → reproducción.
 5. `rpc marcar_capsula_abierta(id)`.
 
 Ver diagrama completo en [arquitectura.md](arquitectura.md) sección 4.
+
+## 4.2. Amistades por @ (red privada)
+
+1. Cada cuenta tiene `usuarios.nombre_usuario` único (obligatorio en registro o en `/elegir-usuario` si faltaba).
+2. En **Amigos**, búsqueda **exacta** por `@` → `resolver_usuario_por_arroba` → `enviar_solicitud_amistad` (estado `pendiente`).
+3. El receptor acepta o rechaza en la misma pantalla; solo con amistad **aceptada** el autor elige destinatario en crear cápsula (lista filtrable por `@`).
+
+**Archivos:** migración `000010`, `pantalla_amigos.dart`, `pantalla_elegir_nombre_usuario.dart`.
+
+Enlaces `capsoul://amistad/{token}` (migración `000009`) quedan como compatibilidad; el flujo principal es por @.
+
+## 4.3. Enlaces de app (fase 1 — desarrollo)
+
+| Enlace | Uso |
+|--------|-----|
+| `capsoul://capsula/{id}` | Navegación si el usuario **ya** es destinatario (no concede acceso). |
+| `capsoul://amistad/{token}` | Traer usuarios nuevos a la red del autor. |
+| `capsoul://auth/*` | Supabase Auth (PKCE); no lo maneja `EscuchaEnlacesApp`. |
+
+Sin sesión, el enlace se guarda en cola (`proveedorEnlacePendiente`) y se consume tras login.
+
+**Archivos:** `lib/nucleo/enlaces/escucha_enlaces_app.dart`, `enlace_capsoul.dart`, intent-filters Android.
+
+Fase 2 (HTTPS, Universal/App Links, landing de descarga): ver [enlaces-app-fase2.md](enlaces-app-fase2.md).
 
 ## 5. Crear un momento
 
