@@ -16,6 +16,14 @@ class FalloCapsula implements FalloApp {
       : this(codigoSinElementos,
             'Agrega al menos un recuerdo: foto, video, nota de voz o nota.');
 
+  const FalloCapsula.destinatarioInvalido()
+      : this(codigoDestinatarioInvalido,
+            'Ingresa el correo de quien recibirá la cápsula.');
+
+  const FalloCapsula.destinatarioPropio()
+      : this(codigoDestinatarioPropio,
+            'La cápsula debe ir a otra persona; usa un correo distinto al tuyo.');
+
   const FalloCapsula.demasiadosElementos()
       : this(codigoDemasiadosElementos,
             'Una cápsula puede tener como máximo 10 recuerdos.');
@@ -49,6 +57,8 @@ class FalloCapsula implements FalloApp {
   static const String codigoTituloInvalido = 'titulo_invalido';
   static const String codigoFechaInvalida = 'fecha_invalida';
   static const String codigoSinElementos = 'sin_elementos';
+  static const String codigoDestinatarioInvalido = 'destinatario_invalido';
+  static const String codigoDestinatarioPropio = 'destinatario_propio';
   static const String codigoDemasiadosElementos = 'demasiados_elementos';
   static const String codigoPermisoDenegado = 'permiso_denegado';
   static const String codigoPermisoRecuerdo = 'permiso_recuerdo';

@@ -11,6 +11,9 @@ abstract final class ValidadorCapsula {
   /// Margen que exige el trigger `privado.validar_capsula`.
   static const Duration margenMinimoApertura = Duration(minutes: 1);
 
+  static final RegExp _patronCorreo =
+      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
   static FalloCapsula? validarTitulo(String titulo) {
     final caracteres = contarCaracteres(titulo.trim());
     if (caracteres < 1 || caracteres > caracteresMaxTitulo) {
@@ -34,11 +37,36 @@ abstract final class ValidadorCapsula {
     return null;
   }
 
+  static FalloCapsula? validarCorreoDestinatario(
+    String correo, {
+    String? correoAutor,
+  }) {
+    final normalizado = correo.trim();
+    if (normalizado.isEmpty || !_patronCorreo.hasMatch(normalizado)) {
+      return const FalloCapsula.destinatarioInvalido();
+    }
+    final autor = correoAutor?.trim();
+    if (autor != null &&
+        autor.isNotEmpty &&
+        autor.toLowerCase() == normalizado.toLowerCase()) {
+      return const FalloCapsula.destinatarioPropio();
+    }
+    return null;
+  }
+
   /// Primer problema de [nueva] o `null` si se puede guardar.
-  static FalloCapsula? validar(NuevaCapsula nueva, {required DateTime ahora}) {
+  static FalloCapsula? validar(
+    NuevaCapsula nueva, {
+    required DateTime ahora,
+    String? correoAutor,
+  }) {
     return validarTitulo(nueva.titulo) ??
         validarFecha(nueva.fechaApertura, ahora: ahora) ??
-        validarCantidad(nueva.recuerdos.length);
+        validarCantidad(nueva.recuerdos.length) ??
+        validarCorreoDestinatario(
+          nueva.correoDestinatario,
+          correoAutor: correoAutor,
+        );
   }
 
   /// Primer día que se puede elegir en el selector de fecha (mañana).

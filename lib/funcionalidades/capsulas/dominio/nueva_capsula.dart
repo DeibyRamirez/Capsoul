@@ -10,6 +10,7 @@ class NuevaCapsula {
     required this.titulo,
     required this.fechaApertura,
     required this.recuerdos,
+    required this.correoDestinatario,
     this.mensaje,
   });
 
@@ -17,4 +18,6 @@ class NuevaCapsula {
   final String? mensaje;
   final DateTime fechaApertura;
   final List<Recuerdo> recuerdos;
+  /// Correo del destinatario (usuario Capsoul o invitado externo).
+  final String correoDestinatario;
 }

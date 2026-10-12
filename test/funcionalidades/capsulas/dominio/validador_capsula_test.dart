@@ -21,6 +21,7 @@ void main() {
           for (var i = 0; i < elementos; i++)
             recuerdoPrueba('n$i', tipo: TipoElemento.texto),
         ],
+        correoDestinatario: 'destino@example.com',
       );
 
   test('una cápsula completa es válida', () {
@@ -81,4 +82,39 @@ void main() {
       DateTime(2027, 1, 1),
     );
   });
+
+  test('el correo del destinatario es obligatorio y válido', () {
+    expect(
+      ValidadorCapsula.validar(
+        capsula().copyWith(correoDestinatario: ''),
+        ahora: ahora,
+      )?.codigo,
+      FalloCapsula.codigoDestinatarioInvalido,
+    );
+    expect(
+      ValidadorCapsula.validar(
+        capsula().copyWith(correoDestinatario: 'no-es-correo'),
+        ahora: ahora,
+      )?.codigo,
+      FalloCapsula.codigoDestinatarioInvalido,
+    );
+    expect(
+      ValidadorCapsula.validar(
+        capsula().copyWith(correoDestinatario: 'yo@capsoul.app'),
+        ahora: ahora,
+        correoAutor: 'yo@capsoul.app',
+      )?.codigo,
+      FalloCapsula.codigoDestinatarioPropio,
+    );
+  });
+}
+
+extension on NuevaCapsula {
+  NuevaCapsula copyWith({String? correoDestinatario}) => NuevaCapsula(
+        titulo: titulo,
+        mensaje: mensaje,
+        fechaApertura: fechaApertura,
+        recuerdos: recuerdos,
+        correoDestinatario: correoDestinatario ?? this.correoDestinatario,
+      );
 }
