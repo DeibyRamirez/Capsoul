@@ -7,6 +7,7 @@ import '../../../nucleo/tema/colores_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
+import '../../recuerdos/presentacion/navegacion_visor_recuerdo.dart';
 import '../aplicacion/proveedores_capsulas.dart';
 import '../dominio/apertura_capsula.dart';
 import '../dominio/capsula.dart';
@@ -14,6 +15,7 @@ import '../dominio/estado_capsula.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
+import '../../../nucleo/componentes/menu_acciones_entidad.dart';
 import '../../../nucleo/enlaces/enlace_capsoul.dart';
 import 'componentes/animacion_apertura.dart';
 import 'componentes/cabecera_capsula.dart';
@@ -133,7 +135,7 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
 
   /// Abre el detalle del recuerdo (foto, video, audio o nota).
   void _alTocarElemento(Recuerdo recuerdo) {
-    context.push(RutasApp.detalleRecuerdoDe(recuerdo.id));
+    mostrarVisorPublicacionRecuerdo(context, ref, recuerdo);
   }
 
   @override
@@ -149,8 +151,10 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
     final mensaje = capsula.mensaje?.trim();
     final textoMensaje =
         (mensaje == null || mensaje.isEmpty) ? 'Sin mensaje.' : mensaje;
+    final esAutor =
+        uid != null && capsula.autorId.isNotEmpty && capsula.autorId == uid;
     final mostrarContenido = modo == ModoApertura.selladaParaAutor ||
-        (modo == ModoApertura.lista && _abierta);
+        (modo == ModoApertura.lista && (esAutor || _abierta));
 
     return CustomScrollView(
       slivers: [
@@ -193,7 +197,7 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
                   elementos: capsula.elementos,
                   alTocar: _alTocarElemento,
                 )
-              else if (modo == ModoApertura.lista)
+              else if (modo == ModoApertura.lista && !esAutor)
                 _InvitacionAbrir(alAbrir: () => _abrir(capsula, uid))
               else
                 _ContenidoBloqueado(
@@ -442,6 +446,8 @@ class _AccionesAutor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final puedeEditar = capsula.estado == EstadoCapsula.borrador ||
+        capsula.estado == EstadoCapsula.programada;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -453,33 +459,23 @@ class _AccionesAutor extends StatelessWidget {
           label: const Text('Compartir enlace'),
         ),
         const SizedBox(height: 8),
-        if (capsula.estado == EstadoCapsula.borrador ||
-            capsula.estado == EstadoCapsula.programada)
-          OutlinedButton.icon(
-            onPressed: alEditar,
-            icon: const Icon(Icons.edit_outlined),
-            label: const Text('Editar metadatos'),
+        Align(
+          alignment: Alignment.centerRight,
+          child: MenuAccionesEntidad(
+            puedeEditar: puedeEditar,
+            puedeEliminar: alEliminar != null,
+            pedirConfirmacionEliminar: false,
+            etiquetaEliminar: 'Eliminar cápsula',
+            alEditar: alEditar,
+            alEliminar: alEliminar,
           ),
+        ),
         if (alCancelar != null) ...[
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: alCancelar,
             icon: const Icon(Icons.cancel_outlined),
             label: const Text('Cancelar programación'),
-          ),
-        ],
-        if (alEliminar != null) ...[
-          const SizedBox(height: 8),
-          TextButton.icon(
-            onPressed: alEliminar,
-            icon: Icon(
-              Icons.delete_outline,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            label: Text(
-              'Eliminar cápsula',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
           ),
         ],
       ],

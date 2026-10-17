@@ -5,6 +5,7 @@ import '../../../nucleo/errores/fallo_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../elementos/dominio/limites_medios.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
+import '../../retos/aplicacion/proveedores_retos.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
 import '../dominio/fallo_capsula.dart';
 import '../dominio/nueva_capsula.dart';
@@ -144,6 +145,8 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
         state = state.copiarCon(guardando: false);
         ref.invalidate(proveedorMisCapsulas);
         ref.invalidate(proveedorResumenInicio);
+        ref.invalidate(proveedorListaRetos);
+        ref.invalidate(proveedorRetosPendientes);
       }
       return id;
     } on FalloApp catch (fallo) {

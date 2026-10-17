@@ -5,9 +5,12 @@ import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../../elementos/dominio/tipo_elemento.dart';
 import '../../../elementos/dominio/validador_medios.dart';
+import '../../../recuerdos/dominio/aspecto_medio.dart';
 import '../../../recuerdos/dominio/recuerdo.dart';
+import '../../../musica/presentacion/componentes/overlay_musica_foto.dart';
 import '../../../recuerdos/presentacion/componentes/miniatura_recuerdo.dart';
 import '../../../recuerdos/presentacion/componentes/miniatura_recuerdo_firmada.dart';
+import '../../../recuerdos/presentacion/componentes/vista_nota_compacta.dart';
 
 /// Tarjeta de un recuerdo en "Contenido": video (con duración), nota de voz
 /// (con onda), foto o nota. Fotos y videos muestran la miniatura firmada.
@@ -40,7 +43,11 @@ class TarjetaContenido extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AspectRatio(
-              aspectRatio: 1.35,
+              aspectRatio: aspectoMedio(
+                tipo: elemento.tipo,
+                ancho: elemento.ancho,
+                alto: elemento.alto,
+              ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(TemaApp.radioMediano),
                 child: _Portada(elemento: elemento),
@@ -71,6 +78,20 @@ class TarjetaContenido extends StatelessWidget {
   }
 }
 
+Widget _fotoPortada(Recuerdo elemento) {
+  final musica = elemento.musica;
+  if (elemento.tieneMusica && musica != null) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        MiniaturaRecuerdoFirmada(recuerdo: elemento),
+        OverlayMusicaFoto(referencia: musica),
+      ],
+    );
+  }
+  return MiniaturaRecuerdoFirmada(recuerdo: elemento);
+}
+
 class _Portada extends StatelessWidget {
   const _Portada({required this.elemento});
 
@@ -79,9 +100,8 @@ class _Portada extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (elemento.tipo) {
-      TipoElemento.video ||
-      TipoElemento.foto =>
-        MiniaturaRecuerdoFirmada(recuerdo: elemento),
+      TipoElemento.video => MiniaturaRecuerdoFirmada(recuerdo: elemento),
+      TipoElemento.foto => _fotoPortada(elemento),
       TipoElemento.audio => ColoredBox(
           color: ColoresApp.acento.withValues(alpha: 0.15),
           child: Padding(
@@ -96,20 +116,8 @@ class _Portada extends StatelessWidget {
             ),
           ),
         ),
-      TipoElemento.texto => ColoredBox(
-          color: ColoresApp.sobrePrimario,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              elemento.contenidoTexto ?? '',
-              maxLines: 5,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: ColoresApp.sobreSuperficie,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
+      TipoElemento.texto => VistaNotaCompacta(
+          contenidoTexto: elemento.contenidoTexto,
         ),
       TipoElemento.musica => MiniaturaRecuerdo(recuerdo: elemento),
     };

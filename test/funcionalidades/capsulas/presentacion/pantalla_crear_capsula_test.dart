@@ -1,5 +1,6 @@
 import 'package:capsoul/funcionalidades/capsulas/dominio/fallo_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/presentacion/componentes/botones_agregar_elemento.dart';
+import 'package:capsoul/funcionalidades/elementos/dominio/nota_serializada.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,7 @@ import '../../../ayudantes/falsos_recuerdos.dart';
 
 Future<void> _abrirNuevaCapsula(WidgetTester tester) async {
   await tester.tap(find.text('Guardar algo hoy'));
+  await tester.pumpAndSettle();
   await tester.pumpAndSettle();
   await tester.tap(find.text('Cápsula del tiempo'));
   await tester.pumpAndSettle();
@@ -114,7 +116,10 @@ void main() {
     expect(nueva.mensaje, 'Ábrela grande');
     expect(nueva.fechaApertura, DateTime(2027, 10, 3, 8));
     expect(nueva.recuerdos.single.tipo, TipoElemento.texto);
-    expect(nueva.recuerdos.single.contenidoTexto, 'Te quiero, Jacobo');
+    expect(
+      NotaSerializada.parse(nueva.recuerdos.single.contenidoTexto).cuerpo,
+      'Te quiero, Jacobo',
+    );
     expect(nueva.destinatariosUsuarioIds, ['amigo-1']);
     // Tras guardar abre el detalle.
     expect(find.text('Abrir en'), findsOneWidget);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
@@ -100,7 +101,7 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
     final puedeAgregar = !estado.llena && !estado.guardando;
 
     return PantallaCapsoul(
-      appBar: AppBar(title: const Text('Nueva cápsula')),
+      appBar: AppBarCapsoul(titulo: const Text('Nueva cápsula')),
       cuerpo: ListView(
           key: const Key('formulario-capsula'),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),

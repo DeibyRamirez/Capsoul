@@ -120,11 +120,25 @@ void main() {
     expect(find.text('Video'), findsNothing);
   });
 
-  testWidgets('cuando llega la fecha se abre con la animación del frasco',
+  testWidgets('fecha pasada: el autor ve el contenido sin abrir cápsula',
       (tester) async {
     await _montar(
       tester,
       capsula: _capsula(fechaApertura: _ahora.subtract(const Duration(hours: 1))),
+    );
+
+    expect(find.text('Se abrió el'), findsOneWidget);
+    expect(find.text('Abrir cápsula'), findsNothing);
+    expect(find.text('Video'), findsOneWidget);
+    expect(find.text('Nota de voz'), findsOneWidget);
+  });
+
+  testWidgets('cuando llega la fecha el invitado abre con la animación del frasco',
+      (tester) async {
+    await _montar(
+      tester,
+      capsula: _capsula(fechaApertura: _ahora.subtract(const Duration(hours: 1))),
+      uid: 'invitado-uid',
     );
 
     expect(find.text('Se abrió el'), findsOneWidget);

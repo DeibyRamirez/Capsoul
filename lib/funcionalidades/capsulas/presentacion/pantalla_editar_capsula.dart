@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
@@ -101,7 +102,7 @@ class _EstadoPantallaEditarCapsula extends ConsumerState<PantallaEditarCapsula> 
     final estado = ref.watch(proveedorControladorEditarCapsula);
 
     return PantallaCapsoul(
-      appBar: AppBar(title: const Text('Editar cápsula')),
+      appBar: AppBarCapsoul(titulo: const Text('Editar cápsula')),
       cuerpo: capsula.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('$error')),
