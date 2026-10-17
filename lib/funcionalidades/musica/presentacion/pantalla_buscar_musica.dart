@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/infraestructura/cliente_funciones_api.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../aplicacion/proveedores_musica.dart';
+import '../aplicacion/preview_musica_compartido.dart';
 import '../dominio/referencia_musica.dart';
 import 'componentes/reproductor_preview_musica.dart';
 
@@ -25,6 +27,7 @@ class PantallaBuscarMusica extends ConsumerStatefulWidget {
 
 class _EstadoPantallaBuscarMusica extends ConsumerState<PantallaBuscarMusica> {
   final _consulta = TextEditingController();
+  final _previewCompartido = PreviewMusicaCompartido();
   Timer? _debounce;
   List<ReferenciaMusica> _resultados = const [];
   bool _buscando = false;
@@ -35,6 +38,7 @@ class _EstadoPantallaBuscarMusica extends ConsumerState<PantallaBuscarMusica> {
   void dispose() {
     _debounce?.cancel();
     _consulta.dispose();
+    _previewCompartido.dispose();
     super.dispose();
   }
 
@@ -83,28 +87,30 @@ class _EstadoPantallaBuscarMusica extends ConsumerState<PantallaBuscarMusica> {
     }
   }
 
-  void _elegir(ReferenciaMusica ref) {
-    if (widget.soloSeleccion) {
-      setState(() => _seleccionada = ref);
-      return;
+  void _elegir(ReferenciaMusica pista) {
+    setState(() => _seleccionada = pista);
+    unawaited(_previewCompartido.pausarSiNoEs(pista.idExterno));
+    if (!widget.soloSeleccion) {
+      Navigator.of(context).pop(pista);
     }
-    Navigator.of(context).pop(ref);
   }
 
   void _confirmarSeleccion() {
-    final ref = _seleccionada;
-    if (ref == null) {
+    final pista = _seleccionada;
+    if (pista == null) {
       mostrarAvisoInformativo(context, 'Elige una canción de la lista.');
       return;
     }
-    Navigator.of(context).pop(ref);
+    Navigator.of(context).pop(pista);
   }
 
   @override
   Widget build(BuildContext context) {
     return PantallaCapsoul(
-      appBar: AppBar(
-        title: Text(widget.soloSeleccion ? 'Elegir música' : 'Buscar música'),
+      appBar: AppBarCapsoul(
+        titulo: Text(
+          widget.soloSeleccion ? 'Elegir música' : 'Buscar música',
+        ),
       ),
       cuerpo: Column(
         children: [
@@ -153,40 +159,60 @@ class _EstadoPantallaBuscarMusica extends ConsumerState<PantallaBuscarMusica> {
               itemBuilder: (context, indice) {
                 final pista = _resultados[indice];
                 final elegida = _seleccionada?.idExterno == pista.idExterno;
-                return ListTile(
-                  leading: _Portada(pista: pista),
-                  title: Text(pista.titulo, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        pista.artista,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        pista.etiquetaPreview,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: pista.tienePreview
-                              ? ColoresApp.acento
-                              : ColoresApp.atenuado,
-                          fontWeight: pista.tienePreview
-                              ? FontWeight.w600
-                              : FontWeight.w400,
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: elegida
+                          ? ColoresApp.primario
+                          : Colors.transparent,
+                      width: 2,
+                    ),
+                    color: elegida
+                        ? ColoresApp.primario.withValues(alpha: 0.08)
+                        : null,
+                  ),
+                  child: ListTile(
+                    leading: _Portada(pista: pista),
+                    title: Text(
+                      pista.titulo,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          pista.artista,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          pista.etiquetaPreview,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: pista.tienePreview
+                                ? ColoresApp.acento
+                                : ColoresApp.atenuado,
+                            fontWeight: pista.tienePreview
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    isThreeLine: true,
+                    trailing: ReproductorPreviewMusica(
+                      referencia: pista,
+                      compacto: true,
+                      compartido: _previewCompartido,
+                    ),
+                    onTap: () => _elegir(pista),
+                    onLongPress: () => _elegir(pista),
                   ),
-                  isThreeLine: true,
-                  trailing: ReproductorPreviewMusica(
-                    referencia: pista,
-                    compacto: true,
-                  ),
-                  selected: elegida,
-                  onTap: () => _elegir(pista),
-                  onLongPress: () => _elegir(pista),
                 );
               },
             ),

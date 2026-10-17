@@ -50,9 +50,22 @@ class EnlacesEscucharCompleto extends StatelessWidget {
                   _abrir(context, 'Deezer', () => abrirEnDeezer(referencia)),
             ),
             _BotonPlataforma(
-              etiqueta: 'YouTube',
+              etiqueta: 'YT Music',
               icono: FontAwesomeIcons.youtube,
               color: ColoresApp.youtube,
+              alPresionar: () => _abrir(
+                context,
+                'YouTube Music',
+                () => abrirEnYoutubeMusic(
+                  titulo: referencia.titulo,
+                  artista: referencia.artista,
+                ),
+              ),
+            ),
+            _BotonPlataforma(
+              etiqueta: 'YouTube',
+              icono: FontAwesomeIcons.youtube,
+              color: ColoresApp.atenuado,
               alPresionar: () => _abrir(
                 context,
                 'YouTube',
@@ -75,7 +88,7 @@ class EnlacesEscucharCompleto extends StatelessWidget {
   ) async {
     final ok = await abrir();
     if (!ok && context.mounted) {
-      mostrarAvisoError(context, 'No se pudo abrir $plataforma.');
+      mostrarAvisoInformativo(context, 'No se pudo abrir $plataforma.');
     }
   }
 }

@@ -13,6 +13,19 @@ Uri enlaceBusquedaYoutube({required String titulo, required String artista}) {
   );
 }
 
+/// Búsqueda en YouTube Music (sin API).
+Uri enlaceBusquedaYoutubeMusic({
+  required String titulo,
+  required String artista,
+}) {
+  final consulta = '$artista $titulo'.trim();
+  return Uri.https(
+    'music.youtube.com',
+    '/search',
+    {'q': consulta},
+  );
+}
+
 /// Búsqueda en Deezer cuando no hay enlace a pista.
 Uri enlaceBusquedaDeezer({required String titulo, required String artista}) {
   final consulta = '$artista $titulo'.trim();
@@ -33,8 +46,16 @@ Uri enlaceDeezerParaReferencia(ReferenciaMusica referencia) {
 }
 
 Future<bool> abrirUriExterna(Uri uri) async {
-  if (!await canLaunchUrl(uri)) return false;
-  return launchUrl(uri, mode: LaunchMode.externalApplication);
+  try {
+    final lanzado = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (lanzado) return true;
+    if (await canLaunchUrl(uri)) {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+    return false;
+  } catch (_) {
+    return false;
+  }
 }
 
 Future<bool> abrirEnYoutube({
@@ -42,6 +63,14 @@ Future<bool> abrirEnYoutube({
   required String artista,
 }) =>
     abrirUriExterna(enlaceBusquedaYoutube(titulo: titulo, artista: artista));
+
+Future<bool> abrirEnYoutubeMusic({
+  required String titulo,
+  required String artista,
+}) =>
+    abrirUriExterna(
+      enlaceBusquedaYoutubeMusic(titulo: titulo, artista: artista),
+    );
 
 Future<bool> abrirEnDeezer(ReferenciaMusica referencia) =>
     abrirUriExterna(enlaceDeezerParaReferencia(referencia));

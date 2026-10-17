@@ -19,7 +19,7 @@ class VistaRecuerdoMusica extends StatelessWidget {
   Widget build(BuildContext context) {
     return EscenaPreviewMusica(
       referencia: referencia,
-      reproducirAutomaticamente: false,
+      reproducirAutomaticamente: true,
       alturaDisco: 280,
       mostrarEnlacesCompletos: true,
       mostrarPieMetadata: true,

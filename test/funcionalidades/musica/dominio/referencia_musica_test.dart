@@ -62,6 +62,31 @@ void main() {
     expect(ref?.enlaceDeezer, 'https://www.deezer.com/track/9');
   });
 
+  test('desdeFilaBd lee musica_preview_proveedor', () {
+    final ref = ReferenciaMusica.desdeFilaBd({
+      'musica_id_externo': 't1',
+      'musica_titulo': 'Canción',
+      'musica_artista': 'Banda',
+      'musica_url_completa': 'https://open.spotify.com/track/t1',
+      'musica_preview_url': 'https://cdns-preview.dzcdn.com/x.mp3',
+      'musica_preview_proveedor': 'deezer',
+    });
+    expect(ref?.previewProveedor, ProveedorPreviewMusica.deezer);
+    expect(ref?.previewProveedorEfectivo, ProveedorPreviewMusica.deezer);
+  });
+
+  test('aFilaBd guarda musica_preview_proveedor', () {
+    const ref = ReferenciaMusica(
+      idExterno: 't1',
+      titulo: 'Canción',
+      artista: 'Banda',
+      urlCompleta: 'https://open.spotify.com/track/t1',
+      previewUrl: 'https://preview.mp3',
+      previewProveedor: ProveedorPreviewMusica.spotify,
+    );
+    expect(ref.aFilaBd()['musica_preview_proveedor'], 'spotify');
+  });
+
   test('tienePreview refleja previewUrl', () {
     const conPreview = ReferenciaMusica(
       idExterno: '1',

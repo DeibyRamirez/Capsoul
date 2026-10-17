@@ -59,7 +59,16 @@ class ReferenciaMusica {
     );
   }
 
-  String get etiquetaPreview => switch (previewProveedor) {
+  ProveedorPreviewMusica? get previewProveedorEfectivo {
+    if (previewProveedor != null) return previewProveedor;
+    final url = previewUrl?.toLowerCase() ?? '';
+    if (url.contains('dzcdn') || url.contains('deezer')) {
+      return ProveedorPreviewMusica.deezer;
+    }
+    return null;
+  }
+
+  String get etiquetaPreview => switch (previewProveedorEfectivo) {
         ProveedorPreviewMusica.deezer => 'Vista previa (Deezer)',
         ProveedorPreviewMusica.spotify => 'Vista previa',
         null => tienePreview ? 'Vista previa' : 'Solo en Spotify',
@@ -78,13 +87,18 @@ class ReferenciaMusica {
     }
     final proveedor = ProveedorMusica.desdeValorBd(datos['musica_proveedor']) ??
         ProveedorMusica.spotify;
+    final previewUrl = _texto(datos['musica_preview_url']);
+    final previewProv = ProveedorPreviewMusica.desdeApi(
+      datos['musica_preview_proveedor'],
+    );
     return ReferenciaMusica(
       proveedor: proveedor,
       idExterno: id,
       titulo: titulo,
       artista: artista,
       urlCompleta: url,
-      previewUrl: _texto(datos['musica_preview_url']),
+      previewUrl: previewUrl,
+      previewProveedor: previewProv,
       portadaUrl: _texto(datos['musica_portada_url']),
       uriProfundo: _texto(datos['musica_uri_profundo']),
       enlaceDeezer: _texto(datos['musica_enlace_deezer']),
@@ -97,6 +111,8 @@ class ReferenciaMusica {
         'musica_titulo': titulo,
         'musica_artista': artista,
         'musica_preview_url': previewUrl,
+        if (previewProveedor != null)
+          'musica_preview_proveedor': previewProveedor!.valorApi,
         'musica_url_completa': urlCompleta,
         'musica_portada_url': portadaUrl,
         'musica_uri_profundo': uriProfundo,
