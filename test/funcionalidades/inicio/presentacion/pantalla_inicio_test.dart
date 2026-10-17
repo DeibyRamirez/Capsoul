@@ -26,8 +26,9 @@ void main() {
     expect(find.text('128'), findsOneWidget);
     expect(find.text('recuerdos guardados'), findsOneWidget);
     expect(find.text('retos activos'), findsOneWidget);
-    expect(find.text('cápsula creada'), findsOneWidget);
-    expect(find.text('herencias creadas'), findsOneWidget);
+    // Las etiquetas de cápsulas y herencias llevan espacios de relleno para el salto de línea.
+    expect(find.textContaining(RegExp(r'^cápsula\s+creada$')), findsOneWidget);
+    expect(find.textContaining(RegExp(r'^herencias\s+creadas$')), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('No se trata de tener más tiempo, sino de dejar lo que importa.'),
       200,
@@ -53,8 +54,9 @@ void main() {
     await tester.tap(find.text('Guarda hoy, abre en el futuro.'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Mis cápsulas'), findsOneWidget);
+    // Título del encabezado y píldora de la pestaña.
+    expect(find.text('Mis cápsulas'), findsNWidgets(2));
     expect(find.textContaining('Aún no tienes cápsulas'), findsOneWidget);
-    expect(find.byTooltip('Cápsulas para mí'), findsOneWidget);
+    expect(find.text('Para mí'), findsOneWidget);
   });
 }
