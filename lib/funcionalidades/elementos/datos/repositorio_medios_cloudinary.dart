@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../dominio/elemento_borrador.dart';
+import '../dominio/tipo_elemento.dart';
 import '../dominio/fallo_medios.dart';
 import '../dominio/medio_subido.dart';
 import '../dominio/repositorio_medios.dart';
@@ -16,6 +17,29 @@ class RepositorioMediosCloudinary implements RepositorioMedios {
 
   final ClienteFuncionesApi _funciones;
   final ClienteAlmacenamiento _almacenamiento;
+
+  @override
+  Future<MedioSubido> subirAvatarPerfil(ElementoBorrador elemento) async {
+    final ruta = elemento.rutaArchivo;
+    if (elemento.tipo != TipoElemento.foto || ruta == null) {
+      throw const FalloMedios.subidaFallida();
+    }
+    try {
+      final firma = await _funciones.firmarSubida(
+        tipo: TipoElemento.foto,
+        bytes: elemento.bytes,
+        formato: elemento.formato ?? 'jpg',
+        perfilAvatar: true,
+      );
+      return await _almacenamiento.subirArchivo(
+        rutaLocal: ruta,
+        urlSubida: firma.urlSubida,
+        parametrosFirma: firma.parametros,
+      );
+    } on ErrorFuncionesApi catch (error) {
+      throw traducirErrorFuncion(error);
+    }
+  }
 
   @override
   Future<MedioSubido> subir(ElementoBorrador elemento) async {

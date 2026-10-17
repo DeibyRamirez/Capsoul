@@ -22,6 +22,7 @@ class _FuncionesFalsas implements ClienteFuncionesApi {
     required int bytes,
     Duration? duracion,
     String? formato,
+    bool perfilAvatar = false,
   }) async {
     final error = fallo;
     if (error != null) throw ErrorFuncionesApi(estado: 404);
@@ -39,7 +40,14 @@ class _FuncionesFalsas implements ClienteFuncionesApi {
   }
 
   @override
+  Future<UrlMedio?> firmarAvatarPerfil() async => null;
+
+  @override
   Future<List<UrlMedio>> firmarMedio(List<String> idsElemento) async =>
+      const [];
+
+  @override
+  Future<List<UrlMedio>> firmarAvataresUsuarios(List<String> idsUsuario) async =>
       const [];
 
   @override

@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
@@ -203,11 +204,13 @@ class BarraConfirmarCaptura extends StatelessWidget {
     required this.etiquetaUsar,
     required this.alUsar,
     required this.alRepetir,
+    this.procesando = false,
   });
 
   final String etiquetaUsar;
-  final VoidCallback alUsar;
-  final VoidCallback alRepetir;
+  final VoidCallback? alUsar;
+  final VoidCallback? alRepetir;
+  final bool procesando;
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +224,7 @@ class BarraConfirmarCaptura extends StatelessWidget {
                 foregroundColor: ColoresApp.sobrePrimario,
                 side: const BorderSide(color: ColoresApp.sobrePrimario),
               ),
-              onPressed: alRepetir,
+              onPressed: procesando ? null : alRepetir,
               icon: const Icon(Icons.replay),
               label: const Text('Repetir'),
             ),
@@ -232,8 +235,13 @@ class BarraConfirmarCaptura extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: ColoresApp.acento,
               ),
-              onPressed: alUsar,
-              icon: const Icon(Icons.check),
+              onPressed: procesando ? null : alUsar,
+              icon: procesando
+                  ? const SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check),
               label: Text(etiquetaUsar),
             ),
           ),
@@ -252,12 +260,14 @@ class EstructuraCaptura extends StatelessWidget {
     required this.cuerpo,
     this.controles,
     this.indicadorSuperior,
+    this.acciones,
   });
 
   final String titulo;
   final Widget cuerpo;
   final Widget? controles;
   final Widget? indicadorSuperior;
+  final List<Widget>? acciones;
 
   @override
   Widget build(BuildContext context) {
@@ -268,8 +278,11 @@ class EstructuraCaptura extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.close),
           tooltip: 'Cerrar',
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () {
+            if (context.canPop()) context.pop();
+          },
         ),
+        actions: acciones,
       ),
       body: SafeArea(
         top: false,

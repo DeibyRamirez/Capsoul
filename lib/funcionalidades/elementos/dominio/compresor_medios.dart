@@ -4,7 +4,11 @@ import 'elemento_borrador.dart';
 /// antes de agregarlos a una cápsula. Lanza [FalloMedios] si el archivo no
 /// cumple [LimitesMedios] tras comprimirlo.
 abstract interface class CompresorMedios {
-  Future<ElementoBorrador> prepararFoto(String rutaOriginal);
+  Future<ElementoBorrador> prepararFoto(
+    String rutaOriginal, {
+    int rotacionGrados = 0,
+    bool esCamaraFrontal = false,
+  });
 
   Future<ElementoBorrador> prepararVideo(String ruta, Duration duracion);
 

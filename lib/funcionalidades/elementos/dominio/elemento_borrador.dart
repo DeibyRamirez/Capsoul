@@ -16,6 +16,8 @@ class ElementoBorrador {
     this.formato,
     this.muestrasOnda = const [],
     this.referenciaMusica,
+    this.esCamaraFrontal = false,
+    this.rotacionGrados = 0,
   });
 
   /// Identificador solo local (clave estable en listas).
@@ -42,9 +44,17 @@ class ElementoBorrador {
   /// Pista de catálogo: elemento `musica` o música adjunta a una foto.
   final ReferenciaMusica? referenciaMusica;
 
+  /// Solo en memoria: la foto se tomó con cámara frontal (preview espejado).
+  final bool esCamaraFrontal;
+
+  /// Rotación acumulada en preview (0, 90, 180, 270); no va a la BD.
+  final int rotacionGrados;
+
   ElementoBorrador copiarCon({
     ReferenciaMusica? referenciaMusica,
     bool quitarMusica = false,
+    bool? esCamaraFrontal,
+    int? rotacionGrados,
   }) =>
       ElementoBorrador(
         idLocal: idLocal,
@@ -60,6 +70,8 @@ class ElementoBorrador {
         referenciaMusica: quitarMusica
             ? null
             : (referenciaMusica ?? this.referenciaMusica),
+        esCamaraFrontal: esCamaraFrontal ?? this.esCamaraFrontal,
+        rotacionGrados: rotacionGrados ?? this.rotacionGrados,
       );
 
   static int _contador = 0;

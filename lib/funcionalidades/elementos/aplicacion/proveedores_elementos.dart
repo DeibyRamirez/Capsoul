@@ -3,13 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../nucleo/infraestructura/proveedores_infraestructura.dart';
 import '../datos/compresor_medios_dispositivo.dart';
 import '../datos/grabadora_audio_record.dart';
+import '../datos/importador_medios_dispositivo.dart';
 import '../datos/repositorio_medios_cloudinary.dart';
 import '../dominio/compresor_medios.dart';
 import '../dominio/grabadora_audio.dart';
+import '../dominio/importador_medios.dart';
 import '../dominio/repositorio_medios.dart';
 
 final proveedorCompresorMedios = Provider<CompresorMedios>(
   (ref) => CompresorMediosDispositivo(),
+);
+
+final proveedorImportadorMedios = Provider<ImportadorMedios>(
+  (ref) => ImportadorMediosDispositivo(ref.watch(proveedorCompresorMedios)),
 );
 
 final proveedorRepositorioMedios = Provider<RepositorioMedios>((ref) {
