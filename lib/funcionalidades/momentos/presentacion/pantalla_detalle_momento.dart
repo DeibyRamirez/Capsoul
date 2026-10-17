@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/cabecera_detalle_capsoul.dart';
+import '../../../nucleo/componentes/menu_acciones_entidad.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/formato/fechas.dart';
@@ -11,7 +12,7 @@ import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
-import '../../recuerdos/presentacion/componentes/miniatura_recuerdo_firmada.dart';
+import '../../recuerdos/presentacion/navegacion_visor_recuerdo.dart';
 import '../aplicacion/proveedores_momentos.dart';
 import '../dominio/momento.dart';
 import 'componentes/rejilla_bento.dart';
@@ -81,14 +82,20 @@ class PantallaDetalleMomento extends ConsumerWidget {
                 titulo: m.titulo,
                 subtitulo: subtitulo,
                 trailing: m.autorId == uid
-                    ? IconButton(
-                        key: const Key('boton-borrar-momento'),
-                        tooltip: 'Borrar momento',
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: ColoresApp.textoPrincipal,
+                    ? MenuAccionesEntidad(
+                        key: const Key('menu-acciones-momento'),
+                        compacto: true,
+                        puedeEditar: true,
+                        puedeEliminar: true,
+                        pedirConfirmacionEliminar: false,
+                        etiquetaEliminar: 'Borrar momento',
+                        tituloConfirmacion: '¿Borrar este momento?',
+                        mensajeConfirmacion:
+                            'Tus recuerdos no se borran: siguen en tu banco.',
+                        alEditar: () => context.push(
+                          RutasApp.editarMomentoDe(m.id),
                         ),
-                        onPressed: () => _borrar(context, ref, m),
+                        alEliminar: () => _borrar(context, ref, m),
                       )
                     : null,
               ),
@@ -101,36 +108,34 @@ class PantallaDetalleMomento extends ConsumerWidget {
   }
 }
 
-class _Contenido extends StatelessWidget {
+class _Contenido extends ConsumerWidget {
   const _Contenido({required this.momento});
 
   final Momento momento;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final estilos = Theme.of(context).textTheme;
-    final portada = momento.portada;
     final descripcion = momento.descripcion;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
-        if (portada != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(TemaApp.radioGrande),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: MiniaturaRecuerdoFirmada(recuerdo: portada, tamanoIcono: 48),
-            ),
-          ),
         if (descripcion != null && descripcion.isNotEmpty) ...[
-          const SizedBox(height: 16),
           Text(descripcion, style: estilos.bodyLarge),
+          const SizedBox(height: 20),
         ],
-        const SizedBox(height: 20),
+        Text(
+          'Evidencias',
+          style: estilos.titleMedium?.copyWith(
+            fontFamily: TemaApp.fuenteTitulos,
+            color: ColoresApp.primario,
+          ),
+        ),
+        const SizedBox(height: 12),
         RejillaBento(
           recuerdos: momento.recuerdos,
           alTocar: (recuerdo) =>
-              context.push(RutasApp.detalleRecuerdoDe(recuerdo.id)),
+              mostrarVisorPublicacionRecuerdo(context, ref, recuerdo),
         ),
       ],
     );

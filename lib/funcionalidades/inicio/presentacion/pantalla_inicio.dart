@@ -7,6 +7,7 @@ import '../../../nucleo/componentes/fondo_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
+import '../../crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../aplicacion/proveedores_inicio.dart';
 import '../dominio/resumen_inicio.dart';
 import 'componentes/banner_frase_inicio.dart';
@@ -21,8 +22,20 @@ class PantallaInicio extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final resumen =
-        ref.watch(proveedorResumenInicio).value ?? ResumenInicio.vacio;
+    final resumenAsincrono = ref.watch(proveedorResumenInicio);
+    ref.listen(proveedorResumenInicio, (anterior, siguiente) {
+      if (!siguiente.hasError || !context.mounted) return;
+      if (anterior?.hasError == true) return;
+      mostrarAvisoError(
+        context,
+        siguiente.error ?? 'No se pudo cargar el resumen.',
+      );
+    });
+    final resumen = resumenAsincrono.when(
+      data: (datos) => datos,
+      loading: () => resumenAsincrono.value ?? ResumenInicio.vacio,
+      error: (_, __) => resumenAsincrono.value ?? ResumenInicio.vacio,
+    );
     final estilos = Theme.of(context).textTheme;
 
     return PantallaCapsoul(
@@ -47,7 +60,7 @@ class PantallaInicio extends ConsumerWidget {
                   minimumSize: const Size(220, 48),
                   shape: const StadiumBorder(),
                 ),
-                onPressed: () => context.push(RutasApp.crear),
+                onPressed: () => HojaOpcionesCrear.mostrar(context),
                 icon: const Icon(Icons.add),
                 label: const Text('Guardar algo hoy'),
               ),
@@ -101,8 +114,7 @@ class _RejillaSecciones extends StatelessWidget {
           'retos activos',
         ),
         ilustracion: const IlustracionSeccion(icono: Icons.terrain_outlined),
-        alTocar: () =>
-            mostrarAvisoInformativo(context, 'Los retos llegarán pronto.'),
+        alTocar: () => context.push(RutasApp.retos),
       ),
       TarjetaSeccionInicio(
         icono: Icons.lock_outline,
@@ -111,8 +123,8 @@ class _RejillaSecciones extends StatelessWidget {
         conteo: resumen.capsulas,
         etiquetaConteo: etiquetaConteo(
           resumen.capsulas,
-          'cápsula creada',
-          'cápsulas creadas',
+          'cápsula        creada',
+          'cápsulas       creadas',
         ),
         ilustracion: const IlustracionSeccion(icono: Icons.hourglass_bottom),
         alTocar: () => context.push(RutasApp.capsulas),
@@ -124,8 +136,8 @@ class _RejillaSecciones extends StatelessWidget {
         conteo: resumen.herencias,
         etiquetaConteo: etiquetaConteo(
           resumen.herencias,
-          'herencia creada',
-          'herencias creadas',
+          'herencia        creada',
+          'herencias       creadas',
         ),
         ilustracion: const IlustracionSeccion(icono: Icons.redeem_outlined),
         alTocar: () => context.go(RutasApp.legado),

@@ -93,7 +93,7 @@ abstract final class TemaApp {
         scrolledUnderElevation: 0,
         centerTitle: true,
         titleTextStyle: temaTexto.titleMedium?.copyWith(
-          color: ColoresApp.tarjeta,
+          color: ColoresApp.textoPrincipal,
           fontWeight: FontWeight.w600,
         ),
       ),

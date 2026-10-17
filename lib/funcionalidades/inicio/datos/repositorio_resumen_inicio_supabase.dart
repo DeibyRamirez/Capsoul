@@ -13,10 +13,7 @@ class RepositorioResumenInicioSupabase implements RepositorioResumenInicio {
   Future<ResumenInicio> leerResumen(String uid) async {
     final conteos = await Future.wait([
       _seguro('elementos', iguales: {'propietario_id': uid}),
-      _seguro(
-        'reto_participantes',
-        iguales: {'usuario_id': uid, 'estado': 'aceptado'},
-      ),
+      _seguroRetos(),
       _seguro(
         'capsulas',
         iguales: {'autor_id': uid},
@@ -34,6 +31,15 @@ class RepositorioResumenInicioSupabase implements RepositorioResumenInicio {
       capsulas: conteos[2],
       herencias: conteos[3],
     );
+  }
+
+  Future<int> _seguroRetos() async {
+    try {
+      return await _acceso.contarRetosPendientes();
+    } catch (error) {
+      debugPrint('Capsoul: no se pudo contar retos pendientes: $error');
+      return 0;
+    }
   }
 
   Future<int> _seguro(

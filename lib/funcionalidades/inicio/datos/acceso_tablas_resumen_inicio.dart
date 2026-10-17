@@ -7,6 +7,8 @@ abstract interface class AccesoTablasResumenInicio {
     required Map<String, String> iguales,
     Map<String, String> distintos,
   });
+
+  Future<int> contarRetosPendientes();
 }
 
 class AccesoTablasResumenInicioPostgrest implements AccesoTablasResumenInicio {
@@ -29,5 +31,15 @@ class AccesoTablasResumenInicioPostgrest implements AccesoTablasResumenInicio {
     }
     final respuesta = await consulta.limit(1).contar();
     return respuesta.cantidad;
+  }
+
+  @override
+  Future<int> contarRetosPendientes() async {
+    final filas = await _cliente.rpc('contar_retos_pendientes');
+    if (filas.isEmpty) return 0;
+    final valor = filas.first;
+    if (valor is int) return valor;
+    if (valor is num) return valor.toInt();
+    return 0;
   }
 }
