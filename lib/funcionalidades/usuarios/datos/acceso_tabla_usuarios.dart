@@ -6,6 +6,8 @@ abstract interface class AccesoTablaUsuarios {
 
   Future<int> actualizarNombreVisible(String id, String nombreVisible);
 
+  Future<int> actualizarFotoPublicId(String id, String fotoPublicId);
+
   Future<void> establecerNombreUsuarioRpc(String nombreUsuario);
 }
 
@@ -26,6 +28,16 @@ class AccesoTablaUsuariosPostgrest implements AccesoTablaUsuarios {
         .seleccionar(columnas)
         .eq('id', id)
         .maybeSingle();
+  }
+
+  @override
+  Future<int> actualizarFotoPublicId(String id, String fotoPublicId) async {
+    final filas = await _cliente
+        .from(tabla)
+        .actualizar({'foto_public_id': fotoPublicId})
+        .eq('id', id)
+        .select('id');
+    return filas.length;
   }
 
   @override

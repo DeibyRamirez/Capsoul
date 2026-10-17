@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/dominio/validador_nombre_usuario.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
@@ -106,7 +107,7 @@ class _EstadoPantallaElegirNombreUsuario extends ConsumerState<PantallaElegirNom
   @override
   Widget build(BuildContext context) {
     return PantallaCapsoul(
-      appBar: AppBar(title: const Text('Tu usuario @')),
+      appBar: AppBarCapsoul(titulo: const Text('Tu usuario @')),
       cuerpo: Padding(
         padding: const EdgeInsets.all(24),
         child: Form(

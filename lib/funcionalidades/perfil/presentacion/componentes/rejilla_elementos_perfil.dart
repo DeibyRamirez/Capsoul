@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../nucleo/enrutador/rutas_app.dart';
+import '../../../recuerdos/presentacion/navegacion_visor_recuerdo.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../recuerdos/dominio/recuerdo.dart';
 import '../../../recuerdos/presentacion/componentes/miniatura_recuerdo_firmada.dart';
 
 /// Rejilla de 3 columnas con los recuerdos del usuario (estilo Instagram).
-class RejillaElementosPerfil extends StatelessWidget {
+class RejillaElementosPerfil extends ConsumerWidget {
   const RejillaElementosPerfil({
     super.key,
     required this.recuerdos,
@@ -18,7 +18,7 @@ class RejillaElementosPerfil extends StatelessWidget {
   final String mensajeVacio;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (recuerdos.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(32),
@@ -60,7 +60,8 @@ class RejillaElementosPerfil extends StatelessWidget {
             color: ColoresApp.superficie,
             clipBehavior: Clip.antiAlias,
             child: InkWell(
-              onTap: () => context.push(RutasApp.detalleRecuerdoDe(recuerdo.id)),
+              onTap: () =>
+                  mostrarVisorPublicacionRecuerdo(context, ref, recuerdo),
               child: MiniaturaRecuerdoFirmada(recuerdo: recuerdo),
             ),
           ),

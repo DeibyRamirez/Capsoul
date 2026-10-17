@@ -21,4 +21,10 @@ abstract interface class RepositorioUsuarios {
     required String uid,
     required String nombreUsuario,
   });
+
+  /// Guarda el `public_id` del avatar en Cloudinary (`foto_public_id`).
+  Future<void> guardarFotoPerfil({
+    required String uid,
+    required String fotoPublicId,
+  });
 }

@@ -78,6 +78,22 @@ class RepositorioUsuariosSupabase implements RepositorioUsuarios {
   }
 
   @override
+  Future<void> guardarFotoPerfil({
+    required String uid,
+    required String fotoPublicId,
+  }) async {
+    final filas = await _proteger(
+      () => _acceso.actualizarFotoPublicId(uid, fotoPublicId),
+    );
+    if (filas == 0) {
+      throw FalloPerfilUsuario.desdeCodigo(
+        FalloPerfilUsuario.codigoNoEncontrado,
+      );
+    }
+    _cambios.add(uid);
+  }
+
+  @override
   Future<void> guardarNombreVisible({
     required String uid,
     required String nombreVisible,

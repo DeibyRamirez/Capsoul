@@ -5,8 +5,11 @@ import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/firebase/escucha_tokens_push.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../autenticacion/dominio/fallo_autenticacion.dart';
+import '../../elementos/aplicacion/proveedores_elementos.dart';
+import '../../elementos/dominio/tipo_elemento.dart';
 import '../../usuarios/aplicacion/proveedores_usuarios.dart';
 import '../../usuarios/dominio/perfil_usuario.dart';
+import 'proveedor_avatar_perfil.dart';
 
 /// Perfil (tabla `usuarios`) del usuario con sesión.
 final proveedorPerfilUsuarioActual =
@@ -23,6 +26,29 @@ final proveedorPerfilUsuarioActual =
 class ControladorPerfil extends Notifier<AsyncValue<void>> {
   @override
   AsyncValue<void> build() => const AsyncData(null);
+
+  Future<bool> subirFotoPerfil(String rutaLocal) {
+    final autenticacion = ref.read(proveedorRepositorioAutenticacion);
+    final medios = ref.read(proveedorRepositorioMedios);
+    final usuarios = ref.read(proveedorRepositorioUsuarios);
+    final compresor = ref.read(proveedorCompresorMedios);
+    return _ejecutar(() async {
+      final usuario = autenticacion.usuarioActual;
+      if (usuario == null) throw const FalloAutenticacion.desconocido();
+      final preparada = await compresor.prepararFoto(rutaLocal);
+      if (preparada.tipo != TipoElemento.foto) {
+        throw const FalloAutenticacion.desconocido();
+      }
+      final subido = await medios.subirAvatarPerfil(preparada);
+      await usuarios.guardarFotoPerfil(
+        uid: usuario.uid,
+        fotoPublicId: subido.publicId,
+      );
+      ref.invalidate(proveedorUrlsAvatarPerfil);
+      ref.invalidate(proveedorUrlAvatarPerfil);
+      ref.invalidate(proveedorPerfilUsuarioActual);
+    });
+  }
 
   Future<bool> actualizarNombreVisible(String nombre) {
     final autenticacion = ref.read(proveedorRepositorioAutenticacion);

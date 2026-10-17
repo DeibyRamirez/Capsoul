@@ -25,6 +25,9 @@ class PerfilUsuario {
   /// `public_id` del avatar en Cloudinary (`foto_public_id`), no una URL.
   final String? fotoPublicId;
 
+  bool get tieneFoto =>
+      fotoPublicId != null && fotoPublicId!.trim().isNotEmpty;
+
   /// Si otros usuarios que no son amigos pueden ver el perfil.
   final bool perfilPublico;
 
@@ -33,13 +36,14 @@ class PerfilUsuario {
   PerfilUsuario copiarCon({
     String? nombreVisible,
     String? nombreUsuario,
+    String? fotoPublicId,
   }) {
     return PerfilUsuario(
       uid: uid,
       nombreVisible: nombreVisible ?? this.nombreVisible,
       correo: correo,
       nombreUsuario: nombreUsuario ?? this.nombreUsuario,
-      fotoPublicId: fotoPublicId,
+      fotoPublicId: fotoPublicId ?? this.fotoPublicId,
       perfilPublico: perfilPublico,
       creadoEn: creadoEn,
     );

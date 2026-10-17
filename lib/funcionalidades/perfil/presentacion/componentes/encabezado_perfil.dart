@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../../inicio/dominio/resumen_inicio.dart';
+import 'avatar_perfil.dart';
 
 /// Cabecera estilo Instagram: avatar, estadísticas, bio y botones de acción.
 class EncabezadoPerfil extends StatelessWidget {
@@ -16,6 +17,8 @@ class EncabezadoPerfil extends StatelessWidget {
     required this.ocupado,
     required this.alEditar,
     required this.alCerrarSesion,
+    this.fotoPublicId,
+    this.alTocarAvatar,
   });
 
   final String nombre;
@@ -26,6 +29,8 @@ class EncabezadoPerfil extends StatelessWidget {
   final bool ocupado;
   final VoidCallback alEditar;
   final VoidCallback alCerrarSesion;
+  final String? fotoPublicId;
+  final VoidCallback? alTocarAvatar;
 
   @override
   Widget build(BuildContext context) {
@@ -50,17 +55,10 @@ class EncabezadoPerfil extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 42,
-                backgroundColor: ColoresApp.primario,
-                foregroundColor: ColoresApp.sobrePrimario,
-                child: Text(
-                  inicial,
-                  style: estilos.headlineMedium?.copyWith(
-                    color: ColoresApp.sobrePrimario,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+              AvatarPerfil(
+                inicial: inicial,
+                fotoPublicId: fotoPublicId,
+                alTocar: alTocarAvatar,
               ),
               const SizedBox(width: 10),
               Expanded(
