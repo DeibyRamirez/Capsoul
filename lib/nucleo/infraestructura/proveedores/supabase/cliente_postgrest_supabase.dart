@@ -20,7 +20,18 @@ class ClientePostgrestSupabase implements ClientePostgrest {
     String nombre, {
     Map<String, dynamic>? parametros,
   }) =>
-      protegerPostgrest(
-        () => _cliente.rpc<List<dynamic>>(nombre, params: parametros),
-      );
+      protegerPostgrest(() async {
+        final datos = await _cliente.rpc<dynamic>(
+          nombre,
+          params: parametros,
+        );
+        return respuestaRpcComoLista(datos);
+      });
+}
+
+/// PostgREST devuelve listas para `RETURNS TABLE` y escalares para `RETURNS int`, etc.
+List<dynamic> respuestaRpcComoLista(dynamic datos) {
+  if (datos is List) return datos;
+  if (datos == null) return const [];
+  return [datos];
 }

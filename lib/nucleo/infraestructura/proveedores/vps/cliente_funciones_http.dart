@@ -38,6 +38,7 @@ class ClienteFuncionesHttp implements ClienteFuncionesApi {
     required int bytes,
     Duration? duracion,
     String? formato,
+    bool perfilAvatar = false,
   }) async {
     final respuesta = await _http.post(
       _uri('v1/medios/firmar-subida'),
@@ -48,6 +49,7 @@ class ClienteFuncionesHttp implements ClienteFuncionesApi {
         if (duracion != null)
           'duracion_segundos': duracion.inMilliseconds / 1000,
         'formato': ?formato,
+        if (perfilAvatar) 'contexto': 'perfil_avatar',
       }),
     );
     if (respuesta.statusCode >= 200 && respuesta.statusCode < 300) {
@@ -62,6 +64,13 @@ class ClienteFuncionesHttp implements ClienteFuncionesApi {
     }
     throw ErrorFuncionesApi(estado: respuesta.statusCode, detalles: detalles);
   }
+
+  @override
+  Future<UrlMedio?> firmarAvatarPerfil() async => null;
+
+  @override
+  Future<List<UrlMedio>> firmarAvataresUsuarios(List<String> idsUsuario) async =>
+      const [];
 
   @override
   Future<List<UrlMedio>> firmarMedio(List<String> idsElemento) async {

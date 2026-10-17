@@ -4,13 +4,19 @@ import 'package:capsoul/funcionalidades/inicio/dominio/resumen_inicio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _AccesoFalso implements AccesoTablasResumenInicio {
+  _AccesoFalso(
+    this.contador, {
+    Future<int> Function()? retosPendientes,
+  }) : retosPendientes = retosPendientes ?? _sieteRetos;
+
+  static Future<int> _sieteRetos() async => 7;
+
   final Future<int> Function(
     String tabla, {
     required Map<String, String> iguales,
     Map<String, String> distintos,
   }) contador;
-
-  _AccesoFalso(this.contador);
+  final Future<int> Function() retosPendientes;
 
   @override
   Future<int> contar(
@@ -19,6 +25,9 @@ class _AccesoFalso implements AccesoTablasResumenInicio {
     Map<String, String> distintos = const {},
   }) =>
       contador(tabla, iguales: iguales, distintos: distintos);
+
+  @override
+  Future<int> contarRetosPendientes() => retosPendientes();
 }
 
 void main() {
@@ -43,7 +52,7 @@ void main() {
       resumen,
       const ResumenInicio(
         recuerdos: 128,
-        retosActivos: 0,
+        retosActivos: 7,
         capsulas: 5,
         herencias: 2,
       ),
@@ -51,10 +60,34 @@ void main() {
     expect(consultas['elementos']?.$1, {'propietario_id': 'uid-1'});
     expect(consultas['capsulas']?.$1, {'autor_id': 'uid-1'});
     expect(consultas['capsulas']?.$2, {'estado': 'cancelada'});
-    expect(consultas['reto_participantes']?.$1, {
-      'usuario_id': 'uid-1',
-      'estado': 'aceptado',
-    });
     expect(consultas['herencias']?.$2, {'estado': 'revocada'});
+  });
+
+  test('si retos pendientes falla, el resto del resumen sigue disponible', () async {
+    final repositorio = RepositorioResumenInicioSupabase(
+      _AccesoFalso(
+        (tabla, {required iguales, distintos = const {}}) async {
+          return switch (tabla) {
+            'elementos' => 3,
+            'capsulas' => 1,
+            'herencias' => 0,
+            _ => 0,
+          };
+        },
+        retosPendientes: () async => throw Exception('rpc ausente'),
+      ),
+    );
+
+    final resumen = await repositorio.leerResumen('uid-1');
+
+    expect(
+      resumen,
+      const ResumenInicio(
+        recuerdos: 3,
+        retosActivos: 0,
+        capsulas: 1,
+        herencias: 0,
+      ),
+    );
   });
 }

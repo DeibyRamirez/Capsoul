@@ -124,6 +124,10 @@ class RepositorioMediosFalso implements RepositorioMedios {
   FalloApp? fallo;
 
   @override
+  Future<MedioSubido> subirAvatarPerfil(ElementoBorrador elemento) =>
+      subir(elemento);
+
+  @override
   Future<MedioSubido> subir(ElementoBorrador elemento) async {
     final error = fallo;
     if (error != null) throw error;

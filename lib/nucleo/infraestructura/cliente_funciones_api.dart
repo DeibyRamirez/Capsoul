@@ -82,9 +82,16 @@ abstract interface class ClienteFuncionesApi {
     required int bytes,
     Duration? duracion,
     String? formato,
+    bool perfilAvatar = false,
   });
 
   Future<List<UrlMedio>> firmarMedio(List<String> idsElemento);
+
+  /// URL firmada del avatar propio (`foto_public_id`), o `null` si no hay.
+  Future<UrlMedio?> firmarAvatarPerfil();
+
+  /// URLs firmadas de avatares de usuarios visibles (amigos / perfil público).
+  Future<List<UrlMedio>> firmarAvataresUsuarios(List<String> idsUsuario);
 
   /// Resultados normalizados de la Edge Function `buscar-musica`.
   Future<List<Map<String, dynamic>>> buscarMusica({

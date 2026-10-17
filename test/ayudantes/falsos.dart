@@ -212,6 +212,21 @@ class RepositorioUsuariosFalso implements RepositorioUsuarios {
   }
 
   @override
+  Future<void> guardarFotoPerfil({
+    required String uid,
+    required String fotoPublicId,
+  }) async {
+    final actual = perfiles[uid];
+    if (actual == null) {
+      throw FalloPerfilUsuario.desdeCodigo(
+        FalloPerfilUsuario.codigoNoEncontrado,
+      );
+    }
+    perfiles[uid] = actual.copiarCon(fotoPublicId: fotoPublicId);
+    _cambios.add(null);
+  }
+
+  @override
   Future<void> establecerNombreUsuario({
     required String uid,
     required String nombreUsuario,
@@ -370,11 +385,16 @@ class ClienteFuncionesApiFalso implements ClienteFuncionesApi {
   List<UrlMedio> medios = const [];
 
   @override
+  Future<UrlMedio?> firmarAvatarPerfil() async =>
+      medios.isEmpty ? null : medios.first;
+
+  @override
   Future<FirmaSubida> firmarSubida({
     required TipoElemento tipo,
     required int bytes,
     Duration? duracion,
     String? formato,
+    bool perfilAvatar = false,
   }) async =>
       firma ??
       const FirmaSubida(
@@ -389,6 +409,10 @@ class ClienteFuncionesApiFalso implements ClienteFuncionesApi {
 
   @override
   Future<List<UrlMedio>> firmarMedio(List<String> idsElemento) async => medios;
+
+  @override
+  Future<List<UrlMedio>> firmarAvataresUsuarios(List<String> idsUsuario) async =>
+      medios;
 
   List<Map<String, dynamic>> resultadosMusica = const [];
 

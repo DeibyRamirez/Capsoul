@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,7 +16,22 @@ class ClienteFuncionesSupabase implements ClienteFuncionesApi {
   static const String funcionFirmarMedio = 'firmar-medio';
   static const String funcionBuscarMusica = 'buscar-musica';
 
+  /// Evita spinner infinito si la red o la Edge Function no responden.
+  static const Duration tiempoMaximoInvoke = Duration(seconds: 45);
+
   final SupabaseClient _cliente;
+
+  Future<FunctionResponse> _invokeConTiempo(
+    String nombre,
+    Map<String, dynamic> body,
+  ) {
+    return _cliente.functions
+        .invoke(nombre, body: body)
+        .timeout(
+          tiempoMaximoInvoke,
+          onTimeout: () => throw TimeoutException(nombre),
+        );
+  }
 
   @override
   Future<FirmaSubida> firmarSubida({
@@ -22,6 +39,7 @@ class ClienteFuncionesSupabase implements ClienteFuncionesApi {
     required int bytes,
     Duration? duracion,
     String? formato,
+    bool perfilAvatar = false,
   }) async {
     try {
       final respuesta = await _cliente.functions.invoke(
@@ -32,6 +50,7 @@ class ClienteFuncionesSupabase implements ClienteFuncionesApi {
           if (duracion != null)
             'duracion_segundos': duracion.inMilliseconds / 1000,
           'formato': ?formato,
+          if (perfilAvatar) 'contexto': 'perfil_avatar',
         },
       );
       final firma = FirmaSubida.desdeJson(respuesta.data);
@@ -45,16 +64,91 @@ class ClienteFuncionesSupabase implements ClienteFuncionesApi {
   }
 
   @override
-  Future<List<UrlMedio>> firmarMedio(List<String> idsElemento) async {
+  Future<UrlMedio?> firmarAvatarPerfil() async {
     try {
-      final respuesta = await _cliente.functions.invoke(
+      final respuesta = await _invokeConTiempo(
         funcionFirmarMedio,
-        body: {'elemento_ids': idsElemento},
+        {'avatar_perfil': true},
+      );
+      final datos = respuesta.data;
+      final medios = datos is Map ? datos['medios'] : null;
+      if (medios is! List || medios.isEmpty) {
+        if (kDebugMode) {
+          debugPrint(
+            'Capsoul avatar: firmar-medio sin medios (revisa foto_public_id en usuarios).',
+          );
+        }
+        return null;
+      }
+      final medio = UrlMedio.desdeJson(medios.first);
+      if (medio == null && kDebugMode) {
+        debugPrint(
+          'Capsoul avatar: respuesta no parseable: ${medios.first}',
+        );
+      }
+      return medio;
+    } on TimeoutException {
+      throw const ErrorFuncionesApi(
+        estado: 408,
+        detalles: {
+          'codigo': 'tiempo_agotado',
+          'mensaje': 'La firma del avatar tardó demasiado.',
+        },
+      );
+    } on FunctionException catch (error) {
+      if (kDebugMode) {
+        debugPrint(
+          'Capsoul avatar: firmar-medio HTTP ${error.status} ${error.details}',
+        );
+      }
+      throw ErrorFuncionesApi(estado: error.status, detalles: error.details);
+    }
+  }
+
+  @override
+  Future<List<UrlMedio>> firmarAvataresUsuarios(List<String> idsUsuario) async {
+    if (idsUsuario.isEmpty) return const [];
+    try {
+      final respuesta = await _invokeConTiempo(
+        funcionFirmarMedio,
+        {'avatares_usuario_ids': idsUsuario},
       );
       final datos = respuesta.data;
       final medios = datos is Map ? datos['medios'] : null;
       if (medios is! List) return const [];
       return [for (final medio in medios) ?UrlMedio.desdeJson(medio)];
+    } on TimeoutException {
+      throw const ErrorFuncionesApi(
+        estado: 408,
+        detalles: {
+          'codigo': 'tiempo_agotado',
+          'mensaje': 'La firma de avatares tardó demasiado.',
+        },
+      );
+    } on FunctionException catch (error) {
+      throw ErrorFuncionesApi(estado: error.status, detalles: error.details);
+    }
+  }
+
+  @override
+  Future<List<UrlMedio>> firmarMedio(List<String> idsElemento) async {
+    try {
+      final respuesta = await _invokeConTiempo(
+        funcionFirmarMedio,
+        {'elemento_ids': idsElemento},
+      );
+      final datos = respuesta.data;
+      final medios = datos is Map ? datos['medios'] : null;
+      if (medios is! List) return const [];
+      return [for (final medio in medios) ?UrlMedio.desdeJson(medio)];
+    } on TimeoutException {
+      throw const ErrorFuncionesApi(
+        estado: 408,
+        detalles: {
+          'codigo': 'tiempo_agotado',
+          'mensaje': 'La firma de medios tardó demasiado.',
+        },
+      );
     } on FunctionException catch (error) {
       throw ErrorFuncionesApi(estado: error.status, detalles: error.details);
     }
