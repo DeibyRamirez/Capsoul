@@ -267,17 +267,19 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
             Text('¿Para quién?', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             Expanded(
-              child: ListView(
-                children: [
-                  for (final a in amigos)
-                    RadioListTile<String>(
-                      value: a.usuarioId,
-                      groupValue: b.beneficiarioUsuarioId,
-                      onChanged: (v) => ctrl.actualizar(b.copiar(beneficiarioUsuarioId: v)),
-                      title: Text(a.nombreVisible),
-                      subtitle: a.nombreUsuario != null ? Text('@${a.nombreUsuario}') : null,
-                    ),
-                ],
+              child: RadioGroup<String>(
+                groupValue: b.beneficiarioUsuarioId,
+                onChanged: (v) => ctrl.actualizar(b.copiar(beneficiarioUsuarioId: v)),
+                child: ListView(
+                  children: [
+                    for (final a in amigos)
+                      RadioListTile<String>(
+                        value: a.usuarioId,
+                        title: Text(a.nombreVisible),
+                        subtitle: a.nombreUsuario != null ? Text('@${a.nombreUsuario}') : null,
+                      ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -335,43 +337,41 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
           ],
         );
       case 4:
-        return _pasoDesplazable(
-          pasoKey: const ValueKey('paso_condicion'),
-          children: [
-            const Text('Condición de activación'),
-            RadioListTile<CondicionHerencia>(
-              value: CondicionHerencia.confirmacionConfianza,
-              groupValue: b.condicion,
-              onChanged: (v) => ctrl.actualizar(b.copiar(condicion: v)),
-              title: const Text('Confirmación de persona de confianza'),
-            ),
-            RadioListTile<CondicionHerencia>(
-              value: CondicionHerencia.fecha,
-              groupValue: b.condicion,
-              onChanged: (v) => ctrl.actualizar(b.copiar(condicion: v)),
-              title: const Text('Fecha programada'),
-            ),
-            RadioListTile<CondicionHerencia>(
-              value: CondicionHerencia.inactividad,
-              groupValue: b.condicion,
-              onChanged: (v) => ctrl.actualizar(b.copiar(condicion: v)),
-              title: const Text('Tras inactividad'),
-            ),
-            if (b.condicion == CondicionHerencia.fecha) ...[
-              const SizedBox(height: 12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Fecha de activación'),
-                subtitle: Text(
-                  b.fechaActivacion == null
-                      ? 'Elige un día a partir de mañana'
-                      : formatearFechaCorta(b.fechaActivacion!),
-                ),
-                trailing: const Icon(Icons.calendar_today_outlined),
-                onTap: () => _elegirFechaActivacion(b),
+        return RadioGroup<CondicionHerencia>(
+          groupValue: b.condicion,
+          onChanged: (v) => ctrl.actualizar(b.copiar(condicion: v)),
+          child: _pasoDesplazable(
+            pasoKey: const ValueKey('paso_condicion'),
+            children: [
+              const Text('Condición de activación'),
+              const RadioListTile<CondicionHerencia>(
+                value: CondicionHerencia.confirmacionConfianza,
+                title: Text('Confirmación de persona de confianza'),
               ),
+              const RadioListTile<CondicionHerencia>(
+                value: CondicionHerencia.fecha,
+                title: Text('Fecha programada'),
+              ),
+              const RadioListTile<CondicionHerencia>(
+                value: CondicionHerencia.inactividad,
+                title: Text('Tras inactividad'),
+              ),
+              if (b.condicion == CondicionHerencia.fecha) ...[
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Fecha de activación'),
+                  subtitle: Text(
+                    b.fechaActivacion == null
+                        ? 'Elige un día a partir de mañana'
+                        : formatearFechaCorta(b.fechaActivacion!),
+                  ),
+                  trailing: const Icon(Icons.calendar_today_outlined),
+                  onTap: () => _elegirFechaActivacion(b),
+                ),
+              ],
             ],
-          ],
+          ),
         );
       default:
         return Column(

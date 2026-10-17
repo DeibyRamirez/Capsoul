@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../../nucleo/enrutador/rutas_app.dart';
-import '../../../../nucleo/formato/fechas.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../dominio/apertura_capsula.dart';

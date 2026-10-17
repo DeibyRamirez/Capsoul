@@ -34,7 +34,7 @@ class PantallaInicio extends ConsumerWidget {
     final resumen = resumenAsincrono.when(
       data: (datos) => datos,
       loading: () => resumenAsincrono.value ?? ResumenInicio.vacio,
-      error: (_, __) => resumenAsincrono.value ?? ResumenInicio.vacio,
+      error: (_, _) => resumenAsincrono.value ?? ResumenInicio.vacio,
     );
     final estilos = Theme.of(context).textTheme;
 

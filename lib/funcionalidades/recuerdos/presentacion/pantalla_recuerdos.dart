@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../nucleo/componentes/encabezado_seccion_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/errores/fallo_app.dart';
-import '../../../nucleo/tema/colores_app.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../aplicacion/proveedores_recuerdos.dart';
 import 'componentes/barra_filtros_recuerdos.dart';

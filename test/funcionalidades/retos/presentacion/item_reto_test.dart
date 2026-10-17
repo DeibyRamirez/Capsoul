@@ -10,7 +10,7 @@ void main() {
       slug: 'recuerdo_nota',
       titulo: 'Escribe una nota',
       descripcion: 'Deja tus palabras.',
-      pasos: const ['Toca +'],
+      pasos: ['Toca +'],
       orden: 1,
       criterioClave: 'recuerdo_nota',
       completado: true,

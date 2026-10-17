@@ -12,10 +12,9 @@ import '../dominio/repositorio_legado.dart';
 
 class RepositorioLegadoSupabase implements RepositorioLegado {
   RepositorioLegadoSupabase({
-    required ClientePostgrest cliente,
-    required String? Function() uidActual,
-  })  : _cliente = cliente,
-        _uidActual = uidActual;
+    required this._cliente,
+    required this._uidActual,
+  });
 
   static const _uuid = Uuid();
 
@@ -107,7 +106,7 @@ class RepositorioLegadoSupabase implements RepositorioLegado {
         'metadatos': metadatos.aJson(),
         if (fechaActivacion != null)
           'fecha_activacion': fechaActivacion.toUtc().toIso8601String(),
-        if (diasInactividad != null) 'dias_inactividad': diasInactividad,
+        'dias_inactividad': ?diasInactividad,
         'estado': activar ? 'activa' : 'borrador',
       });
       return id;

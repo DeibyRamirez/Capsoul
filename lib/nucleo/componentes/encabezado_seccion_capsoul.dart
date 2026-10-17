@@ -67,7 +67,7 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
                   ],
                 ),
               ),
-              if (acciones != null) acciones!,
+              ?acciones,
             ],
           ),
           const SizedBox(height: 4),

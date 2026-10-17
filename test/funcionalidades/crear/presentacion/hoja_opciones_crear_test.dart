@@ -1,4 +1,3 @@
-import 'package:capsoul/funcionalidades/crear/presentacion/componentes/hoja_opciones_crear.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/nota_serializada.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
