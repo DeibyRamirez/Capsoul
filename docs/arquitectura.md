@@ -1,6 +1,6 @@
 # Capsoul · Arquitectura e infraestructura (ARQ-2)
 
-> Versión 2.0 · 2026-10-02 · Reemplaza la versión basada en Firebase (Auth, Firestore, Storage y Cloud Functions).
+> Versión 2.1 · 2026-10-16 · Reemplaza la versión basada en Firebase (Auth, Firestore, Storage y Cloud Functions).
 > Decisión del PO: **Supabase** (Auth, Postgres con RLS, RPC, Edge Functions, Cron) + **Cloudinary** (medios privados).
 > **Firebase queda solo para FCM**, en plan **Spark**. Modelo de datos: [`docs/modelo_er.md`](modelo_er.md).
 > Migraciones: [`supabase/migrations/`](../supabase/migrations/) · VPS: [`docs/migraciones.md`](migraciones.md).
@@ -27,7 +27,7 @@ flowchart LR
         AUTH["Supabase Auth<br/>correo y contraseña · JWT"]
         PG[("Postgres<br/>tablas en español + RLS por auth.uid()")]
         RPC["RPC<br/>capsulas_recibidas · marcar_capsula_abierta<br/>registrar_actividad · confirmar_herencia"]
-        EF["Edge Functions<br/>firmar-subida · firmar-medio · enviar-avisos"]
+        EF["Edge Functions<br/>firmar-subida · firmar-medio · buscar-musica · enviar-avisos"]
         CRON["pg_cron + pg_net<br/>liberar cápsulas (cada minuto)<br/>activar herencias (cada hora)"]
         VAULT["Vault<br/>project_url · llave_cron"]
         CRON --> PG
@@ -177,11 +177,13 @@ sequenceDiagram
 | `perfil` | Hecho | Yo: cabecera Instagram + rejilla de momentos |
 | `inicio` | Hecho | frasco + conteos |
 | `momentos` | Hecho | feed vertical + nuevo + detalle |
-| `recuerdos` | Hecho | banco, detalle, elegir |
-| `elementos` | Hecho | captura foto/video/audio, nota |
-| `capsulas` | En progreso | crear, detalle |
+| `recuerdos` | Hecho | banco, visor publicación, editar, elegir |
+| `elementos` | Hecho | captura, importar galería, nota serializada |
+| `musica` | Hecho | buscar-musica, preview 30 s, enlaces externos |
+| `capsulas` | Hecho | crear, pestañas, recibidas, editar |
 | `crear` | Hecho | selector desde `+` |
-| `legado` | Placeholder | Mi legado |
+| `legado` | Hecho | wizard herencia, seguridad, instrucciones |
+| `retos` | Hecho | retos globales y progreso |
 | `navegacion` | Hecho | barra inferior 5 zonas |
 
 ## 7. Configuración y secretos
@@ -195,9 +197,36 @@ sequenceDiagram
 | Credencial de FCM HTTP v1 | Secreto de `enviar-avisos` |
 | `firebase_options.dart`, `google-services.json` | Repo (claves de cliente de Firebase, no secretas) |
 
-## 8. Pendiente
+## 8. Legado y retos (resumen)
 
-- Edge Function `enviar-avisos` (pendiente de desplegar).
+Ver [`11-legado-y-retos.md`](11-legado-y-retos.md). Migraciones `000011`–`000012` (retos), `000014` (legado).
+
+## 9. Preview de música en la app
+
+```mermaid
+sequenceDiagram
+  participant UI as EscenaPreviewMusica
+  participant JA as just_audio
+  participant CDN as CDN preview
+  participant API as buscar-musica
+  participant PG as Postgres
+  UI->>JA: setAudioSource + cabeceras CDN
+  alt Source error
+    JA-->>UI: fallo
+    UI->>CDN: GET temporal (http)
+    alt sigue fallando
+      UI->>API: buscar artista+título
+      API-->>UI: nueva previewUrl
+      UI->>PG: PATCH musica_preview_* (visor propio)
+    end
+  end
+```
+
+**Archivos:** `funcionalidades/musica/aplicacion/reproducir_preview_musica.dart`, `refrescar_preview_musica.dart`.
+
+## 10. Pendiente
+
+- Desplegar `enviar-avisos` y activar job 3 de cron (Vault + `llave_cron`).
 - Registrar token FCM en `dispositivos_push` tras login.
-- Aplicar migraciones, SMTP con Resend y bajar Firebase a Spark: requieren aprobación del PO (regla 7 de `Memory.md`).
+- Aplicar en remoto migraciones `000005`–`000015` si faltan (ver [`migraciones.md`](migraciones.md)).
 - `firestore.rules` y `firebase.json` quedan obsoletos (borrado propuesto al PO).

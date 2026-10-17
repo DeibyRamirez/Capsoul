@@ -25,10 +25,14 @@
 | Grabar audio/video | Usuario | pantallas en `elementos/` | `RepositorioMediosCloudinary` |
 | Escribir nota | Usuario | `pantalla_escribir_nota.dart` | `RepositorioRecuerdosSupabase` |
 | Ver banco de recuerdos | Usuario | `pantalla_recuerdos.dart` | `RepositorioRecuerdosSupabase` |
-| Ver detalle de recuerdo | Usuario | `pantalla_detalle_recuerdo.dart` | `RepositorioUrlsMedio` + `firmar-medio` |
+| Ver recuerdo (visor publicación) | Usuario | `visor_publicacion_recuerdo.dart` | `RepositorioUrlsMedio` + `firmar-medio` |
+| Editar recuerdo / nota | Propietario | `pantalla_editar_recuerdo.dart` | `actualizarMetadatos` / `actualizarContenidoTexto` |
+| Importar foto/video desde galería | Usuario | `hoja_origen_medio.dart` | `importador_medios_dispositivo` + Cloudinary |
 | Buscar y guardar música | Usuario | `pantalla_buscar_musica.dart` | `buscar-musica` + `RepositorioRecuerdosSupabase` |
 | Añadir música a una foto | Usuario | `pantalla_guardar_recuerdo.dart` | Mismos metadatos `musica_*` en `elementos` |
-| Escuchar preview / abrir en Spotify | Usuario | detalle del recuerdo | `just_audio` + `url_launcher` |
+| Escuchar preview (URL caducada) | Usuario | `escena_preview_musica.dart` | `refrescarPreview` + `actualizarMusicaPreview` |
+| Escuchar preview / abrir plataformas | Usuario | visor / búsqueda música | `just_audio` + `abrir_plataformas_musica` |
+| Subir avatar de perfil | Usuario | `pantalla_perfil.dart` | `firmar-subida` + `firmar-medio` (avatar) |
 
 ## Momentos
 
@@ -62,17 +66,19 @@
 | Abrir cápsula liberada | Destinatario | `pantalla_detalle_capsula.dart` | RLS + `firmar-medio` |
 | Marcar como abierta | Destinatario | detalle cápsula | `rpc marcar_capsula_abierta()` |
 
-## Herencias y retos (backlog)
+## Herencias y retos
 
-| Caso de uso | Actor | Estado |
+| Caso de uso | Actor | Pantalla / RPC |
 |---|---|---|
-| Crear herencia | Propietario | `pantalla_legado.dart` placeholder |
-| Confirmar herencia | Persona de confianza | RPC `confirmar_herencia()` en SQL |
-| Participar en reto | Amigo | Tablas `retos`, `reto_participantes` en ER |
+| Crear herencia | Propietario | `pantalla_nueva_herencia.dart` · migración `000014` |
+| Persona de confianza global | Propietario | `pantalla_seguridad_legado.dart` · `establecer_persona_confianza_legado` |
+| Vincular cápsulas al legado | Propietario | Wizard herencia · `herencia_capsulas` |
+| Confirmar herencia | Persona de confianza | RPC `confirmar_herencia()` |
+| Ver y completar retos | Usuario | `pantalla_retos.dart` · `RepositorioRetosSupabase` |
 
 ## Notificaciones
 
 | Caso de uso | Actor | Estado |
 |---|---|---|
 | Recibir push al liberar cápsula | Destinatario | FCM token en arranque; registro en `dispositivos_push` pendiente |
-| Enviar avisos pendientes | Servidor | Edge Function `enviar-avisos` pendiente |
+| Enviar avisos pendientes | Servidor | Edge Function `enviar-avisos` (desplegar + cron job 3) |

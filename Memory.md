@@ -90,10 +90,15 @@ lib/
     inicio/{aplicacion,datos,dominio,presentacion}         # Inicio del mockup con conteos reales (RepositorioResumenInicio)
     recuerdos/{aplicacion,datos,dominio,presentacion}      # banco de recuerdos, URLs firmadas (firmar-medio), reproductores, elegir
     momentos/{aplicacion,datos,dominio,presentacion}       # feed vertical, crear, detalle bento, filtros perfil
-    crear/ legado/                                         # presentacion/pantalla_*.dart
+    musica/{aplicacion,datos,dominio,presentacion}       # buscar-musica, preview 30s, enlaces externos
+    legado/{aplicacion,datos,dominio,presentacion}       # herencias, wizard, persona de confianza
+    retos/{aplicacion,datos,dominio,presentacion}        # retos globales
+    crear/                                                 # selector + hoja opciones crear
 test/                                # espejo de lib/ (nucleo/, funcionalidades/) + ayudantes/ (falsos, app_prueba)
 docs/README.md                       # índice de documentación técnica
-docs/arquitectura.md                 # ARQ-2 v2.0: Supabase + Cloudinary + FCM + Resend (4 diagramas Mermaid)
+docs/arquitectura.md                 # ARQ-2 v2.1 (2026-10-16): legado, retos, preview música
+docs/11-legado-y-retos.md            # suplemento ER legado + retos
+docs/migraciones.md                  # catálogo 000001–000015
 docs/01-vision-y-objetivos.md        # producto, metas, DoD
 docs/03-estructura-proyecto.md       # mapa de carpetas y capas
 docs/04-flujos-criticos.md           # arranque, auth, medios, cápsulas, momentos
@@ -370,3 +375,14 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   Estado remoto verificado (solo lectura): 000001–000006 registradas; objetos de 000007–000010 presentes sin registrar;
   funciones `firmar-subida` v2, `firmar-medio` v3, `buscar-musica` v7 (todas con JWT); cron con 2 jobs; Vault vacío.
   `enviar-avisos` queda fuera de los commits (pendiente de seguridad y FCM v1). Commits locales en `develop`, **sin push**.
+- **2026-10-16** Avatares de perfil: `AvatarPerfil`/`proveedorUrlAvatarPerfil` enlazados a `foto_public_id`, firma batch `avatares_usuario_ids` en `firmar-medio`, RPC `mis_amigos` + solicitudes con foto, UI `AvatarUsuario` en Yo y Amigos. **PO:** migración `20261016000013` y redeploy `firmar-medio`.
+- **2026-10-16** Avatar visible en Yo: `transformaciones_medios.ts` alinea eager de `firmar-subida` y miniatura de `firmar-medio` (`c_limit,w_480,q_auto`); Flutter prioriza URL original, `ImagenAvatarRed` con respaldo, refresh en Yo invalida perfil + firma; aviso si falla `firmar-medio`. **PO:** redeploy `firmar-medio` y `firmar-subida`; re-subir foto si el eager anterior no coincidía.
+- **2026-10-16** Módulo Mi legado: migración `20261016000014` (confianza global @, `herencia_capsulas`, metadatos, eventos, RPC), feature `legado/` (UI mock, wizard 6 pasos, `RepositorioLegado` Supabase + stub HTTP), contratos `docs/contrato-legado.json` y `contrato-api-legado.md`. **PO:** aplicar migración en remoto.
+- **2026-10-16** Avatar cargando infinito: `ref.read` en providers de avatar, timeout 45 s en `invoke` de `firmar-medio`, logs debug, `ImagenAvatarRed` con `loadingBuilder` y timeout de descarga; `mensajeParaUsuario` entiende `ErrorFuncionesApi`; guía `docs/verificacion-avatar-perfil.md`. **PO:** ejecutar checklist (foto_public_id + deploy Edge).
+- **2026-10-16** `EncabezadoSeccionCapsoul` y `PildorasSeleccionCapsoul` en núcleo; cabecera unificada en Momentos, Recuerdos, Retos y Legado. Listado Mis cápsulas con tarjetas mockup y pestañas Mis cápsulas / Para mí (`pantalla_capsulas_recibidas` reutiliza la misma pantalla).
+- **2026-10-16** UI pantalla Retos alineada al mockup (pestañas Activos/Completados/Favoritos, secciones diario/semanal/especial);
+  clasificación en cliente (`clasificacion_retos_ui.dart`) hasta migración de categorías/favoritos en backend.
+- **2026-10-16** Importar recuerdos desde el dispositivo: hoja «Capturar» vs galería/archivos (`ImportadorMediosDispositivo`,
+  `image_picker`, `file_picker`), integrado en `capturarRecuerdo` y acción en pantallas de captura. Permisos Android
+  `READ_MEDIA_*` + `READ_EXTERNAL_STORAGE` (≤ API 32); iOS `NSPhotoLibraryUsageDescription`. Documentación
+  `docs/10-permisos-dispositivo-y-privacidad.md` y actualización de `04-flujos-criticos` / `06-integraciones`.

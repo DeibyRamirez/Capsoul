@@ -57,6 +57,21 @@ En pruebas se sobreescriben providers con implementaciones fake (`mocktail`).
 - Repositorios mockeados vía `ProviderScope` overrides.
 - `AccesoTablas*` como interfaces para simular PostgREST.
 
+## Preview de música
+
+- Lógica pura en `aplicacion/`: `cabecerasPreview`, `cargarPreviewEnReproductor`, `refrescarPreview`, `intentarCargarPreviewConRefresco`.
+- UI: `ConsumerStatefulWidget` mantiene `ReferenciaMusica` actualizada tras refresh.
+- Persistencia opcional: `elementoRecuerdoIdParaPersistir` en `EscenaPreviewMusica` llama `actualizarMusicaPreview` solo para el propietario.
+
+## Visor de recuerdo
+
+- Modal `VisorPublicacionRecuerdo` + `GlobalKey<EscenaPreviewMusicaState>` para detener audio al cerrar.
+- Acciones compartidas en `acciones_recuerdo.dart` (borrar con confirmación).
+
+## Commits (español)
+
+Tipos habituales: `funcionalidad(ámbito):`, `fix(ámbito):`, `documentación(ámbito):`. Cuerpo breve con el motivo.
+
 ## Reglas de agente / PO
 
 - Sin commit/push sin autorización explícita.

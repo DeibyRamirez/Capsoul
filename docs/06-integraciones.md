@@ -21,8 +21,8 @@
 | Función | Rol |
 |---|---|
 | `firmar-subida` | Firma de subida a Cloudinary (`type=authenticated`) |
-| `firmar-medio` | URLs temporales si RLS lo permite |
-| `enviar-avisos` | Pendiente: consume `notificaciones` y envía FCM/correo |
+| `firmar-medio` | URLs temporales (`elemento_ids`, `avatar_perfil`, `avatares_usuario_ids`) |
+| `enviar-avisos` | En repo; desplegar y enlazar job 3 de cron (`verify_jwt = false`, apikey de servicio) |
 | `buscar-musica` | Búsqueda de pistas Spotify (`preview_url`, metadatos, enlaces) |
 
 ### Migraciones
@@ -49,16 +49,26 @@ Resumen para producto y licencias: [08-musica-producto-y-licencias.md](08-musica
 - **Coste:** la API pública no factura por uso; existe cuota de consultas (ver [FAQs desarrolladores Deezer](https://support.deezer.com/hc/en-gb/articles/360011538897-Deezer-FAQs-For-Developers)).
 - **Legal / producción:** los [términos de desarrolladores](https://developers.deezer.com/termsofuse) limitan el uso gratuito de la API a fines **no comerciales**; una app comercial en tiendas puede requerir acuerdo con [Deezer for Partners](https://support.deezer.business/). Capsoul solo reproduce extracts de 30 s en app y abre la pista completa en la app/web de Deezer (no re-streaming). Opción futura: flag en `buscar-musica` para desactivar fallback Deezer hasta tener asesoría legal.
 
-## YouTube (enlace de búsqueda)
+## YouTube y YouTube Music (enlaces de búsqueda)
 
-- Sin YouTube Data API: la app abre `youtube.com/results?search_query=artista+título` para que el usuario elija el video.
+- Sin YouTube Data API: la app abre búsquedas con `artista + título`:
+  - **YouTube Music:** `music.youtube.com/search?q=...`
+  - **YouTube (video):** `youtube.com/results?search_query=...`
 - No se guarda `video_id` en Postgres.
+- Columna opcional `musica_preview_proveedor` (`spotify` | `deezer`) para saber el origen del clip de 30 s al reabrir recuerdos.
 
 ## Cloudinary
 
 - **Cloud:** `dee3zdenh` (plan Free).
 - En Postgres solo se guarda `cloudinary_public_id` y metadatos.
 - Miniaturas: derivadas *eager* en la subida (no transformaciones al vuelo en `authenticated`).
+- Avatar de perfil: checklist de BD + `firmar-medio` en [verificacion-avatar-perfil.md](verificacion-avatar-perfil.md).
+- Tras cambios en `transformaciones_medios.ts`, redesplegar (con aprobación del PO):
+
+```bash
+supabase functions deploy firmar-medio
+supabase functions deploy firmar-subida
+```
 
 ## Firebase (FCM)
 
@@ -74,6 +84,16 @@ Resumen para producto y licencias: [08-musica-producto-y-licencias.md](08-musica
 - Configurado en Supabase Auth (SMTP) y secretos de `enviar-avisos`.
 - La app **no** contiene la API key.
 - Plantillas HTML de Auth (confirmación, magic link, restablecer contraseña, etc.): [`supabase/email-templates/`](../supabase/email-templates/README.md).
+
+## Medios en el dispositivo (cliente)
+
+| Paquete | Uso |
+|---|---|
+| `camera` / `record` | Captura foto, video y nota de voz |
+| `image_picker` | Galería: fotos y videos |
+| `file_picker` | Archivos de audio del dispositivo |
+
+Permisos, privacidad y tiendas: [10-permisos-dispositivo-y-privacidad.md](10-permisos-dispositivo-y-privacidad.md).
 
 ## Configuración local del desarrollador
 

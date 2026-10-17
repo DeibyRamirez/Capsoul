@@ -4,18 +4,29 @@
 
 Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). Son PostgreSQL estándar (tablas, RLS, funciones `privado`, RPC).
 
+## Catálogo (orden de aplicación)
+
+| Archivo | Contenido |
+|---------|-----------|
+| `20261002000001` | Modelo inicial v1.3 |
+| `20261002000002` | `pg_cron` + trabajos (liberar cápsulas, herencias; job 3 avisos) |
+| `20261003000003` | Límites de medios |
+| `20261004000004` | Recuerdos y momentos |
+| `20261005000005` | Tipo elemento `musica` + columnas `musica_*` |
+| `20261006000006` | `musica_enlace_deezer` |
+| `20261007000007` | Grants de columnas |
+| `20261008000008` | Pendientes de borrado de medio |
+| `20261009000009` | Amistad y compartir (enlaces) |
+| `20261010000010` | `nombre_usuario` único |
+| `20261011000011` | Enum `completado` en retos |
+| `20261011000012` | Retos globales y semillas |
+| `20261016000013` | Foto de perfil en amigos |
+| `20261016000014` | Legado: vínculos cápsulas y RPC |
+| `20261016000015` | `musica_preview_proveedor` |
+
+El estado **aplicado en remoto** puede ir por detrás del repo; usar `supabase migration list` antes de cada release.
+
 ## Aplicar en Supabase Cloud
-
-### Estado habitual del proyecto `capsoul`
-
-| Migración | Contenido | Notas |
-|-----------|-----------|--------|
-| `000001` | Modelo inicial | Aplicada |
-| `000002` | `pg_cron` + trabajos | En remoto se aplicó **solo** jobs 1–2 (ver abajo); el job `enviar-avisos` queda para cuando exista la Edge Function |
-| `000003`–`000004` | Límites, recuerdos, momentos | Aplicadas |
-| `000005` | Elemento `musica` | Pendiente hasta `db push` o SQL manual |
-
-Si `supabase db push` dice que falta insertar `000002` antes de la última migración remota, sigue la sección [Cron parcial y música](#cron-parcial-y-música).
 
 ### Comando por defecto
 
@@ -23,7 +34,7 @@ Si `supabase db push` dice que falta insertar `000002` antes de la última migra
 supabase db push
 ```
 
-O vía Management API / panel de Supabase, como hasta ahora.
+O vía Management API / panel de Supabase.
 
 ### Cron parcial y música
 
@@ -38,41 +49,17 @@ Orden recomendado (requiere aprobación del PO para el entorno remoto):
    supabase migration list
    ```
 
-4. **Música:** `supabase db push` (solo `000005`). La migración `000005` añade el enum `musica` **fuera** del `begin`/`commit` (PostgreSQL error `55P04` si se hace en la misma transacción). Alternativa: SQL Editor + `migration repair 20261005000005`.
-5. **Spotify:** `supabase secrets set SPOTIFY_CLIENT_ID=... SPOTIFY_CLIENT_SECRET=...` y `supabase functions deploy buscar-musica`. La cuenta dueña de la app en Spotify Developer debe tener Premium si la app está en development mode; la búsqueda usa `limit` máx. 10.
+4. **Música:** migración `000005` añade el enum `musica` **fuera** del `begin`/`commit` (PostgreSQL error `55P04` si se hace en la misma transacción).
+5. **Spotify:** `supabase secrets set SPOTIFY_CLIENT_ID=... SPOTIFY_CLIENT_SECRET=...` y `supabase functions deploy buscar-musica`.
+6. **Avisos:** `supabase functions deploy enviar-avisos` y activar job 3 solo con Vault (`project_url`, `llave_cron`) configurado.
 
-El archivo [`supabase/migrations/20261002000002_capsoul_programar_trabajos.sql`](../supabase/migrations/20261002000002_capsoul_programar_trabajos.sql) del repo **sigue incluyendo** el job 3; no lo ejecutes entero en remoto hasta tener `enviar-avisos` y secretos en Vault (`project_url`, `llave_cron`). Una migración futura puede añadir solo ese job.
+El archivo [`20261002000002_capsoul_programar_trabajos.sql`](../supabase/migrations/20261002000002_capsoul_programar_trabajos.sql) del repo **incluye** el job 3; no ejecutes el script entero en remoto hasta tener `enviar-avisos` desplegada.
 
 ## Aplicar en VPS (PostgreSQL propio)
 
 1. Instalar [dbmate](https://github.com/amacneil/dbmate).
-2. Sincronizar SQL desde Supabase:
-
-   ```powershell
-   .\infra\scripts\sincronizar_migraciones.ps1
-   ```
-
-   ```bash
-   ./infra/scripts/sincronizar_migraciones.sh
-   ```
-
-3. Definir la URL de conexión:
-
-   ```bash
-   export DATABASE_URL="postgres://usuario:clave@host:5432/capsoul?sslmode=disable"
-   ```
-
-4. Aplicar:
-
-   ```bash
-   dbmate -d infra/migraciones/db up
-   ```
-
-   O usar el script todo-en-uno:
-
-   ```bash
-   ./infra/scripts/aplicar_migraciones.sh
-   ```
+2. Sincronizar SQL desde Supabase (`infra/scripts/sincronizar_migraciones.ps1` o `.sh`).
+3. `export DATABASE_URL=...` y `dbmate -d infra/migraciones/db up`.
 
 ## Notas al migrar fuera de Supabase
 
