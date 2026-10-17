@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
+import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../elementos/dominio/limites_medios.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
+import '../../retos/aplicacion/proveedores_retos.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
 import '../dominio/fallo_capsula.dart';
 import '../dominio/nueva_capsula.dart';
@@ -16,6 +18,7 @@ class EstadoCrearCapsula {
   const EstadoCrearCapsula({
     this.recuerdos = const [],
     this.fechaApertura,
+    this.destinatariosUsuarioIds = const {},
     this.guardando = false,
     this.error,
   });
@@ -23,6 +26,7 @@ class EstadoCrearCapsula {
   /// Recuerdos elegidos, en el orden en que se guardarán.
   final List<Recuerdo> recuerdos;
   final DateTime? fechaApertura;
+  final Set<String> destinatariosUsuarioIds;
   final bool guardando;
   final FalloApp? error;
 
@@ -38,6 +42,7 @@ class EstadoCrearCapsula {
   EstadoCrearCapsula copiarCon({
     List<Recuerdo>? recuerdos,
     DateTime? fechaApertura,
+    Set<String>? destinatariosUsuarioIds,
     bool? guardando,
     FalloApp? error,
     bool limpiarError = false,
@@ -45,6 +50,8 @@ class EstadoCrearCapsula {
     return EstadoCrearCapsula(
       recuerdos: recuerdos ?? this.recuerdos,
       fechaApertura: fechaApertura ?? this.fechaApertura,
+      destinatariosUsuarioIds:
+          destinatariosUsuarioIds ?? this.destinatariosUsuarioIds,
       guardando: guardando ?? this.guardando,
       error: limpiarError ? null : (error ?? this.error),
     );
@@ -56,8 +63,6 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
   @override
   EstadoCrearCapsula build() => const EstadoCrearCapsula();
 
-  /// Agrega [nuevos] sin duplicados y hasta el máximo. Devuelve cuántos se
-  /// agregaron; si sobraron, deja el fallo de "demasiados" en el estado.
   int agregarRecuerdos(List<Recuerdo> nuevos) {
     final ids = state.idsElegidos;
     final lista = [...state.recuerdos];
@@ -90,7 +95,6 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
     );
   }
 
-  /// Lo llama la pantalla después de mostrar el error.
   void limpiarError() {
     if (state.error != null) state = state.copiarCon(limpiarError: true);
   }
@@ -99,23 +103,35 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
     state = state.copiarCon(fechaApertura: fecha, limpiarError: true);
   }
 
-  /// Valida y guarda. Devuelve el id de la cápsula o `null` si falló (el
-  /// fallo queda en [EstadoCrearCapsula.error]).
+  void elegirDestinatarios(Set<String> usuarioIds) {
+    state = state.copiarCon(
+      destinatariosUsuarioIds: usuarioIds,
+      limpiarError: true,
+    );
+  }
+
   Future<String?> guardar({required String titulo, String? mensaje}) async {
     if (state.guardando) return null;
     final fecha = state.fechaApertura;
+    final destinatarios = state.destinatariosUsuarioIds.toList();
     final ahora = ref.read(proveedorReloj)();
     if (fecha == null) {
       state = state.copiarCon(error: const FalloCapsula.fechaInvalida());
       return null;
     }
+    final uidAutor = ref.read(proveedorRepositorioAutenticacion).usuarioActual?.uid;
     final nueva = NuevaCapsula(
       titulo: titulo,
       mensaje: mensaje,
       fechaApertura: fecha,
       recuerdos: state.recuerdos,
+      destinatariosUsuarioIds: destinatarios,
     );
-    final fallo = ValidadorCapsula.validar(nueva, ahora: ahora);
+    final fallo = ValidadorCapsula.validar(
+      nueva,
+      ahora: ahora,
+      uidAutor: uidAutor,
+    );
     if (fallo != null) {
       state = state.copiarCon(error: fallo);
       return null;
@@ -129,6 +145,8 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
         state = state.copiarCon(guardando: false);
         ref.invalidate(proveedorMisCapsulas);
         ref.invalidate(proveedorResumenInicio);
+        ref.invalidate(proveedorListaRetos);
+        ref.invalidate(proveedorRetosPendientes);
       }
       return id;
     } on FalloApp catch (fallo) {

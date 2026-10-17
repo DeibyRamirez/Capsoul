@@ -3,9 +3,10 @@
 | Campo | Valor |
 |---|---|
 | Documento | 13 · Modelo Entidad-Relación |
-| Fecha | 2026-10-03 |
-| Versión | 1.3 (1.2 del 2026-10-02 + permisos por defecto globales y vinculación de invitaciones al cambiar el correo, aprobados por el PO el 2026-10-03) |
-| Estado | Aplicado en el proyecto Supabase `capsoul` (Management API, registradas en `supabase_migrations.schema_migrations`): `000001` v1.3 (2026-10-03), `000003` límites de medios (2026-10-03) y `000004` recuerdos y momentos (2026-10-03). **Pendiente:** `000002` (`pg_cron`, `pg_net` y Vault) |
+| Fecha | 2026-10-16 |
+| Versión | 1.4 (1.3 + música, retos globales, legado ampliado, avatar en amigos, `musica_preview_proveedor`) |
+| Estado | Repo incluye migraciones `000001`–`000015` en [`supabase/migrations/`](../supabase/migrations/). En remoto puede faltar `000002` (cron parcial) o migraciones recientes; ver [`migraciones.md`](migraciones.md). |
+| Suplemento legado/retos | [`11-legado-y-retos.md`](11-legado-y-retos.md) |
 | Relacionado | ARQ-3 ([DEV-91](https://linear.app/fabrica-de-software-uac/issue/DEV-91)); documentos 05 (Arquitectura) y 12 (Decisión de migración) |
 | Archivos | `20261002000001_capsoul_modelo_inicial.sql`, `20261002000002_capsoul_programar_trabajos.sql`, `20261003000003_capsoul_limites_medios.sql`, `20261004000004_capsoul_recuerdos_momentos.sql`, `pruebas_rls_capsoul.sql` y `13-Modelo-Entidad-Relacion.mmd` en la carpeta de documentos |
 

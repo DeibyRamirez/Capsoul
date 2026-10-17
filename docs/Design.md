@@ -1,95 +1,89 @@
-# Capsoul · Sistema de diseño
+# Capsoul — Sistema de diseño
 
 Guía visual de la app. Los tokens viven en código en `lib/nucleo/tema/`; este documento explica **cuándo** y **cómo** usarlos.
+Fuente de verdad visual: `docs/design_system_for_flutter.md` (modo claro, paleta pastel azul/gris).
 
 ## Identidad
 
-Capsoul guarda recuerdos como luces dentro de una cápsula de vidrio bajo un cielo nocturno. La UI combina:
+Capsoul guarda recuerdos como luces dentro de una cápsula de vidrio. La UI combina:
 
-- **Emoción:** frasco luminoso, luciérnagas, tipografía serif en títulos hero.
-- **Claridad:** Material 3, contraste legible, tarjetas blancas sobre fondos suaves.
+- **Emoción:** frasco luminoso, luciérnagas (dentro de tarjetas medianoche), títulos en Playfair Display.
+- **Claridad:** Material 3 en **modo claro**, fondo azul hielo, tarjetas blancas con borde sutil y sombra azul suave.
 - **Español** en toda la interfaz.
-
-Referencias visuales: `pantalla_inicio.dart`, `pantalla_detalle_capsula.dart`.
 
 ---
 
-## Tokens de color
+## Tokens de color (`ColoresApp`)
 
 | Token | Hex | Uso |
 |-------|-----|-----|
-| `ColoresApp.primario` | `#1B2A4A` | AppBar, chips de icono, botones filled, texto principal |
-| `ColoresApp.acento` | `#3D6B9A` | FAB, enlaces, degradados, indicador de navegación |
-| `ColoresApp.superficie` | `#F5F7FA` | Fondo plano, final del degradado suave |
-| `ColoresApp.sobrePrimario` | `#FFFFFF` | Texto sobre primario, tarjetas, campos |
-| `ColoresApp.sobreSuperficie` | `#1A1A2E` | Texto sobre superficie clara |
-| `ColoresApp.atenuado` | `#6B7280` | Subtítulos, metadatos |
-| `ColoresApp.vidrioCupula` | `#33FFFFFF` | Efectos de vidrio |
-| `ColoresApp.bordeCupula` | `#66FFFFFF` | Borde del frasco |
+| `primario` | `#1B316B` | Botones filled, navegación activa, logo, chips de icono (al 8 %), bordes |
+| `acento` | `#3D6B9A` | Enlaces (`TextButton`), foco de campos |
+| `superficie` / `fondoFin` | `#F4F8FC` | Fondo plano y final del degradado |
+| `fondoInicio` | `#E2EDF8` | Inicio del degradado claro |
+| `tarjeta` / `sobrePrimario` | `#FFFFFF` | Tarjetas, campos, texto sobre primario |
+| `bordeTarjeta` | `#D6E4F0` | Borde de 1 px de tarjetas, campos, chips, divisores |
+| `sombraTarjeta` | `#141B316B` | Sombra de tarjeta (azul real 8 %) |
+| `textoPrincipal` / `sobreSuperficie` | `#111E38` | Títulos y texto principal |
+| `textoSecundario` / `atenuado` | `#5A6E94` | Subtítulos, descripciones, metadatos |
+| `navInactivo` | `#8FA1C2` | Iconos/etiquetas inactivas de la barra, hints |
+| `dorado` / `doradoClaro` | `#F59E0B` / `#FDE68A` | Solo brillos, estrellas, corazones e iconos (no texto) |
+| `medianoche` | `#132247` | Banners oscuros y cielo con luciérnagas |
+| `pastelAzul` / `pastelVerde` / `pastelRosa` | `#B8D4E8` / `#C8E6C9` / `#F8BBD0` | Insignias del perfil |
+| `spotify` / `appleMusic` / `youtube` | `#1DB954` / `#A238FF` / `#FF0000` | Marcas externas de música |
+| `vidrioCupula` / `bordeCupula` | `#33FFFFFF` / `#66FFFFFF` | Vidrio del frasco (solo sobre fondo oscuro) |
 
 **Regla:** nunca escribir hex en widgets de funcionalidades; usar `ColoresApp` o `Theme.of(context)`.
+**Contraste:** texto blanco solo sobre `primario`, `medianoche`, fotos o cámara; sobre fondo claro usar `textoPrincipal`/`textoSecundario`.
 
 ---
 
-## Radios y espaciado
-
-Definidos en `TemaApp`:
+## Radios, espaciado y sombras (`TemaApp`)
 
 | Token | Valor |
 |-------|-------|
-| `radioPequeno` | 12 px |
+| `radioPequeno` | 12 px (campos, chips de icono) |
 | `radioMediano` | 16 px |
-| `radioGrande` | 20 px |
+| `radioGrande` | 20 px (tarjetas, diálogos, hojas) |
+| `radioPildora` | 30 px (botones: `StadiumBorder`) |
+| `altoBoton` | 48 px |
+| `sombraTarjeta` | `#141B316B`, blur 16, offset (0, 6) |
+| `decoracionTarjeta()` | blanco + borde `bordeTarjeta` + sombra + radio 20 |
 
-Espaciado habitual: **8**, **12**, **16**, **24** px.
-
-Áreas táctiles mínimas: **48** px lógicos.
-
----
-
-## Tipografía
-
-- **UI general:** tema Material 3 (`Theme.of(context).textTheme`).
-- **Títulos emocionales / hero:** `fontFamily: 'serif'`, peso 300–500; itálica opcional (ej. «Tu vida. Tus momentos. Tu legado.»).
-- **Sobre cielo nocturno:** texto blanco (`ColoresApp.sobrePrimario`) con alpha 0.8–1.0 en secundarios.
+Padding horizontal de pantalla 16–20 px; padding de tarjeta 16 px; separación de rejilla 16 px. Áreas táctiles mínimas: **48** px.
 
 ---
 
-## Fondos (3 niveles)
+## Tipografía (assets en `assets/fonts`, OFL)
+
+- **UI general:** `Poppins` (400, 500, 600, 700) — global en `ThemeData.fontFamily` (`TemaApp.fuenteUi`).
+- **Marca / hero:** `PlayfairDisplay` (variable 400–900) — `TemaApp.fuenteTitulos`.
+- Logo: Playfair 700, ~28, `primario`, letterSpacing 1.2. Título de tarjeta: Poppins 600 16 `textoPrincipal`.
+  Cuerpo: Poppins 400 12–14 `textoSecundario`. Botón: Poppins 500 14 blanco.
+
+---
+
+## Fondos
 
 Implementados en `DegradadosCapsoul` y `FondoCapsoul`.
 
-### 1. Nocturno (`FondoCapsoulTipo.nocturno`)
-
-- Gradiente vertical: `primario → primario (55%) → acento`.
-- Partículas: estrellas + luciérnagas (`CieloNocturno`).
-- **Dónde:** cabeceras de detalle (cápsula), autenticación, zonas hero.
-
-### 2. Suave (`FondoCapsoulTipo.suave`)
-
-- Gradiente: `acento @ 18% → superficie`.
-- Sin partículas (rendimiento).
-- **Dónde:** Inicio, tabs (Momentos, Perfil, Legado), listas, formularios.
-
-### 3. Plano (`FondoCapsoulTipo.plano`)
-
-- Color sólido `superficie` o negro según contexto.
-- **Dónde:** captura de cámara/audio, notas (UI funcional).
+1. **Suave** (`FondoCapsoulTipo.suave`, **default** de `PantallaCapsoul`): `#E2EDF8 → #F4F8FC`.
+2. **Plano** (`FondoCapsoulTipo.plano`): sólido `superficie`.
+3. **Nocturno** (`DegradadosCapsoul.nocturno`, `medianoche → primario`): **solo dentro de tarjetas/banners oscuros** con `CieloNocturno`; nunca a pantalla completa.
+4. **Banner** (`DegradadosCapsoul.banner`): horizontal `medianoche → primario` (frase de Inicio).
 
 ---
 
 ## Partículas (luciérnagas y estrellas)
 
-Widget: `CieloNocturno` en `lib/nucleo/componentes/cielo_nocturno.dart`.
+Widget: `CieloNocturno` en `lib/nucleo/componentes/cielo_nocturno.dart` (no modificar su lógica).
+Se muestra siempre dentro de un contenedor medianoche recortado con `radioGrande`:
 
-| Tipo | Aspecto | Animación |
-|------|---------|-----------|
-| Estrella | Círculo 0.6–1.8 px, alpha 0.2–0.7 | Parpadeo suave |
-| Luciérnaga | Halo radial + cuerpo redondeado | Deriva ±4 px, pulso alpha 0.35–0.75, periodo 3–6 s |
+- Inicio: tarjeta con `EscenaFrascoInicio` (frasco + texto manuscrito).
+- Autenticación: banner de 96 px sobre el panel blanco.
+- Detalle de cápsula: tarjeta con frasco, título y fecha (`CabeceraCapsula`).
 
-**Alcance de animación:** solo pantallas **hero** y **autenticación**. No en listas, tabs ni cámara.
-
-Respetar `MediaQuery.disableAnimations` → pintor estático.
+Respetar `MediaQuery.disableAnimations` → pintor estático. No en listas, tabs ni cámara.
 
 ---
 
@@ -97,69 +91,41 @@ Respetar `MediaQuery.disableAnimations` → pintor estático.
 
 | Widget | Ruta | Rol |
 |--------|------|-----|
-| `FrascoLuminoso` | `nucleo/componentes/frasco_luminoso.dart` | Cápsula de vidrio con luces internas |
-| `EscenaFrascoInicio` | `inicio/.../escena_frasco_inicio.dart` | Hero de Inicio con frasco y texto manuscrito |
-| `CieloNocturno` | `nucleo/componentes/cielo_nocturno.dart` | Fondo nocturno animado |
-| `CabeceraCapsula` | `capsulas/.../cabecera_capsula.dart` | Cabecera de detalle con cielo + frasco |
-| `CabeceraDetalleCapsoul` | `nucleo/componentes/cabecera_detalle_capsoul.dart` | Cabecera compacta para otros detalles |
+| `FrascoLuminoso` | `nucleo/componentes/frasco_luminoso.dart` | Cápsula de vidrio (usar sobre fondo oscuro) |
+| `EscenaFrascoInicio` | `inicio/.../escena_frasco_inicio.dart` | Tarjeta medianoche de Inicio con luciérnagas |
+| `CieloNocturno` | `nucleo/componentes/cielo_nocturno.dart` | Cielo animado |
+| `CabeceraCapsula` | `capsulas/.../cabecera_capsula.dart` | Cabecera clara + tarjeta medianoche |
+| `CabeceraDetalleCapsoul` | `nucleo/componentes/cabecera_detalle_capsoul.dart` | Cabecera clara con título Playfair |
 | `FondoCapsoul` | `nucleo/componentes/fondo_capsoul.dart` | Envoltorio de degradado |
-| `PantallaCapsoul` | `nucleo/componentes/pantalla_capsoul.dart` | Scaffold estándar con fondo |
-| `TarjetaCapsoul` | `nucleo/componentes/tarjeta_capsoul.dart` | Tarjeta blanca con chip de icono |
-| `TarjetaSeccionInicio` | `inicio/.../tarjeta_seccion_inicio.dart` | Tarjeta de sección con conteo e ilustración |
+| `PantallaCapsoul` | `nucleo/componentes/pantalla_capsoul.dart` | Scaffold estándar (fondo suave) |
+| `TarjetaCapsoul` | `nucleo/componentes/tarjeta_capsoul.dart` | Tarjeta blanca con borde, sombra y chip de icono |
+| `TarjetaSeccionInicio` | `inicio/.../tarjeta_seccion_inicio.dart` | Tarjeta de la rejilla 2×2 |
 
 ---
 
 ## Patrones de pantalla
 
-### Lista con refresco
-
-```dart
-PantallaCapsoul(
-  tipoFondo: FondoCapsoulTipo.suave,
-  cuerpo: RefreshIndicator(
-    onRefresh: ...,
-    child: ListView(...),
-  ),
-)
-```
-
-### Inicio (zona hero)
-
-- Los primeros ~320 px combinan `FondoCapsoul.suave` con una capa `CieloNocturno` (brillo ~0.35, animado).
-- **EncabezadoInicio** y **EscenaFrascoInicio** (texto manuscrito) usan `sobrePrimario` (alpha 0.85–0.95), no `primario` ni `acento`: el texto vive sobre el cielo oscuro.
-- A partir del botón "Guardar algo hoy" y la rejilla 2×2 el fondo es claro; ahí sí aplican `primario` y `atenuado`.
-
-### Detalle con cabecera hero
-
-- Cabecera: `CieloNocturno` + título serif + metadatos.
-- Cuerpo: fondo `superficie`, tarjetas `TarjetaCapsoul` o contenido específico.
-
-### Autenticación
-
-- Fondo: `CieloNocturno` animado a pantalla completa.
-- Formulario: panel blanco (`sobrePrimario`) con `radioGrande`, centrado en `EstructuraAutenticacion`.
-
-### Navegación inferior
-
-5 zonas: **Inicio | Momentos | + | Mi legado | Yo**. `NavigationBar` blanca, indicador `acento @ 20%`.
+- **Inicio:** encabezado claro (logo Playfair `primario`, slogan `textoSecundario`, campana `primario`), tarjeta medianoche con frasco, botón píldora "Guardar algo hoy", rejilla 2×2 (separación 16) y banner medianoche.
+- **Detalle:** cabecera clara (`CabeceraDetalleCapsoul`) o `CabeceraCapsula`; cuerpo sobre `superficie` con `TarjetaCapsoul`.
+- **Autenticación:** fondo suave, banner con luciérnagas y panel `decoracionTarjeta()` centrado.
+- **Navegación inferior:** Inicio | Momentos | + | Mi legado | Yo. `NavigationBar` blanca, activo `primario`, inactivo `navInactivo`, indicador `primario @ 10%`; `+` circular `primario` con sombra.
+- **AppBar:** transparente, texto/iconos `textoPrincipal`.
 
 ---
 
 ## Tarjetas de contenido
 
-- Fondo: `ColoresApp.sobrePrimario`.
-- Radio: `TemaApp.radioGrande` (secciones) o `radioMediano` (rejillas).
-- Borde opcional: `atenuado @ 12%` para tarjetas en rejilla.
-- Icono en chip cuadrado `primario` + icono blanco (patrón `TarjetaCapsoul`).
+- Fondo `tarjeta`, borde 1 px `bordeTarjeta`, `sombraTarjeta`, radio `radioGrande`, padding 16.
+- Chip de icono: fondo `primario @ 8%`, icono `primario`.
 
 ---
 
 ## Anti-patrones
 
 - Hexadecimales en widgets de funcionalidades.
-- Feed estilo Instagram como pantalla de inicio.
-- Partículas animadas en listas o cámara (impacto en rendimiento y legibilidad).
-- Fondos que compiten con el contenido (evitar degradados fuertes bajo texto largo).
+- Texto blanco sobre fondo claro; dorado como color de texto.
+- Cielo nocturno a pantalla completa o partículas en listas/cámara.
+- Fondos que compiten con el contenido.
 - Omitir estados vacío, cargando y error en listas o detalles.
 
 ---
@@ -169,4 +135,5 @@ PantallaCapsoul(
 - Colores: `lib/nucleo/tema/colores_app.dart`
 - Tema Material: `lib/nucleo/tema/tema_app.dart`
 - Degradados: `lib/nucleo/tema/degradados_capsoul.dart`
+- Fuentes: `assets/fonts/` (declaradas en `pubspec.yaml`)
 - Skill del agente: `.cursor/skills/capsoul-ui-design-system/SKILL.md`

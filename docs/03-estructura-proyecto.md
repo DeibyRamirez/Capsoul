@@ -51,7 +51,9 @@ flowchart TB
 | `enrutador/rutas_app.dart` | Constantes de rutas |
 | `tema/colores_app.dart`, `tema_app.dart` | Design tokens Material 3 |
 | `errores/fallo_app.dart` | Errores con mensaje al usuario |
-| `componentes/` | Botones, avisos, frasco luminoso (reutilizables) |
+| `componentes/` | EncabezadoSeccionCapsoul, avatares, menú acciones, avisos |
+| `configuracion/` | Flags de UI (`flags_ui.dart`) |
+| `infraestructura/` | Clientes PostgREST/funciones (`BACKEND=supabase|vps`) |
 
 ## Funcionalidades implementadas
 
@@ -62,11 +64,13 @@ flowchart TB
 | `perfil/` | `pantalla_perfil.dart` (pestaña Yo) | Usa proveedores de usuarios, inicio y momentos |
 | `inicio/` | `pantalla_inicio.dart` | `RepositorioResumenInicioSupabase` |
 | `momentos/` | listado feed, nuevo, detalle | `RepositorioMomentosSupabase` |
-| `recuerdos/` | banco, detalle, elegir, guardar | `RepositorioRecuerdosSupabase` |
-| `elementos/` | capturar foto/video/audio, escribir nota | `RepositorioMediosCloudinary` |
-| `capsulas/` | crear, mis cápsulas, detalle | `RepositorioCapsulasSupabase` |
+| `recuerdos/` | banco, visor publicación, editar, elegir | `RepositorioRecuerdosSupabase` |
+| `elementos/` | captura, importar galería, nota serializada | `RepositorioMediosCloudinary` |
+| `musica/` | buscar, preview, enlaces externos | `RepositorioCatalogoMusica` + `buscar-musica` |
+| `capsulas/` | crear, pestañas, recibidas, detalle | `RepositorioCapsulasSupabase` |
 | `crear/` | selector Crear (desde `+`) | — |
-| `legado/` | `pantalla_legado.dart` (placeholder) | Pendiente herencias |
+| `legado/` | herencias, wizard, seguridad | `RepositorioLegadoSupabase` |
+| `retos/` | listado y progreso | `RepositorioRetosSupabase` |
 | `navegacion/` | `contenedor_navegacion.dart` | Barra inferior 5 zonas |
 
 ## Dónde encontrar cada cosa

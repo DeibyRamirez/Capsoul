@@ -8,7 +8,11 @@ import '../../dominio/momento.dart';
 
 /// Tarjeta de un momento: portada, nombre y "N recuerdos · fecha".
 class TarjetaMomento extends StatelessWidget {
-  const TarjetaMomento({super.key, required this.momento, required this.alTocar});
+  const TarjetaMomento({
+    super.key,
+    required this.momento,
+    required this.alTocar,
+  });
 
   final Momento momento;
   final VoidCallback alTocar;
@@ -17,18 +21,17 @@ class TarjetaMomento extends StatelessWidget {
   Widget build(BuildContext context) {
     final portada = momento.portada;
     final cantidad = momento.cantidad;
-    final detalle = '${cantidad == 1 ? '1 recuerdo' : '$cantidad recuerdos'}'
+    final detalle =
+        '${cantidad == 1 ? '1 recuerdo' : '$cantidad recuerdos'}'
         ' · ${formatearFechaCorta(momento.creadoEn.toLocal())}';
     return Semantics(
       button: true,
       label: 'Momento: ${momento.titulo}',
       child: Material(
-        color: ColoresApp.sobrePrimario,
+        color: ColoresApp.tarjeta,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(TemaApp.radioGrande),
-          side: BorderSide(
-            color: ColoresApp.atenuado.withValues(alpha: 0.12),
-          ),
+          side: const BorderSide(color: ColoresApp.bordeTarjeta),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -43,13 +46,16 @@ class TarjetaMomento extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [ColoresApp.acento, ColoresApp.primario],
+                            colors: [
+                              ColoresApp.fondoInicio,
+                              ColoresApp.bordeTarjeta,
+                            ],
                           ),
                         ),
                         child: Center(
                           child: Icon(
                             Icons.auto_awesome_mosaic_outlined,
-                            color: ColoresApp.sobrePrimario,
+                            color: ColoresApp.primario,
                             size: 36,
                           ),
                         ),

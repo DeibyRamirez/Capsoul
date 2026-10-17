@@ -1,9 +1,11 @@
 import 'package:capsoul/funcionalidades/elementos/dominio/elemento_borrador.dart';
+import 'package:capsoul/funcionalidades/elementos/dominio/nota_serializada.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/elementos/presentacion/pantalla_escribir_nota.dart';
 import 'package:capsoul/nucleo/tema/tema_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 class _Resultado {
   ElementoBorrador? nota;
@@ -13,22 +15,33 @@ class _Resultado {
 /// Abre la pantalla de nota sobre una ruta base y guarda lo que devuelve.
 Future<_Resultado> _abrirNota(WidgetTester tester) async {
   final resultado = _Resultado();
-  await tester.pumpWidget(
-    MaterialApp(
-      theme: TemaApp.claro,
-      home: Builder(
-        builder: (context) => Scaffold(
+  final enrutador = GoRouter(
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => Scaffold(
           body: TextButton(
             onPressed: () async {
-              resultado.nota = await Navigator.of(context).push<ElementoBorrador>(
-                MaterialPageRoute(builder: (_) => const PantallaEscribirNota()),
-              );
+              resultado.nota =
+                  await context.push<ElementoBorrador>('/nota');
               resultado.terminado = true;
             },
             child: const Text('abrir'),
           ),
         ),
+        routes: [
+          GoRoute(
+            path: 'nota',
+            builder: (context, state) => const PantallaEscribirNota(),
+          ),
+        ],
       ),
+    ],
+  );
+  await tester.pumpWidget(
+    MaterialApp.router(
+      theme: TemaApp.claro,
+      routerConfig: enrutador,
     ),
   );
   await tester.tap(find.text('abrir'));
@@ -51,8 +64,8 @@ void main() {
     expect(resultado.terminado, isTrue);
     final nota = resultado.nota;
     expect(nota?.tipo, TipoElemento.texto);
-    expect(nota?.texto, 'Te quiero');
-    expect(nota?.bytes, 9);
+    expect(NotaSerializada.parse(nota?.texto).cuerpo, 'Te quiero');
+    expect(nota?.bytes, nota!.texto!.length);
   });
 
   testWidgets('no deja guardar una nota vacía', (tester) async {

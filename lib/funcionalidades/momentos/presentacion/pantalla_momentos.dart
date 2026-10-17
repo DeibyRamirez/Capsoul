@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/encabezado_seccion_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
-import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../aplicacion/proveedor_filtro_momentos.dart';
@@ -21,7 +20,6 @@ class PantallaMomentos extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final momentosAsincrono = ref.watch(proveedorMomentos);
     final filtro = ref.watch(proveedorFiltroMomentos);
-    final estilos = Theme.of(context).textTheme;
 
     final momentosFiltrados = momentosAsincrono.maybeWhen(
       data: (lista) => filtro.aplicar(lista),
@@ -29,12 +27,6 @@ class PantallaMomentos extends ConsumerWidget {
     );
 
     return PantallaCapsoul(
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'nuevo-momento',
-        onPressed: () => context.push(RutasApp.nuevoMomento),
-        icon: const Icon(Icons.add),
-        label: const Text('Nuevo momento'),
-      ),
       cuerpo: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(proveedorMomentos);
@@ -42,45 +34,11 @@ class PantallaMomentos extends ConsumerWidget {
         },
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'cápsoul',
-                      style: estilos.labelLarge?.copyWith(
-                        color: ColoresApp.acento,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          'Momentos',
-                          style: estilos.headlineMedium?.copyWith(
-                            color: ColoresApp.primario,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.local_florist_outlined,
-                          color: ColoresApp.acento,
-                          size: 28,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Tus recuerdos, tu historia.',
-                      style: estilos.bodyMedium?.copyWith(
-                        color: ColoresApp.atenuado,
-                      ),
-                    ),
-                  ],
-                ),
+            const SliverToBoxAdapter(
+              child: EncabezadoSeccionCapsoul(
+                titulo: 'Momentos',
+                subtitulo: 'Tus recuerdos, tu historia.',
+                icono: Icons.local_florist_outlined,
               ),
             ),
             SliverToBoxAdapter(

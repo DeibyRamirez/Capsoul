@@ -1,17 +1,22 @@
 # Capsoul
 
-A new Flutter project.
+App Flutter de **cápsulas del tiempo** y **legado digital** (Android e iOS).
 
-## Getting Started
+- **Documentación técnica:** [`docs/README.md`](docs/README.md)
+- **Estado del código:** [`Memory.md`](Memory.md)
+- **Backend:** Supabase (Auth, Postgres, Edge Functions) + Cloudinary + Firebase (solo FCM)
 
-This project is a starting point for a Flutter application.
+## Desarrollo local
 
-A few resources to get you started if this is your first Flutter project:
+1. Copiar `env/dev.json.example` → `env/dev.json` (no commitear).
+2. `flutter pub get`
+3. `flutter run --dart-define-from-file=env/dev.json`
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Antes de probar legado, retos o música en un entorno remoto, aplicar migraciones hasta `20261016000015` (ver [`docs/migraciones.md`](docs/migraciones.md)).
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Calidad
+
+```bash
+flutter analyze
+flutter test
+```

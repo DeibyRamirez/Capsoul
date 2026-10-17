@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../../nucleo/tema/colores_app.dart';
+import '../../../../nucleo/tema/tema_app.dart';
 
 /// Muestra la animación de apertura a pantalla completa y espera a que
 /// termine (o a que el usuario toque para saltarla).
@@ -12,7 +13,7 @@ Future<void> mostrarAnimacionApertura(BuildContext context) {
     context: context,
     barrierDismissible: false,
     barrierLabel: 'Abriendo cápsula',
-    barrierColor: ColoresApp.primario.withValues(alpha: 0.92),
+    barrierColor: ColoresApp.medianoche.withValues(alpha: 0.94),
     transitionDuration: const Duration(milliseconds: 250),
     pageBuilder: (contexto, _, _) => AnimacionAperturaCapsula(
       alTerminar: () => Navigator.of(contexto).pop(),
@@ -116,7 +117,7 @@ class _EstadoAnimacionAperturaCapsula extends State<AnimacionAperturaCapsula>
                         '¡Tu cápsula se abrió!',
                         style: estilos.headlineSmall?.copyWith(
                           color: ColoresApp.sobrePrimario,
-                          fontFamily: 'serif',
+                          fontFamily: TemaApp.fuenteTitulos,
                         ),
                       ),
                     ),
@@ -144,9 +145,14 @@ class _PintorLucesSubiendo extends CustomPainter {
     final origen = Offset(size.width / 2, size.height / 2 - 90);
     for (var i = 0; i < 28; i++) {
       final angulo = -math.pi / 2 + (aleatorio.nextDouble() - 0.5) * 1.6;
-      final distancia = size.height * 0.45 * (0.4 + 0.6 * aleatorio.nextDouble());
-      final avance = (progreso * (0.7 + 0.3 * aleatorio.nextDouble())).clamp(0.0, 1.0);
-      final centro = origen +
+      final distancia =
+          size.height * 0.45 * (0.4 + 0.6 * aleatorio.nextDouble());
+      final avance = (progreso * (0.7 + 0.3 * aleatorio.nextDouble())).clamp(
+        0.0,
+        1.0,
+      );
+      final centro =
+          origen +
           Offset(math.cos(angulo), math.sin(angulo)) * distancia * avance;
       final radio = 2 + aleatorio.nextDouble() * 3;
       final opacidad = (1 - avance) * 0.9;

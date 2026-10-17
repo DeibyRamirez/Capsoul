@@ -6,6 +6,7 @@ import 'package:capsoul/funcionalidades/recuerdos/dominio/enlace_medio.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/filtro_recuerdos.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/nuevo_recuerdo.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
+import 'package:capsoul/funcionalidades/musica/dominio/referencia_musica.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/repositorio_recuerdos.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/repositorio_urls_medio.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/url_medio.dart';
@@ -30,8 +31,8 @@ Recuerdo recuerdoPrueba(
     creadoEn: dia,
     titulo: titulo,
     contenidoTexto: tipo == TipoElemento.texto ? (texto ?? 'Nota $id') : null,
-    publicId: tipo == TipoElemento.texto ? null : 'capsoul/$id',
-    bytes: tipo == TipoElemento.texto ? null : 1000,
+    publicId: tipo.usaCloudinary ? 'capsoul/$id' : null,
+    bytes: tipo.usaCloudinary ? 1000 : null,
   );
 }
 
@@ -93,6 +94,83 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
 
   @override
   Future<int> contarCapsulasSelladas(String id) async => selladas[id] ?? 0;
+
+  @override
+  Future<void> actualizarMetadatos(
+    String id, {
+    String? titulo,
+    DateTime? fechaRecuerdo,
+  }) async {
+    final actual = recuerdos[id];
+    if (actual == null) return;
+    recuerdos[id] = Recuerdo(
+      id: actual.id,
+      propietarioId: actual.propietarioId,
+      tipo: actual.tipo,
+      fechaRecuerdo: fechaRecuerdo ?? actual.fechaRecuerdo,
+      creadoEn: actual.creadoEn,
+      titulo: titulo ?? actual.titulo,
+      contenidoTexto: actual.contenidoTexto,
+      bytes: actual.bytes,
+      duracion: actual.duracion,
+      ancho: actual.ancho,
+      alto: actual.alto,
+      musica: actual.musica,
+      publicId: actual.publicId,
+      formato: actual.formato,
+    );
+  }
+
+  @override
+  Future<void> actualizarMusicaPreview(
+    String id,
+    ReferenciaMusica musica,
+  ) async {
+    final actual = recuerdos[id];
+    if (actual == null) return;
+    recuerdos[id] = Recuerdo(
+      id: actual.id,
+      propietarioId: actual.propietarioId,
+      tipo: actual.tipo,
+      fechaRecuerdo: actual.fechaRecuerdo,
+      creadoEn: actual.creadoEn,
+      titulo: actual.titulo,
+      contenidoTexto: actual.contenidoTexto,
+      bytes: actual.bytes,
+      duracion: actual.duracion,
+      ancho: actual.ancho,
+      alto: actual.alto,
+      musica: musica,
+      publicId: actual.publicId,
+      formato: actual.formato,
+    );
+  }
+
+  @override
+  Future<void> actualizarContenidoTexto(
+    String id,
+    String contenidoTexto,
+  ) async {
+    final actual = recuerdos[id];
+    if (actual != null) {
+      recuerdos[id] = Recuerdo(
+        id: actual.id,
+        propietarioId: actual.propietarioId,
+        tipo: actual.tipo,
+        fechaRecuerdo: actual.fechaRecuerdo,
+        creadoEn: actual.creadoEn,
+        titulo: actual.titulo,
+        contenidoTexto: contenidoTexto,
+        bytes: contenidoTexto.length,
+        duracion: actual.duracion,
+        ancho: actual.ancho,
+        alto: actual.alto,
+        musica: actual.musica,
+        publicId: actual.publicId,
+        formato: actual.formato,
+      );
+    }
+  }
 
   @override
   Future<void> eliminar(String id) async {

@@ -54,7 +54,7 @@ DistribucionBento distribuirBento(List<Recuerdo> recuerdos) {
   for (final recuerdo in recuerdos) {
     final alto = switch (recuerdo.tipo) {
       TipoElemento.texto => 2,
-      TipoElemento.audio => 1,
+      TipoElemento.audio || TipoElemento.musica => 1,
       TipoElemento.foto || TipoElemento.video => visuales++ % 2 == 0 ? 2 : 1,
     };
     final mitad = alturas[0] <= alturas[1] ? 0 : 1;

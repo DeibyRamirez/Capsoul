@@ -7,9 +7,16 @@ import '../../../nucleo/tema/colores_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
+import '../../recuerdos/presentacion/navegacion_visor_recuerdo.dart';
 import '../aplicacion/proveedores_capsulas.dart';
 import '../dominio/apertura_capsula.dart';
 import '../dominio/capsula.dart';
+import '../dominio/estado_capsula.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../../nucleo/componentes/avisos_emergentes.dart';
+import '../../../nucleo/componentes/menu_acciones_entidad.dart';
+import '../../../nucleo/enlaces/enlace_capsoul.dart';
 import 'componentes/animacion_apertura.dart';
 import 'componentes/cabecera_capsula.dart';
 import 'componentes/cuenta_regresiva.dart';
@@ -54,14 +61,81 @@ class _ContenidoDetalle extends ConsumerStatefulWidget {
 class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
   bool _abierta = false;
 
-  Future<void> _abrir() async {
+  Future<void> _abrir(Capsula capsula, String? uid) async {
     await mostrarAnimacionApertura(context);
+    if (!mounted) return;
+    final esDestinatario =
+        uid != null && capsula.autorId != uid && capsula.autorId.isNotEmpty;
+    if (esDestinatario) {
+      try {
+        await ref
+            .read(proveedorRepositorioCapsulas)
+            .marcarAbierta(capsula.id);
+        ref.invalidate(proveedorCapsulasRecibidas);
+      } catch (_) {
+        // La animación ya ocurrió; el usuario puede reintentar refrescando.
+      }
+    }
     if (mounted) setState(() => _abierta = true);
+  }
+
+  bool _puedeGestionar(Capsula capsula, String? uid) =>
+      uid != null &&
+      capsula.autorId == uid &&
+      (capsula.estado == EstadoCapsula.borrador ||
+          capsula.estado == EstadoCapsula.programada ||
+          capsula.estado == EstadoCapsula.cancelada);
+
+  Future<void> _cancelar(Capsula capsula) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancelar cápsula'),
+        content: const Text(
+          'La cápsula quedará cancelada y no se abrirá en la fecha programada.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sí, cancelar')),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+    try {
+      await ref.read(proveedorRepositorioCapsulas).cancelarCapsula(capsula.id);
+      ref.invalidate(proveedorCapsula(capsula.id));
+      ref.invalidate(proveedorMisCapsulas);
+      if (mounted) mostrarAvisoInformativo(context, 'Cápsula cancelada.');
+    } catch (error) {
+      if (mounted) mostrarAvisoError(context, mensajeParaUsuario(error));
+    }
+  }
+
+  Future<void> _eliminar(Capsula capsula) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar cápsula'),
+        content: const Text('Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Eliminar')),
+        ],
+      ),
+    );
+    if (confirmar != true || !mounted) return;
+    try {
+      await ref.read(proveedorRepositorioCapsulas).eliminarCapsula(capsula.id);
+      ref.invalidate(proveedorMisCapsulas);
+      if (mounted) context.pop();
+    } catch (error) {
+      if (mounted) mostrarAvisoError(context, mensajeParaUsuario(error));
+    }
   }
 
   /// Abre el detalle del recuerdo (foto, video, audio o nota).
   void _alTocarElemento(Recuerdo recuerdo) {
-    context.push(RutasApp.detalleRecuerdoDe(recuerdo.id));
+    mostrarVisorPublicacionRecuerdo(context, ref, recuerdo);
   }
 
   @override
@@ -77,8 +151,10 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
     final mensaje = capsula.mensaje?.trim();
     final textoMensaje =
         (mensaje == null || mensaje.isEmpty) ? 'Sin mensaje.' : mensaje;
+    final esAutor =
+        uid != null && capsula.autorId.isNotEmpty && capsula.autorId == uid;
     final mostrarContenido = modo == ModoApertura.selladaParaAutor ||
-        (modo == ModoApertura.lista && _abierta);
+        (modo == ModoApertura.lista && (esAutor || _abierta));
 
     return CustomScrollView(
       slivers: [
@@ -121,13 +197,32 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
                   elementos: capsula.elementos,
                   alTocar: _alTocarElemento,
                 )
-              else if (modo == ModoApertura.lista)
-                _InvitacionAbrir(alAbrir: _abrir)
+              else if (modo == ModoApertura.lista && !esAutor)
+                _InvitacionAbrir(alAbrir: () => _abrir(capsula, uid))
               else
                 _ContenidoBloqueado(
                   fecha: fecha == null ? null : formatearFechaCorta(fecha),
                 ),
               const SizedBox(height: 24),
+              if (_puedeGestionar(capsula, uid)) ...[
+                const SizedBox(height: 8),
+                _AccionesAutor(
+                  capsula: capsula,
+                  alCompartir: () => Share.share(
+                    'Te envié una cápsula en Capsoul. Ábrela con la app:\n'
+                    '${EnlaceCapsoul.capsula(capsula.id)}',
+                  ),
+                  alEditar: () =>
+                      context.push(RutasApp.editarCapsulaDe(capsula.id)),
+                  alCancelar: capsula.estado == EstadoCapsula.programada
+                      ? () => _cancelar(capsula)
+                      : null,
+                  alEliminar: capsula.estado == EstadoCapsula.borrador ||
+                          capsula.estado == EstadoCapsula.cancelada
+                      ? () => _eliminar(capsula)
+                      : null,
+                ),
+              ],
               const _Titulo('Persona de confianza'),
               const SizedBox(height: 6),
               const _PersonaConfianza(),
@@ -249,7 +344,7 @@ class _ContenidoBloqueado extends StatelessWidget {
 class _InvitacionAbrir extends StatelessWidget {
   const _InvitacionAbrir({required this.alAbrir});
 
-  final VoidCallback alAbrir;
+  final Future<void> Function() alAbrir;
 
   @override
   Widget build(BuildContext context) {
@@ -262,7 +357,7 @@ class _InvitacionAbrir extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         FilledButton.icon(
-          onPressed: alAbrir,
+          onPressed: () => alAbrir(),
           icon: const Icon(Icons.lock_open_outlined),
           label: const Text('Abrir cápsula'),
         ),
@@ -330,6 +425,60 @@ class _EstadoSinCapsula extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AccionesAutor extends StatelessWidget {
+  const _AccionesAutor({
+    required this.capsula,
+    required this.alEditar,
+    required this.alCompartir,
+    this.alCancelar,
+    this.alEliminar,
+  });
+
+  final Capsula capsula;
+  final VoidCallback alEditar;
+  final VoidCallback alCompartir;
+  final VoidCallback? alCancelar;
+  final VoidCallback? alEliminar;
+
+  @override
+  Widget build(BuildContext context) {
+    final puedeEditar = capsula.estado == EstadoCapsula.borrador ||
+        capsula.estado == EstadoCapsula.programada;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _Titulo('Gestionar'),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: alCompartir,
+          icon: const Icon(Icons.share_outlined),
+          label: const Text('Compartir enlace'),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: MenuAccionesEntidad(
+            puedeEditar: puedeEditar,
+            puedeEliminar: alEliminar != null,
+            pedirConfirmacionEliminar: false,
+            etiquetaEliminar: 'Eliminar cápsula',
+            alEditar: alEditar,
+            alEliminar: alEliminar,
+          ),
+        ),
+        if (alCancelar != null) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: alCancelar,
+            icon: const Icon(Icons.cancel_outlined),
+            label: const Text('Cancelar programación'),
+          ),
+        ],
+      ],
     );
   }
 }

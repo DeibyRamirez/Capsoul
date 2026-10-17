@@ -1,0 +1,43 @@
+name: CI Capsoul
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+
+  deno:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+      # Las pruebas comparan las firmas con el SDK npm de Cloudinary, que lee estas variables
+      # de entorno al importarse; solo se conceden esas (no hay secretos en CI).
+      - run: deno test --allow-env=CLOUDINARY_URL,CLOUDINARY_ACCOUNT_URL,CLOUDINARY_API_PROXY supabase/functions/firmar-medio/
+      - run: deno test supabase/functions/firmar-subida/
+      - run: deno test supabase/functions/buscar-musica/
+      - run: deno test supabase/functions/enviar-avisos/

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
+import '../../../nucleo/dominio/validador_nombre_usuario.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../aplicacion/controladores_autenticacion.dart';
@@ -21,6 +22,7 @@ class PantallaRegistro extends ConsumerStatefulWidget {
 class _EstadoPantallaRegistro extends ConsumerState<PantallaRegistro> {
   final _claveFormulario = GlobalKey<FormState>();
   final _controladorNombre = TextEditingController();
+  final _controladorUsuario = TextEditingController();
   final _controladorCorreo = TextEditingController();
   final _controladorContrasena = TextEditingController();
   final _controladorConfirmacion = TextEditingController();
@@ -28,6 +30,7 @@ class _EstadoPantallaRegistro extends ConsumerState<PantallaRegistro> {
   @override
   void dispose() {
     _controladorNombre.dispose();
+    _controladorUsuario.dispose();
     _controladorCorreo.dispose();
     _controladorContrasena.dispose();
     _controladorConfirmacion.dispose();
@@ -42,6 +45,9 @@ class _EstadoPantallaRegistro extends ConsumerState<PantallaRegistro> {
     final resultado =
         await ref.read(proveedorControladorRegistro.notifier).registrarUsuario(
               nombre: _controladorNombre.text,
+              nombreUsuario: ValidadorNombreUsuario.normalizar(
+                _controladorUsuario.text,
+              ),
               correo: _controladorCorreo.text,
               contrasena: _controladorContrasena.text,
             );
@@ -78,6 +84,16 @@ class _EstadoPantallaRegistro extends ConsumerState<PantallaRegistro> {
                 capitalizacion: TextCapitalization.words,
                 pistasAutocompletado: const [AutofillHints.name],
                 validador: ValidadoresAutenticacion.nombreVisible,
+                habilitado: !cargando,
+              ),
+              const SizedBox(height: 16),
+              CampoTextoAutenticacion(
+                controlador: _controladorUsuario,
+                etiqueta: 'Usuario',
+                icono: Icons.alternate_email,
+                prefijoTexto: '@',
+                tipoTeclado: TextInputType.visiblePassword,
+                validador: ValidadorNombreUsuario.validar,
                 habilitado: !cargando,
               ),
               const SizedBox(height: 16),

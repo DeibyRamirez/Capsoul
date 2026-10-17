@@ -2,15 +2,15 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/identificadores/generador_ids.dart';
-import '../../../nucleo/supabase/errores_postgrest.dart';
+import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
 import '../../elementos/dominio/fallo_medios.dart';
 import '../../recuerdos/datos/mapeo_recuerdos.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
 import '../dominio/capsula.dart';
+import '../dominio/capsula_recibida.dart';
 import '../dominio/estado_capsula.dart';
 import '../dominio/fallo_capsula.dart';
 import '../dominio/nueva_capsula.dart';
@@ -47,8 +47,16 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   Future<String> crearCapsula(NuevaCapsula nueva) async {
     final uid = _uidActual();
     if (uid == null) throw const FalloCapsula.sinSesion();
-    final fallo = ValidadorCapsula.validar(nueva, ahora: _reloj());
+    final fallo = ValidadorCapsula.validar(
+      nueva,
+      ahora: _reloj(),
+      uidAutor: _uidActual(),
+    );
     if (fallo != null) throw fallo;
+
+    final destinatarios = [
+      for (final id in nueva.destinatariosUsuarioIds) id.trim(),
+    ];
 
     final idCapsula = _generarId();
     var insertada = false;
@@ -69,6 +77,13 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
             'capsula_id': idCapsula,
             'elemento_id': nueva.recuerdos[i].id,
             'orden': i,
+          },
+      ]);
+      await _acceso.insertarDestinatarios([
+        for (final usuarioId in destinatarios)
+          {
+            'capsula_id': idCapsula,
+            'usuario_id': usuarioId,
           },
       ]);
       await _acceso.actualizarEstadoCapsula(
@@ -115,6 +130,140 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     }
   }
 
+  @override
+  Future<List<CapsulaRecibida>> listarRecibidas() async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    try {
+      final filas = await _acceso.leerCapsulasRecibidas();
+      return [
+        for (final fila in filas) ?CapsulaRecibida.desdeFilaRpc(fila),
+      ];
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> marcarAbierta(String idCapsula) async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    try {
+      await _acceso.marcarCapsulaAbierta(idCapsula);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> actualizarMetadatosCapsula(
+    String id, {
+    required String titulo,
+    String? mensaje,
+    required DateTime fechaApertura,
+  }) async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    final falloTitulo = ValidadorCapsula.validarTitulo(titulo);
+    if (falloTitulo != null) throw falloTitulo;
+    final falloFecha = ValidadorCapsula.validarFecha(
+      fechaApertura,
+      ahora: _reloj(),
+    );
+    if (falloFecha != null) throw falloFecha;
+    final textoMensaje = mensaje?.trim();
+    try {
+      await _acceso.actualizarCapsula(id, {
+        'titulo': titulo.trim(),
+        'mensaje': (textoMensaje == null || textoMensaje.isEmpty)
+            ? null
+            : textoMensaje,
+        'fecha_apertura': fechaApertura.toUtc().toIso8601String(),
+      });
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> actualizarCapsulaEditable(
+    String id, {
+    required String titulo,
+    String? mensaje,
+    required DateTime fechaApertura,
+    required List<String> idsRecuerdosOrdenados,
+    required List<String> destinatariosUsuarioIds,
+  }) async {
+    final uid = _uidActual();
+    if (uid == null) throw const FalloCapsula.sinSesion();
+
+    final recuerdos = idsRecuerdosOrdenados;
+    final falloTitulo = ValidadorCapsula.validarTitulo(titulo);
+    if (falloTitulo != null) throw falloTitulo;
+    final falloFecha = ValidadorCapsula.validarFecha(
+      fechaApertura,
+      ahora: _reloj(),
+    );
+    if (falloFecha != null) throw falloFecha;
+    final falloCantidad = ValidadorCapsula.validarCantidad(recuerdos.length);
+    if (falloCantidad != null) throw falloCantidad;
+    final falloDest = ValidadorCapsula.validarDestinatarios(
+      destinatariosUsuarioIds,
+      uidAutor: uid,
+    );
+    if (falloDest != null) throw falloDest;
+
+    final textoMensaje = mensaje?.trim();
+    try {
+      await _acceso.actualizarCapsula(id, {
+        'titulo': titulo.trim(),
+        'mensaje': (textoMensaje == null || textoMensaje.isEmpty)
+            ? null
+            : textoMensaje,
+        'fecha_apertura': fechaApertura.toUtc().toIso8601String(),
+      });
+      await _acceso.eliminarEnlacesDeCapsula(id);
+      await _acceso.insertarEnlaces([
+        for (var i = 0; i < recuerdos.length; i++)
+          {
+            'capsula_id': id,
+            'elemento_id': recuerdos[i],
+            'orden': i,
+          },
+      ]);
+      await _acceso.eliminarDestinatariosDeCapsula(id);
+      final destinatarios = [
+        for (final usuarioId in destinatariosUsuarioIds) usuarioId.trim(),
+      ];
+      await _acceso.insertarDestinatarios([
+        for (final usuarioId in destinatarios)
+          {
+            'capsula_id': id,
+            'usuario_id': usuarioId,
+          },
+      ]);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> cancelarCapsula(String id) async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    try {
+      await _acceso.actualizarEstadoCapsula(id, EstadoCapsula.cancelada.valorBd);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> eliminarCapsula(String id) async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    try {
+      await _acceso.eliminarCapsula(id);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
   /// Falla cerrado: una fila sin id, autor, título, estado o fecha de
   /// creación válidos se descarta. Los elementos mal formados se omiten.
   @visibleForTesting
@@ -138,6 +287,13 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       if (enlaces is List)
         for (final enlace in enlaces) ?recuerdoDesdeEnlace(enlace),
     ]..sort((a, b) => a.$1.compareTo(b.$1));
+    final filasDest = fila['capsula_destinatarios'];
+    final destinatarios = <String>[
+      if (filasDest is List)
+        for (final filaDest in filasDest)
+          if (filaDest is Map)
+            if (filaDest['usuario_id'] is String) filaDest['usuario_id'] as String,
+    ];
     return Capsula(
       id: id,
       autorId: autorId,
@@ -148,6 +304,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       liberadaEn: _fecha(fila['liberada_en']),
       creadoEn: creadoEn,
       elementos: List.unmodifiable([for (final (_, r) in ordenados) r]),
+      destinatariosUsuarioIds: List.unmodifiable(destinatarios),
     );
   }
 
@@ -177,19 +334,20 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   @visibleForTesting
   static FalloApp traducirError(Object error) {
     if (error is FalloApp) return error;
-    if (error is PostgrestException) {
-      switch (error.code) {
+    if (error is ErrorPostgrest) {
+      switch (error.codigo) {
         case codigoCuotaExcedida:
           return const FalloMedios.cuotaExcedida();
         case codigoMaximoElementos:
           return const FalloCapsula.demasiadosElementos();
-        case ErroresPostgrest.permisoDenegado:
+        case TraductorErroresBackend.permisoDenegado:
           return falloPermisoPorTabla(
-            ErroresPostgrest.tablaDeViolacionRls(error.message),
+            TraductorErroresBackend.tablaDeViolacionRls(error.mensaje),
           );
-        case final codigo? when ErroresPostgrest.sesionInvalida.contains(codigo):
+        case final codigo?
+            when TraductorErroresBackend.sesionInvalida.contains(codigo):
           return const FalloCapsula.sesionVencida();
-        case 'P0001' when error.message.contains('fecha de apertura'):
+        case 'P0001' when error.mensaje.contains('fecha de apertura'):
           return const FalloCapsula.fechaInvalida();
         case '23514':
           return const FalloCapsula(
@@ -202,7 +360,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
             'Uno de los recuerdos ya no existe. Quítalo y vuelve a intentarlo.',
           );
       }
-      debugPrint('Capsoul: PostgrestException no esperada: $error');
+      debugPrint('Capsoul: ErrorPostgrest no esperado: $error');
       return const FalloCapsula.desconocido();
     }
     if (error is SocketException || error is TimeoutException) {

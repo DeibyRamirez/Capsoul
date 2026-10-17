@@ -6,7 +6,16 @@ import 'package:capsoul/funcionalidades/autenticacion/dominio/resultado_registro
 import 'package:capsoul/funcionalidades/autenticacion/dominio/usuario_app.dart';
 import 'package:capsoul/funcionalidades/usuarios/dominio/fallo_perfil_usuario.dart';
 import 'package:capsoul/funcionalidades/usuarios/dominio/perfil_usuario.dart';
+import 'package:capsoul/funcionalidades/elementos/dominio/medio_subido.dart';
+import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
+import 'package:capsoul/funcionalidades/recuerdos/dominio/url_medio.dart';
 import 'package:capsoul/funcionalidades/usuarios/dominio/repositorio_usuarios.dart';
+import 'package:capsoul/nucleo/infraestructura/cliente_almacenamiento.dart';
+import 'package:capsoul/nucleo/firebase/repositorio_dispositivos_push.dart';
+import 'package:capsoul/nucleo/infraestructura/cliente_autenticacion.dart';
+import 'package:capsoul/nucleo/infraestructura/cliente_funciones_api.dart';
+import 'package:capsoul/nucleo/infraestructura/cliente_postgrest.dart';
+import 'package:capsoul/nucleo/infraestructura/consulta_postgrest.dart';
 
 const usuarioPrueba = UsuarioApp(
   uid: 'uid-123',
@@ -14,6 +23,22 @@ const usuarioPrueba = UsuarioApp(
   nombreVisible: 'Ana',
   correoVerificado: true,
 );
+
+/// Push en memoria (pruebas de widget).
+class RegistroDispositivosPushFalso implements RegistroDispositivosPush {
+  int llamadasBorrarTodos = 0;
+
+  @override
+  Future<void> registrarToken(String tokenFcm) async {}
+
+  @override
+  Future<void> eliminarToken(String tokenFcm) async {}
+
+  @override
+  Future<void> eliminarTodosLosTokensDelUsuario() async {
+    llamadasBorrarTodos++;
+  }
+}
 
 /// [RepositorioAutenticacion] en memoria para pruebas de widgets (sin
 /// Supabase).
@@ -89,6 +114,7 @@ class RepositorioAutenticacionFalso implements RepositorioAutenticacion {
   @override
   Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
+    required String nombreUsuario,
     required String correo,
     required String contrasena,
   }) async {
@@ -183,5 +209,312 @@ class RepositorioUsuariosFalso implements RepositorioUsuarios {
     }
     perfiles[uid] = actual.copiarCon(nombreVisible: nombreVisible);
     _cambios.add(null);
+  }
+
+  @override
+  Future<void> guardarFotoPerfil({
+    required String uid,
+    required String fotoPublicId,
+  }) async {
+    final actual = perfiles[uid];
+    if (actual == null) {
+      throw FalloPerfilUsuario.desdeCodigo(
+        FalloPerfilUsuario.codigoNoEncontrado,
+      );
+    }
+    perfiles[uid] = actual.copiarCon(fotoPublicId: fotoPublicId);
+    _cambios.add(null);
+  }
+
+  @override
+  Future<void> establecerNombreUsuario({
+    required String uid,
+    required String nombreUsuario,
+  }) async {
+    final actual = perfiles[uid];
+    if (actual == null) {
+      throw FalloPerfilUsuario.desdeCodigo(
+        FalloPerfilUsuario.codigoNoEncontrado,
+      );
+    }
+    perfiles[uid] = actual.copiarCon(nombreUsuario: nombreUsuario);
+    _cambios.add(null);
+  }
+}
+
+/// [ClientePostgrest] en memoria para pruebas unitarias.
+class ClientePostgrestFalso implements ClientePostgrest {
+  final Map<String, List<Map<String, dynamic>>> tablas = {};
+  final Map<String, List<dynamic>> rpcs = {};
+
+  @override
+  TablaPostgrest from(String tabla) => TablaPostgrestFalsa(tabla, this);
+
+  @override
+  Future<List<dynamic>> rpc(
+    String nombre, {
+    Map<String, dynamic>? parametros,
+  }) async =>
+      rpcs[nombre] ?? const [];
+}
+
+class TablaPostgrestFalsa implements TablaPostgrest {
+  TablaPostgrestFalsa(this.nombre, this.cliente);
+
+  final String nombre;
+  final ClientePostgrestFalso cliente;
+
+  @override
+  Future<void> insertar(Map<String, dynamic> fila) async {
+    cliente.tablas.putIfAbsent(nombre, () => []).add(fila);
+  }
+
+  @override
+  Future<void> insertarMuchos(List<Map<String, dynamic>> filas) async {
+    cliente.tablas.putIfAbsent(nombre, () => []).addAll(filas);
+  }
+
+  @override
+  SeleccionPostgrest seleccionar([String columnas = '*']) =>
+      SeleccionPostgrestFalsa(cliente.tablas[nombre] ?? const []);
+
+  @override
+  ActualizacionPostgrest actualizar(Map<String, dynamic> valores) =>
+      ActualizacionPostgrestFalsa(valores, cliente.tablas[nombre] ??= []);
+
+  @override
+  EliminacionPostgrest eliminar() =>
+      EliminacionPostgrestFalsa(cliente.tablas[nombre] ??= []);
+}
+
+class SeleccionPostgrestFalsa implements SeleccionPostgrest {
+  SeleccionPostgrestFalsa(this._filas);
+
+  List<Map<String, dynamic>> _filas;
+
+  @override
+  SeleccionPostgrest eq(String columna, Object valor) {
+    _filas = _filas.where((f) => f[columna] == valor).toList();
+    return this;
+  }
+
+  @override
+  SeleccionPostgrest neq(String columna, Object valor) {
+    _filas = _filas.where((f) => f[columna] != valor).toList();
+    return this;
+  }
+
+  @override
+  SeleccionPostgrest gte(String columna, Object valor) =>
+      this;
+
+  @override
+  SeleccionPostgrest lte(String columna, Object valor) =>
+      this;
+
+  @override
+  SeleccionPostgrest inFilter(String columna, List<Object> valores) {
+    _filas = _filas.where((f) => valores.contains(f[columna])).toList();
+    return this;
+  }
+
+  @override
+  SeleccionPostgrest order(String columna, {bool ascendente = true}) =>
+      this;
+
+  @override
+  SeleccionPostgrest limit(int cantidad) {
+    _filas = _filas.take(cantidad).toList();
+    return this;
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> ejecutar() async => _filas;
+
+  @override
+  Future<Map<String, dynamic>?> maybeSingle() async =>
+      _filas.isEmpty ? null : _filas.first;
+
+  @override
+  Future<ConteoPostgrest> contar() async => ConteoPostgrest(_filas.length);
+}
+
+class ActualizacionPostgrestFalsa implements ActualizacionPostgrest {
+  ActualizacionPostgrestFalsa(this._valores, this._filas);
+
+  final Map<String, dynamic> _valores;
+  final List<Map<String, dynamic>> _filas;
+
+  @override
+  ActualizacionPostgrest eq(String columna, Object valor) => this;
+
+  @override
+  Future<List<Map<String, dynamic>>> select(String columnas) async {
+    for (final fila in _filas) {
+      fila.addAll(_valores);
+    }
+    return _filas;
+  }
+
+  @override
+  Future<void> ejecutar() async {}
+}
+
+class EliminacionPostgrestFalsa implements EliminacionPostgrest {
+  EliminacionPostgrestFalsa(this._filas);
+
+  final List<Map<String, dynamic>> _filas;
+
+  @override
+  EliminacionPostgrest eq(String columna, Object valor) => this;
+
+  @override
+  Future<List<Map<String, dynamic>>> select(String columnas) async {
+    final borradas = List<Map<String, dynamic>>.from(_filas);
+    _filas.clear();
+    return borradas;
+  }
+
+  @override
+  Future<void> ejecutar() async => _filas.clear();
+}
+
+/// [ClienteFuncionesApi] en memoria para pruebas.
+class ClienteFuncionesApiFalso implements ClienteFuncionesApi {
+  FirmaSubida? firma;
+  List<UrlMedio> medios = const [];
+
+  @override
+  Future<UrlMedio?> firmarAvatarPerfil() async =>
+      medios.isEmpty ? null : medios.first;
+
+  @override
+  Future<FirmaSubida> firmarSubida({
+    required TipoElemento tipo,
+    required int bytes,
+    Duration? duracion,
+    String? formato,
+    bool perfilAvatar = false,
+  }) async =>
+      firma ??
+      const FirmaSubida(
+        urlSubida: 'https://api.cloudinary.com/v1_1/nube/image/upload',
+        parametros: {
+          'api_key': '1',
+          'timestamp': '1',
+          'signature': 's',
+          'public_id': 'p',
+        },
+      );
+
+  @override
+  Future<List<UrlMedio>> firmarMedio(List<String> idsElemento) async => medios;
+
+  @override
+  Future<List<UrlMedio>> firmarAvataresUsuarios(List<String> idsUsuario) async =>
+      medios;
+
+  List<Map<String, dynamic>> resultadosMusica = const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> buscarMusica({
+    required String consulta,
+    int limite = 10,
+    String mercado = 'CO',
+  }) async =>
+      resultadosMusica;
+}
+
+/// [ClienteAlmacenamiento] en memoria para pruebas.
+class ClienteAlmacenamientoFalso implements ClienteAlmacenamiento {
+  MedioSubido? resultado;
+
+  @override
+  Future<MedioSubido> subirArchivo({
+    required String rutaLocal,
+    required String urlSubida,
+    required Map<String, String> parametrosFirma,
+  }) async =>
+      resultado ??
+      const MedioSubido(
+        publicId: 'capsoul/prueba',
+        tipoRecurso: 'image',
+        bytes: 1,
+      );
+}
+
+/// [ClienteAutenticacion] en memoria para pruebas de infraestructura.
+class ClienteAutenticacionFalso implements ClienteAutenticacion {
+  ClienteAutenticacionFalso({this._usuario});
+
+  UsuarioApp? _usuario;
+  String? _token;
+  final _cambios = StreamController<SesionAutenticacion>.broadcast();
+
+  @override
+  Stream<SesionAutenticacion> cambiosEstado() async* {
+    yield SesionAutenticacion(
+      usuario: _usuario,
+      evento: _usuario == null
+          ? EventoAutenticacion.cerrada
+          : EventoAutenticacion.iniciada,
+    );
+    yield* _cambios.stream;
+  }
+
+  @override
+  UsuarioApp? get usuarioActual => _usuario;
+
+  @override
+  String? get tokenAcceso => _token;
+
+  @override
+  Future<UsuarioApp> iniciarSesion({
+    required String correo,
+    required String contrasena,
+  }) async {
+    _usuario = UsuarioApp(uid: 'uid-falso', correo: correo);
+    _token = 'token-falso';
+    return _usuario!;
+  }
+
+  @override
+  Future<ResultadoRegistro> registrarUsuario({
+    required String nombre,
+    required String nombreUsuario,
+    required String correo,
+    required String contrasena,
+    required String urlConfirmacion,
+  }) async {
+    _usuario = UsuarioApp(
+      uid: 'uid-nuevo',
+      correo: correo,
+      nombreVisible: nombre,
+    );
+    return ResultadoRegistro(usuario: _usuario!, sesionIniciada: true);
+  }
+
+  @override
+  Future<void> enviarCorreoRecuperacion(
+    String correo, {
+    required String urlRecuperacion,
+  }) async {}
+
+  @override
+  Future<void> reenviarCorreoConfirmacion(
+    String correo, {
+    required String urlConfirmacion,
+  }) async {}
+
+  @override
+  Future<void> actualizarContrasena(String contrasenaNueva) async {}
+
+  @override
+  Future<void> actualizarNombreVisible(String nombre) async {}
+
+  @override
+  Future<void> cerrarSesion() async {
+    _usuario = null;
+    _token = null;
   }
 }

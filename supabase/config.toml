@@ -1,0 +1,15 @@
+# Configuración mínima del CLI (proyecto enlazado: mslcdvcmfuqopfwojxvt).
+project_id = "mslcdvcmfuqopfwojxvt"
+
+[functions.buscar-musica]
+verify_jwt = true
+
+[functions.firmar-subida]
+verify_jwt = true
+
+[functions.firmar-medio]
+verify_jwt = true
+
+[functions.enviar-avisos]
+# Invocada por pg_cron con apikey de servicio; no exige JWT de usuario.
+verify_jwt = false

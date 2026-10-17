@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/onda_audio.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../aplicacion/controlador_grabacion_audio.dart';
 import '../dominio/limites_medios.dart';
+import '../dominio/tipo_elemento.dart';
 import '../dominio/validador_medios.dart';
 import 'componentes/componentes_captura.dart';
+import 'componentes/hoja_origen_medio.dart';
 
 /// Grabadora de notas de voz (hasta 5 min) con onda en vivo. Devuelve un
 /// [ElementoBorrador] con `Navigator.pop`.
@@ -28,6 +31,9 @@ class PantallaGrabarAudio extends ConsumerWidget {
 
     return EstructuraCaptura(
       titulo: 'Nota de voz',
+      acciones: resultado == null
+          ? const [AccionImportarMedio(tipo: TipoElemento.audio)]
+          : null,
       indicadorSuperior: ContadorGrabacion(
         transcurrido: resultado?.duracion ?? estado.transcurrido,
         maximo: LimitesMedios.duracionMaxAudio,
@@ -38,7 +44,7 @@ class PantallaGrabarAudio extends ConsumerWidget {
           ? BarraConfirmarCaptura(
               etiquetaUsar: 'Usar nota de voz',
               alRepetir: controlador.descartar,
-              alUsar: () => Navigator.of(context).pop(resultado),
+              alUsar: () => context.pop(resultado),
             )
           : _BotonMicrofono(
               fase: estado.fase,

@@ -33,7 +33,7 @@ void main() {
     expect(find.text('Guardar algo hoy'), findsNothing);
   });
 
-  testWidgets('el botón + abre el selector de Crear', (tester) async {
+  testWidgets('el botón + abre la hoja de opciones de Crear', (tester) async {
     await montarAppCapsoul(
       tester,
       autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
@@ -45,7 +45,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Crear'), findsOneWidget);
+    expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.text('Cápsula del tiempo'), findsOneWidget);
     expect(find.text('Graba un recuerdo en video (hasta 60 s)'), findsOneWidget);
   });

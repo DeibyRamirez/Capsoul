@@ -1,12 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/identificadores/generador_ids.dart';
-import '../../../nucleo/supabase/errores_postgrest.dart';
+import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
+import '../../musica/dominio/referencia_musica.dart';
 import '../../elementos/dominio/elemento_borrador.dart';
 import '../../elementos/dominio/fallo_medios.dart';
 import '../../elementos/dominio/repositorio_medios.dart';
@@ -79,8 +80,17 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
     if (elemento.tipo == TipoElemento.texto) {
       return {...comunes, 'contenido_texto': elemento.texto};
     }
+    if (elemento.tipo == TipoElemento.musica) {
+      final ref = elemento.referenciaMusica;
+      if (ref == null) throw const FalloRecuerdo.datoInvalido();
+      return {
+        ...comunes,
+        ...ref.aFilaBd(),
+        if (ref.previewUrl != null) 'duracion_segundos': 30,
+      };
+    }
     final medio = await _medios.subir(elemento);
-    return {
+    final fila = {
       ...comunes,
       'cloudinary_public_id': medio.publicId,
       'cloudinary_tipo_recurso': medio.tipoRecurso,
@@ -91,6 +101,11 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
       'alto': medio.alto,
       'duracion_segundos': _duracion(medio.duracionSegundos, elemento),
     };
+    final adjunta = elemento.referenciaMusica;
+    if (adjunta != null) {
+      fila.addAll(adjunta.aFilaBd());
+    }
+    return fila;
   }
 
   static double? _duracion(double? servidor, ElementoBorrador elemento) {
@@ -143,6 +158,55 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
   }
 
   @override
+  Future<void> actualizarContenidoTexto(String id, String contenidoTexto) async {
+    _uid();
+    try {
+      await _acceso.actualizar(id, {
+        'contenido_texto': contenidoTexto,
+        'bytes': utf8.encode(contenidoTexto).length,
+      });
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> actualizarMusicaPreview(String id, ReferenciaMusica musica) async {
+    _uid();
+    try {
+      await _acceso.actualizar(id, {
+        ...musica.aFilaBd(),
+        if (musica.tienePreview) 'duracion_segundos': 30,
+      });
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> actualizarMetadatos(
+    String id, {
+    String? titulo,
+    DateTime? fechaRecuerdo,
+  }) async {
+    _uid();
+    final cambios = <String, dynamic>{};
+    if (titulo != null) {
+      final limpio = titulo.trim();
+      cambios['titulo'] = limpio.isEmpty ? null : limpio;
+    }
+    if (fechaRecuerdo != null) {
+      cambios['fecha_recuerdo'] = fechaParaBd(fechaRecuerdo);
+    }
+    if (cambios.isEmpty) return;
+    try {
+      await _acceso.actualizar(id, cambios);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
   Future<void> eliminar(String id) async {
     _uid();
     int borradas;
@@ -177,20 +241,21 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
   @visibleForTesting
   static FalloApp traducirError(Object error) {
     if (error is FalloApp) return error;
-    if (error is PostgrestException) {
-      switch (error.code) {
+    if (error is ErrorPostgrest) {
+      switch (error.codigo) {
         case codigoCuotaExcedida:
           return const FalloMedios.cuotaExcedida();
         case codigoRecuerdoEnCapsula:
           return const FalloRecuerdo.enCapsulaSellada();
-        case ErroresPostgrest.permisoDenegado:
+        case TraductorErroresBackend.permisoDenegado:
           return const FalloRecuerdo.permisoDenegado();
         case '23514':
           return const FalloRecuerdo.datoInvalido();
-        case final codigo? when ErroresPostgrest.sesionInvalida.contains(codigo):
+        case final codigo?
+            when TraductorErroresBackend.sesionInvalida.contains(codigo):
           return const FalloRecuerdo.sesionVencida();
       }
-      debugPrint('Capsoul: PostgrestException no esperada: $error');
+      debugPrint('Capsoul: ErrorPostgrest no esperado: $error');
       return const FalloRecuerdo.desconocido();
     }
     if (error is SocketException || error is TimeoutException) {

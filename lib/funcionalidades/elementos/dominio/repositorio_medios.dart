@@ -5,4 +5,7 @@ import 'medio_subido.dart';
 /// (Edge Function `firmar-subida`). Lanza [FalloMedios] si no se puede.
 abstract interface class RepositorioMedios {
   Future<MedioSubido> subir(ElementoBorrador elemento);
+
+  /// Avatar de perfil (no cuenta en la cuota de recuerdos).
+  Future<MedioSubido> subirAvatarPerfil(ElementoBorrador elemento);
 }

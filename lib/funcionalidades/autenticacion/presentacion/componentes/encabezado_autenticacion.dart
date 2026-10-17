@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../../nucleo/tema/colores_app.dart';
+import '../../../../nucleo/tema/tema_app.dart';
 
 /// Encabezado de marca de Capsoul: frasco luminoso, nombre y eslogan.
 class EncabezadoAutenticacion extends StatelessWidget {
@@ -21,8 +22,9 @@ class EncabezadoAutenticacion extends StatelessWidget {
           'Capsoul',
           style: estilosTexto.headlineMedium?.copyWith(
             color: ColoresApp.primario,
-            fontFamily: 'serif',
-            fontWeight: FontWeight.w600,
+            fontFamily: TemaApp.fuenteTitulos,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 4),
@@ -30,7 +32,7 @@ class EncabezadoAutenticacion extends StatelessWidget {
           'Pequeñas herencias, grandes recuerdos',
           textAlign: TextAlign.center,
           style: estilosTexto.bodyMedium?.copyWith(
-            color: ColoresApp.acento,
+            color: ColoresApp.textoSecundario,
             fontStyle: FontStyle.italic,
           ),
         ),

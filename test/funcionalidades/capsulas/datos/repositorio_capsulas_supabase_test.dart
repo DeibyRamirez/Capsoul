@@ -7,7 +7,7 @@ import 'package:capsoul/funcionalidades/elementos/dominio/fallo_medios.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:capsoul/nucleo/infraestructura/traductor_errores_backend.dart';
 
 import '../../../ayudantes/falsos_recuerdos.dart';
 
@@ -16,9 +16,11 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   final List<String> operaciones = [];
   final List<Map<String, dynamic>> capsulas = [];
   final List<Map<String, dynamic>> enlaces = [];
+  final List<Map<String, dynamic>> destinatarios = [];
   final List<String> capsulasBorradas = [];
   Object? falloEnCapsula;
   Object? falloEnEnlaces;
+  Object? falloEnDestinatarios;
   Map<String, dynamic>? filaLeida;
 
   @override
@@ -38,6 +40,14 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   }
 
   @override
+  Future<void> insertarDestinatarios(List<Map<String, dynamic>> filas) async {
+    operaciones.add('destinatarios');
+    final fallo = falloEnDestinatarios;
+    if (fallo != null) throw fallo;
+    destinatarios.addAll(filas);
+  }
+
+  @override
   Future<void> actualizarEstadoCapsula(String id, String estado) async {
     operaciones.add('estado:$estado');
   }
@@ -52,6 +62,31 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   @override
   Future<Map<String, dynamic>?> leerCapsulaConElementos(String id) async =>
       filaLeida;
+
+  @override
+  Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios) async {
+    operaciones.add('actualizar:$id');
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> leerCapsulasRecibidas() async => [];
+
+  @override
+  Future<void> marcarCapsulaAbierta(String idCapsula) async {
+    operaciones.add('abierta:$idCapsula');
+  }
+
+  @override
+  Future<void> eliminarEnlacesDeCapsula(String capsulaId) async {
+    operaciones.add('borrar-enlaces:$capsulaId');
+    enlaces.removeWhere((e) => e['capsula_id'] == capsulaId);
+  }
+
+  @override
+  Future<void> eliminarDestinatariosDeCapsula(String capsulaId) async {
+    operaciones.add('borrar-destinatarios:$capsulaId');
+    destinatarios.removeWhere((e) => e['capsula_id'] == capsulaId);
+  }
 }
 
 void main() {
@@ -67,6 +102,7 @@ void main() {
         mensaje: '  ',
         fechaApertura: DateTime.utc(2046, 8, 13, 13),
         recuerdos: recuerdos,
+        destinatariosUsuarioIds: const ['uid-amigo'],
       );
 
   setUp(() {
@@ -88,6 +124,7 @@ void main() {
     expect(acceso.operaciones, [
       'capsula:borrador',
       'enlaces',
+      'destinatarios',
       'estado:programada',
     ]);
     expect(acceso.capsulas.single['id'], 'id-1');
@@ -99,6 +136,54 @@ void main() {
       {'capsula_id': 'id-1', 'elemento_id': 'r-foto', 'orden': 0},
       {'capsula_id': 'id-1', 'elemento_id': 'r-nota', 'orden': 1},
     ]);
+    expect(acceso.destinatarios, [
+      {
+        'capsula_id': 'id-1',
+        'usuario_id': 'uid-amigo',
+      },
+    ]);
+  });
+
+  test('inserta varios destinatarios', () async {
+    await repositorio.crearCapsula(
+      NuevaCapsula(
+        titulo: 'Grupo',
+        fechaApertura: DateTime.utc(2046, 8, 13, 13),
+        recuerdos: [nota],
+        destinatariosUsuarioIds: const ['uid-a', 'uid-b'],
+      ),
+    );
+    expect(acceso.destinatarios, [
+      {'capsula_id': 'id-1', 'usuario_id': 'uid-a'},
+      {'capsula_id': 'id-1', 'usuario_id': 'uid-b'},
+    ]);
+  });
+
+  test('actualizar editable reemplaza enlaces y destinatarios', () async {
+    await repositorio.crearCapsula(nueva([foto]));
+    await repositorio.actualizarCapsulaEditable(
+      'id-1',
+      titulo: 'Nuevo título',
+      mensaje: 'Hola',
+      fechaApertura: DateTime.utc(2047, 1, 1, 10),
+      idsRecuerdosOrdenados: ['r-nota'],
+      destinatariosUsuarioIds: const ['uid-amigo', 'uid-otro'],
+    );
+    expect(acceso.operaciones, contains('borrar-enlaces:id-1'));
+    expect(acceso.operaciones, contains('borrar-destinatarios:id-1'));
+    expect(
+      acceso.enlaces.where((e) => e['capsula_id'] == 'id-1'),
+      [
+        {'capsula_id': 'id-1', 'elemento_id': 'r-nota', 'orden': 0},
+      ],
+    );
+    expect(
+      acceso.destinatarios.where((d) => d['capsula_id'] == 'id-1'),
+      [
+        {'capsula_id': 'id-1', 'usuario_id': 'uid-amigo'},
+        {'capsula_id': 'id-1', 'usuario_id': 'uid-otro'},
+      ],
+    );
   });
 
   test('valida antes de escribir nada', () async {
@@ -127,10 +212,10 @@ void main() {
   });
 
   test('si la cápsula no se inserta, no hay nada que deshacer', () async {
-    acceso.falloEnCapsula = const PostgrestException(
-      message: 'new row violates row-level security policy for table '
+    acceso.falloEnCapsula = const ErrorPostgrest(
+      mensaje: 'new row violates row-level security policy for table '
           '"capsulas"',
-      code: '42501',
+      codigo: '42501',
     );
 
     await expectLater(
@@ -145,9 +230,9 @@ void main() {
   });
 
   test('si fallan los enlaces, borra solo la cápsula', () async {
-    acceso.falloEnEnlaces = const PostgrestException(
-      message: 'máximo de elementos',
-      code: 'CAP02',
+    acceso.falloEnEnlaces = const ErrorPostgrest(
+      mensaje: 'máximo de elementos',
+      codigo: 'CAP02',
     );
 
     await expectLater(
@@ -165,61 +250,61 @@ void main() {
     test('cuota (CAP01), permisos, fecha y check', () {
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'cuota', code: 'CAP01'),
+          ErrorPostgrest(mensaje: 'cuota', codigo: 'CAP01'),
         ).codigo,
         FalloMedios.codigoCuotaExcedida,
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'x', code: '42501'),
+          ErrorPostgrest(mensaje: 'x', codigo: '42501'),
         ).codigo,
         FalloCapsula.codigoPermisoDenegado,
       );
       // El mensaje dice qué tabla rechazó la fila (antes siempre "cápsula").
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(
-            message: 'new row violates row-level security policy for table '
+          ErrorPostgrest(
+            mensaje: 'new row violates row-level security policy for table '
                 '"elementos"',
-            code: '42501',
+            codigo: '42501',
           ),
         ).mensaje,
         'No tienes permiso para guardar o cambiar este recuerdo.',
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(
-            message: 'new row violates row-level security policy for table '
+          ErrorPostgrest(
+            mensaje: 'new row violates row-level security policy for table '
                 '"capsula_elementos"',
-            code: '42501',
+            codigo: '42501',
           ),
         ).codigo,
         FalloCapsula.codigoPermisoEnlace,
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'JWT expired', code: 'PGRST301'),
+          ErrorPostgrest(mensaje: 'JWT expired', codigo: 'PGRST301'),
         ).codigo,
         FalloCapsula.codigoSesionVencida,
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(
-            message: 'La fecha de apertura debe estar en el futuro',
-            code: 'P0001',
+          ErrorPostgrest(
+            mensaje: 'La fecha de apertura debe estar en el futuro',
+            codigo: 'P0001',
           ),
         ).codigo,
         FalloCapsula.codigoFechaInvalida,
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'x', code: '23514'),
+          ErrorPostgrest(mensaje: 'x', codigo: '23514'),
         ).codigo,
         'dato_invalido',
       );
       expect(
         RepositorioCapsulasSupabase.traducirError(
-          PostgrestException(message: 'fk', code: '23503'),
+          ErrorPostgrest(mensaje: 'fk', codigo: '23503'),
         ).codigo,
         'recuerdo_no_existe',
       );

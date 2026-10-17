@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/errores/fallo_app.dart';
@@ -10,9 +11,11 @@ import '../../../nucleo/tema/colores_app.dart';
 import '../aplicacion/proveedores_elementos.dart';
 import '../dominio/elemento_borrador.dart';
 import '../dominio/limites_medios.dart';
+import '../dominio/tipo_elemento.dart';
 import '../dominio/validador_medios.dart';
 import 'componentes/componentes_captura.dart';
 import 'componentes/gestor_camara.dart';
+import 'componentes/hoja_origen_medio.dart';
 
 /// Graba un video de hasta 60 s en 720p (frontal o trasera) con contador.
 /// Se detiene solo al llegar al máximo. Devuelve un [ElementoBorrador].
@@ -119,11 +122,18 @@ class _EstadoPantallaCapturarVideo
     if (grabado != null) {
       return EstructuraCaptura(
         titulo: 'Video',
-        cuerpo: _ResumenVideo(elemento: grabado),
+        cuerpo: _ResumenVideo(
+          elemento: grabado,
+          alGirar: () => setState(
+            () => _grabado = grabado.copiarCon(
+              rotacionGrados: (grabado.rotacionGrados + 90) % 360,
+            ),
+          ),
+        ),
         controles: BarraConfirmarCaptura(
           etiquetaUsar: 'Usar video',
           alRepetir: () => setState(() => _grabado = null),
-          alUsar: () => Navigator.of(context).pop(grabado),
+          alUsar: () => context.pop(grabado),
         ),
       );
     }
@@ -134,6 +144,7 @@ class _EstadoPantallaCapturarVideo
         final controlador = _camara.controlador;
         return EstructuraCaptura(
           titulo: 'Video',
+          acciones: const [AccionImportarMedio(tipo: TipoElemento.video)],
           indicadorSuperior: error == null
               ? ContadorGrabacion(
                   transcurrido: _transcurrido,
@@ -175,9 +186,13 @@ class _EstadoPantallaCapturarVideo
 }
 
 class _ResumenVideo extends StatelessWidget {
-  const _ResumenVideo({required this.elemento});
+  const _ResumenVideo({
+    required this.elemento,
+    required this.alGirar,
+  });
 
   final ElementoBorrador elemento;
+  final VoidCallback alGirar;
 
   @override
   Widget build(BuildContext context) {
@@ -186,8 +201,14 @@ class _ResumenVideo extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.play_circle_outline,
-              size: 96, color: ColoresApp.sobrePrimario),
+          Transform.rotate(
+            angle: elemento.rotacionGrados * 3.141592653589793 / 180,
+            child: const Icon(
+              Icons.play_circle_outline,
+              size: 96,
+              color: ColoresApp.sobrePrimario,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             'Video listo',
@@ -200,6 +221,22 @@ class _ResumenVideo extends StatelessWidget {
             style: estilos.bodyMedium?.copyWith(
               color: ColoresApp.sobrePrimario.withValues(alpha: 0.8),
             ),
+          ),
+          if (elemento.rotacionGrados != 0) ...[
+            const SizedBox(height: 8),
+            Text(
+              'La rotación es solo de vista previa; el archivo guardado '
+              'mantiene la orientación original.',
+              textAlign: TextAlign.center,
+              style: estilos.bodySmall?.copyWith(
+                color: ColoresApp.sobrePrimario.withValues(alpha: 0.75),
+              ),
+            ),
+          ],
+          IconButton(
+            tooltip: 'Girar 90°',
+            onPressed: alGirar,
+            icon: const Icon(Icons.rotate_right, color: ColoresApp.sobrePrimario),
           ),
         ],
       ),

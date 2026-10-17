@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Metadatos de herencia (herencias.metadatos)",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "tipo_activo": { "type": "string", "examples": ["CDT", "objeto", "cuenta", "otro"] },
+    "titular": { "type": "string" },
+    "beneficiario_nombre": { "type": "string" },
+    "valor_aproximado": { "type": "string" },
+    "moneda": { "type": "string", "default": "COP" },
+    "instrucciones": { "type": "string" },
+    "mensaje_personal": { "type": "string" }
+  }
+}

@@ -69,6 +69,7 @@ class ControladorRegistro extends ControladorAccionAutenticacion {
   /// sesión hasta confirmar).
   Future<ResultadoAccionRegistro> registrarUsuario({
     required String nombre,
+    required String nombreUsuario,
     required String correo,
     required String contrasena,
   }) async {
@@ -77,6 +78,7 @@ class ControladorRegistro extends ControladorAccionAutenticacion {
     final exito = await ejecutar(() async {
       resultado = await autenticacion.registrarUsuario(
         nombre: nombre.trim(),
+        nombreUsuario: nombreUsuario.trim(),
         correo: correo.trim(),
         contrasena: contrasena,
       );

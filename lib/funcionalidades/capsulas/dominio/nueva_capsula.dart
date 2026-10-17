@@ -10,6 +10,7 @@ class NuevaCapsula {
     required this.titulo,
     required this.fechaApertura,
     required this.recuerdos,
+    required this.destinatariosUsuarioIds,
     this.mensaje,
   });
 
@@ -17,4 +18,7 @@ class NuevaCapsula {
   final String? mensaje;
   final DateTime fechaApertura;
   final List<Recuerdo> recuerdos;
+
+  /// Amigos aceptados que recibirán la cápsula (`capsula_destinatarios.usuario_id`).
+  final List<String> destinatariosUsuarioIds;
 }

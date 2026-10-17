@@ -44,13 +44,16 @@ abstract final class LimitesMedios {
         TipoElemento.foto => bytesMaxFoto,
         TipoElemento.video => bytesMaxVideo,
         TipoElemento.audio => bytesMaxAudio,
-        TipoElemento.texto => null,
+        TipoElemento.texto || TipoElemento.musica => null,
       };
 
   /// Duración máxima por tipo (`null` si el tipo no tiene duración).
   static Duration? duracionMaxima(TipoElemento tipo) => switch (tipo) {
         TipoElemento.video => duracionMaxVideo,
         TipoElemento.audio => duracionMaxAudio,
-        TipoElemento.foto || TipoElemento.texto => null,
+        TipoElemento.foto ||
+        TipoElemento.texto ||
+        TipoElemento.musica =>
+          null,
       };
 }

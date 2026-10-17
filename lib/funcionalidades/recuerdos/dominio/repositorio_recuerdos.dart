@@ -1,3 +1,4 @@
+import '../../musica/dominio/referencia_musica.dart';
 import 'filtro_recuerdos.dart';
 import 'nuevo_recuerdo.dart';
 import 'recuerdo.dart';
@@ -22,4 +23,16 @@ abstract interface class RepositorioRecuerdos {
   Future<void> eliminar(String id);
 
   Future<UsoMedios> leerUsoMedios();
+
+  Future<void> actualizarMetadatos(
+    String id, {
+    String? titulo,
+    DateTime? fechaRecuerdo,
+  });
+
+  /// Actualiza el payload de una nota (`contenido_texto`).
+  Future<void> actualizarContenidoTexto(String id, String contenidoTexto);
+
+  /// Actualiza columnas de música tras refrescar el preview (p. ej. URL caducada).
+  Future<void> actualizarMusicaPreview(String id, ReferenciaMusica musica);
 }

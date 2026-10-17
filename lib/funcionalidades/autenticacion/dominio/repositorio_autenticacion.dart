@@ -19,6 +19,7 @@ abstract interface class RepositorioAutenticacion {
   /// lo crea el servidor (trigger `auth_usuarios_1_crear_perfil`).
   Future<ResultadoRegistro> registrarUsuario({
     required String nombre,
+    required String nombreUsuario,
     required String correo,
     required String contrasena,
   });

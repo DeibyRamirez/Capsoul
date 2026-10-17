@@ -49,3 +49,9 @@ app.*.map.json
 
 # Configuración local por entorno (claves de Supabase); solo se versiona el .example
 env/*.json
+
+# Caché local del CLI de Supabase
+supabase/.temp/
+
+# Tokens de CLI/herramientas
+.env

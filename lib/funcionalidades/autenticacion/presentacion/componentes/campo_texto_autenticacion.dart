@@ -17,6 +17,8 @@ class CampoTextoAutenticacion extends StatefulWidget {
     this.habilitado = true,
     this.pistasAutocompletado,
     this.capitalizacion = TextCapitalization.none,
+    this.prefijoTexto,
+    this.autocorrect = false,
     this.alEnviar,
   });
 
@@ -30,6 +32,8 @@ class CampoTextoAutenticacion extends StatefulWidget {
   final bool habilitado;
   final Iterable<String>? pistasAutocompletado;
   final TextCapitalization capitalizacion;
+  final String? prefijoTexto;
+  final bool autocorrect;
   final ValueChanged<String>? alEnviar;
 
   @override
@@ -49,13 +53,14 @@ class _EstadoCampoTextoAutenticacion extends State<CampoTextoAutenticacion> {
       textInputAction: widget.accionTeclado,
       obscureText: _oculto,
       enableSuggestions: !widget.esContrasena,
-      autocorrect: false,
+      autocorrect: widget.autocorrect,
       enabled: widget.habilitado,
       autofillHints: widget.pistasAutocompletado,
       textCapitalization: widget.capitalizacion,
       onFieldSubmitted: widget.alEnviar,
       decoration: InputDecoration(
         labelText: widget.etiqueta,
+        prefixText: widget.prefijoTexto,
         prefixIcon: Icon(widget.icono, color: ColoresApp.acento),
         suffixIcon: widget.esContrasena
             ? IconButton(

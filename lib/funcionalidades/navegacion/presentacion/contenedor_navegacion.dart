@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../nucleo/enrutador/rutas_app.dart';
+import '../../../funcionalidades/crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
 
@@ -30,7 +30,7 @@ class ContenedorNavegacion extends StatelessWidget {
 
   void _alSeleccionarDestino(BuildContext context, int posicion) {
     if (posicion == _posicionCrear) {
-      context.push(RutasApp.crear);
+      HojaOpcionesCrear.mostrar(context);
       return;
     }
     final indiceRama = switch (posicion) {
@@ -69,9 +69,10 @@ class ContenedorNavegacion extends StatelessWidget {
             icon: Container(
               width: 50,
               height: 50,
-              decoration: BoxDecoration(
-                color: ColoresApp.acento,
-                borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
+              decoration: const BoxDecoration(
+                color: ColoresApp.primario,
+                shape: BoxShape.circle,
+                boxShadow: TemaApp.sombraTarjeta,
               ),
               child: const Icon(Icons.add, color: ColoresApp.sobrePrimario),
             ),

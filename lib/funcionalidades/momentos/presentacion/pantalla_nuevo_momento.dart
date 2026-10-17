@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
@@ -115,7 +116,7 @@ class _EstadoPantallaNuevoMomento extends ConsumerState<PantallaNuevoMomento> {
     final anio = FiltroRecuerdos.esteAnio(hoy).conTipos(_filtro.tipos);
 
     return PantallaCapsoul(
-      appBar: AppBar(title: const Text('Nuevo momento')),
+      appBar: AppBarCapsoul(titulo: const Text('Nuevo momento')),
       cuerpo: ListView(
           key: const Key('formulario-momento'),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),

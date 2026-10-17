@@ -4,6 +4,7 @@ import '../../../../nucleo/componentes/onda_audio.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../elementos/dominio/tipo_elemento.dart';
 import '../../dominio/recuerdo.dart';
+import 'vista_nota_compacta.dart';
 
 /// Imagen pequeña de un recuerdo: degradado de marca con ícono, onda o
 /// texto según el tipo. [imagen] (miniatura firmada) se dibuja encima si
@@ -30,6 +31,12 @@ class MiniaturaRecuerdo extends StatelessWidget {
         ?imagenFirmada,
         if (recuerdo.tipo == TipoElemento.video)
           Center(child: _IconoReproducir(tamano: tamanoIcono)),
+        if (recuerdo.tieneMusica)
+          const Positioned(
+            right: 6,
+            top: 6,
+            child: Icon(Icons.music_note, color: ColoresApp.sobrePrimario, size: 20),
+          ),
       ],
     );
   }
@@ -44,20 +51,8 @@ class _Fondo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (recuerdo.tipo) {
-      TipoElemento.texto => ColoredBox(
-          color: ColoresApp.sobrePrimario,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Text(
-              recuerdo.contenidoTexto ?? '',
-              overflow: TextOverflow.fade,
-              style: const TextStyle(
-                color: ColoresApp.sobreSuperficie,
-                fontStyle: FontStyle.italic,
-                height: 1.3,
-              ),
-            ),
-          ),
+      TipoElemento.texto => VistaNotaCompacta(
+          contenidoTexto: recuerdo.contenidoTexto,
         ),
       TipoElemento.audio => ColoredBox(
           color: ColoresApp.acento.withValues(alpha: 0.15),
@@ -73,6 +68,7 @@ class _Fondo extends StatelessWidget {
             ),
           ),
         ),
+      TipoElemento.musica => _PortadaMusica(recuerdo: recuerdo, tamanoIcono: tamanoIcono),
       TipoElemento.foto || TipoElemento.video => DecoratedBox(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -91,6 +87,31 @@ class _Fondo extends StatelessWidget {
         ),
     };
   }
+}
+
+class _PortadaMusica extends StatelessWidget {
+  const _PortadaMusica({required this.recuerdo, required this.tamanoIcono});
+
+  final Recuerdo recuerdo;
+  final double tamanoIcono;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = recuerdo.musica?.portadaUrl;
+    if (url != null) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _iconoFallback(tamanoIcono),
+      );
+    }
+    return _iconoFallback(tamanoIcono);
+  }
+
+  Widget _iconoFallback(double tamano) => ColoredBox(
+        color: ColoresApp.acento.withValues(alpha: 0.2),
+        child: Icon(Icons.music_note, size: tamano, color: ColoresApp.primario),
+      );
 }
 
 class _IconoReproducir extends StatelessWidget {

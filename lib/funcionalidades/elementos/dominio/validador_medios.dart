@@ -74,6 +74,7 @@ abstract final class ValidadorMedios {
         TipoElemento.video => 'El video',
         TipoElemento.audio => 'El audio',
         TipoElemento.texto => 'La nota',
+        TipoElemento.musica => 'La canción',
       };
 }
 

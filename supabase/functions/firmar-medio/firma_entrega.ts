@@ -2,6 +2,7 @@
 // las URLs de entrega de Cloudinary para recursos type=authenticated.
 
 export const MAXIMO_IDS = 60;
+export const MAXIMO_AVATARES_USUARIO = 20;
 
 /** Segundos de validez de la URL del original (Download API): 24 h. */
 export const SEGUNDOS_VALIDEZ_ORIGINAL = 24 * 60 * 60;
@@ -9,14 +10,18 @@ export const SEGUNDOS_VALIDEZ_ORIGINAL = 24 * 60 * 60;
 /** Segundos de validez de la URL de la miniatura (Download API): 7 días. */
 export const SEGUNDOS_VALIDEZ_MINIATURA = 7 * 24 * 60 * 60;
 
+import {
+  TRANSFORMACION_MINIATURA_FOTO,
+  TRANSFORMACION_MINIATURA_VIDEO,
+} from "../transformaciones_medios.ts";
+
 /**
- * Transformación de la miniatura: la del eager de firmar-subida (Cloudinary guarda el
- * derivado en el orden canónico: alfabético, `so_` primero en video). En recursos
- * authenticated no hay transformaciones al vuelo: solo sirve el derivado eager.
+ * Transformación de la miniatura: debe coincidir con el eager de firmar-subida.
+ * En recursos authenticated no hay transformaciones al vuelo: solo el derivado eager.
  */
 export const TRANSFORMACION_MINIATURA: Record<"image" | "video", string> = {
-  image: "c_limit,q_auto,w_480",
-  video: "c_limit,q_auto,so_0,w_480",
+  image: TRANSFORMACION_MINIATURA_FOTO,
+  video: TRANSFORMACION_MINIATURA_VIDEO,
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -29,6 +34,40 @@ export class ErrorSolicitud extends Error {
   ) {
     super(mensaje);
   }
+}
+
+/** `{ avatar_perfil: true }` para firmar la foto de perfil del usuario. */
+export function esSolicitudAvatarPerfil(cuerpo: unknown): boolean {
+  if (typeof cuerpo !== "object" || cuerpo === null) return false;
+  return (cuerpo as Record<string, unknown>).avatar_perfil === true;
+}
+
+/** Valida `{ avatares_usuario_ids: [uuid, ...] }` (1..20, sin repetidos). */
+export function validarAvataresUsuarioIds(cuerpo: unknown): string[] {
+  if (typeof cuerpo !== "object" || cuerpo === null) {
+    throw new ErrorSolicitud(422, "solicitud_invalida", "La solicitud no es válida.");
+  }
+  const ids = (cuerpo as Record<string, unknown>).avatares_usuario_ids;
+  if (!Array.isArray(ids) || ids.length === 0 || ids.length > MAXIMO_AVATARES_USUARIO) {
+    throw new ErrorSolicitud(
+      422,
+      "solicitud_invalida",
+      `Envía entre 1 y ${MAXIMO_AVATARES_USUARIO} usuarios.`,
+    );
+  }
+  const unicos = new Set<string>();
+  for (const id of ids) {
+    if (typeof id !== "string" || !UUID.test(id)) {
+      throw new ErrorSolicitud(422, "solicitud_invalida", "Algún identificador no es válido.");
+    }
+    unicos.add(id.toLowerCase());
+  }
+  return [...unicos];
+}
+
+export function esSolicitudAvataresUsuarios(cuerpo: unknown): boolean {
+  if (typeof cuerpo !== "object" || cuerpo === null) return false;
+  return Array.isArray((cuerpo as Record<string, unknown>).avatares_usuario_ids);
 }
 
 /** Valida `{ elemento_ids: [uuid, ...] }` (1..60, sin repetidos). */

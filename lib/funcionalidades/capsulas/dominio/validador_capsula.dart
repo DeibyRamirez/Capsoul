@@ -34,11 +34,33 @@ abstract final class ValidadorCapsula {
     return null;
   }
 
+  static FalloCapsula? validarDestinatarios(
+    List<String> destinatariosUsuarioIds, {
+    String? uidAutor,
+  }) {
+    final ids = <String>{};
+    for (final raw in destinatariosUsuarioIds) {
+      final id = raw.trim();
+      if (id.isEmpty) return const FalloCapsula.destinatarioInvalido();
+      if (!ids.add(id)) continue;
+      if (uidAutor != null && uidAutor.isNotEmpty && uidAutor == id) {
+        return const FalloCapsula.destinatarioPropio();
+      }
+    }
+    if (ids.isEmpty) return const FalloCapsula.destinatarioInvalido();
+    return null;
+  }
+
   /// Primer problema de [nueva] o `null` si se puede guardar.
-  static FalloCapsula? validar(NuevaCapsula nueva, {required DateTime ahora}) {
+  static FalloCapsula? validar(
+    NuevaCapsula nueva, {
+    required DateTime ahora,
+    String? uidAutor,
+  }) {
     return validarTitulo(nueva.titulo) ??
         validarFecha(nueva.fechaApertura, ahora: ahora) ??
-        validarCantidad(nueva.recuerdos.length);
+        validarCantidad(nueva.recuerdos.length) ??
+        validarDestinatarios(nueva.destinatariosUsuarioIds, uidAutor: uidAutor);
   }
 
   /// Primer día que se puede elegir en el selector de fecha (mañana).

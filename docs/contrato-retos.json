@@ -1,0 +1,72 @@
+{
+  "version": "1",
+  "descripcion": "Contrato para importar retos globales en public.retos (creador_id null). Uso futuro: panel admin web con service_role.",
+  "retos": [
+    {
+      "slug": "foto_con_musica",
+      "titulo": "Crea un recuerdo con música",
+      "descripcion": "La música y los recuerdos combinan muy bien.",
+      "pasos": ["Guarda una foto", "Añade una canción al guardar"],
+      "orden": 4,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdo_foto_con_musica",
+        "parametros": {}
+      }
+    }
+  ],
+  "criterios_permitidos": [
+    {
+      "clave": "recuerdo_foto",
+      "descripcion": "El usuario tiene al menos un elemento tipo foto."
+    },
+    {
+      "clave": "recuerdo_foto_con_musica",
+      "descripcion": "Elemento foto con musica_id_externo no nulo."
+    },
+    {
+      "clave": "recuerdo_video",
+      "descripcion": "Al menos un elemento tipo video."
+    },
+    {
+      "clave": "recuerdo_audio",
+      "descripcion": "Al menos un elemento tipo audio."
+    },
+    {
+      "clave": "recuerdo_nota",
+      "descripcion": "Al menos un elemento tipo texto."
+    },
+    {
+      "clave": "recuerdo_musica",
+      "descripcion": "Al menos un elemento tipo musica."
+    },
+    {
+      "clave": "primer_capsula",
+      "descripcion": "Al menos una cápsula no cancelada del usuario."
+    },
+    {
+      "clave": "capsula_programada",
+      "descripcion": "Cápsula programada con fecha_apertura futura."
+    },
+    {
+      "clave": "primer_momento",
+      "descripcion": "Al menos un momento del usuario."
+    },
+    {
+      "clave": "primer_amigo",
+      "descripcion": "Amistad en estado aceptada."
+    },
+    {
+      "clave": "nombre_usuario",
+      "descripcion": "usuarios.nombre_usuario configurado."
+    },
+    {
+      "clave": "recuerdos_cantidad",
+      "descripcion": "Mínimo de elementos; parametros.minimo (entero)."
+    },
+    {
+      "clave": "herencia_borrador",
+      "descripcion": "Al menos una herencia no revocada."
+    }
+  ]
+}

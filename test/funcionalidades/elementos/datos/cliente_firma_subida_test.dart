@@ -1,5 +1,6 @@
-import 'package:capsoul/funcionalidades/elementos/datos/cliente_firma_subida.dart';
+import 'package:capsoul/funcionalidades/elementos/datos/repositorio_medios_cloudinary.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/fallo_medios.dart';
+import 'package:capsoul/nucleo/infraestructura/cliente_funciones_api.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -44,25 +45,31 @@ void main() {
     });
   });
 
-  group('ClienteFirmaSubidaSupabase.traducirErrorFuncion', () {
+  group('RepositorioMediosCloudinary.traducirErrorFuncion', () {
     test('404 (función sin desplegar) da un mensaje claro', () {
-      final fallo = ClienteFirmaSubidaSupabase.traducirErrorFuncion(404, null);
+      final fallo = RepositorioMediosCloudinary.traducirErrorFuncion(
+        const ErrorFuncionesApi(estado: 404),
+      );
       expect(fallo.codigo, FalloMedios.codigoSubidaNoDisponible);
       expect(fallo.mensaje, contains('aún no está disponible'));
     });
 
     test('cuota excedida', () {
-      final fallo = ClienteFirmaSubidaSupabase.traducirErrorFuncion(
-        422,
-        {'codigo': 'cuota_excedida', 'mensaje': 'x'},
+      final fallo = RepositorioMediosCloudinary.traducirErrorFuncion(
+        const ErrorFuncionesApi(
+          estado: 422,
+          detalles: {'codigo': 'cuota_excedida', 'mensaje': 'x'},
+        ),
       );
       expect(fallo.codigo, FalloMedios.codigoCuotaExcedida);
     });
 
     test('422 con mensaje del servidor lo conserva', () {
-      final fallo = ClienteFirmaSubidaSupabase.traducirErrorFuncion(
-        422,
-        {'codigo': 'excede_tamano', 'mensaje': 'La foto supera 2 MB.'},
+      final fallo = RepositorioMediosCloudinary.traducirErrorFuncion(
+        const ErrorFuncionesApi(
+          estado: 422,
+          detalles: {'codigo': 'excede_tamano', 'mensaje': 'La foto supera 2 MB.'},
+        ),
       );
       expect(fallo.codigo, 'excede_tamano');
       expect(fallo.mensaje, 'La foto supera 2 MB.');
@@ -70,7 +77,9 @@ void main() {
 
     test('otros errores son genéricos', () {
       expect(
-        ClienteFirmaSubidaSupabase.traducirErrorFuncion(500, null).codigo,
+        RepositorioMediosCloudinary.traducirErrorFuncion(
+          const ErrorFuncionesApi(estado: 500),
+        ).codigo,
         FalloMedios.codigoSubidaFallida,
       );
     });

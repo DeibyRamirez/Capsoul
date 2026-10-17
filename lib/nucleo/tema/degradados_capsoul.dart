@@ -4,21 +4,25 @@ import 'colores_app.dart';
 
 /// Degradados de marca reutilizables en fondos de pantalla.
 abstract final class DegradadosCapsoul {
-  /// Inicio, tabs y listas: acento tenue arriba → superficie.
+  /// Fondo claro por defecto: azul hielo arriba, casi blanco abajo.
   static const LinearGradient suave = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      Color(0x2E3D6B9A), // acento @ 18%
-      ColoresApp.superficie,
-    ],
+    colors: [ColoresApp.fondoInicio, ColoresApp.fondoFin],
   );
 
-  /// Cabeceras hero y autenticación: cielo nocturno.
+  /// Cielo nocturno (banners con luciernagas): medianoche a azul real.
   static const LinearGradient nocturno = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [ColoresApp.primario, ColoresApp.primario, ColoresApp.acento],
+    colors: [ColoresApp.medianoche, ColoresApp.medianoche, ColoresApp.primario],
     stops: [0, 0.55, 1],
+  );
+
+  /// Banner horizontal oscuro (frase de Inicio).
+  static const LinearGradient banner = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [ColoresApp.medianoche, ColoresApp.primario],
   );
 }

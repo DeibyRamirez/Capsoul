@@ -5,6 +5,9 @@ import '../tema/degradados_capsoul.dart';
 import 'cielo_nocturno.dart';
 
 /// Nivel de fondo de una pantalla Capsoul.
+///
+/// [suave] es el degradado claro por defecto; [nocturno] solo debe usarse
+/// dentro de banners/tarjetas oscuras (cielo con luciernagas).
 enum FondoCapsoulTipo { suave, nocturno, plano }
 
 /// Envoltorio de degradado (y opcionalmente cielo animado) para el cuerpo.
@@ -34,14 +37,14 @@ class FondoCapsoul extends StatelessWidget {
 
     final decoracion = switch (tipo) {
       FondoCapsoulTipo.suave => const BoxDecoration(
-          gradient: DegradadosCapsoul.suave,
-        ),
+        gradient: DegradadosCapsoul.suave,
+      ),
       FondoCapsoulTipo.plano => const BoxDecoration(
-          color: ColoresApp.superficie,
-        ),
+        color: ColoresApp.superficie,
+      ),
       FondoCapsoulTipo.nocturno => const BoxDecoration(
-          gradient: DegradadosCapsoul.nocturno,
-        ),
+        gradient: DegradadosCapsoul.nocturno,
+      ),
     };
 
     return DecoratedBox(decoration: decoracion, child: child);

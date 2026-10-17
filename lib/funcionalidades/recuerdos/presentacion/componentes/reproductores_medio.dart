@@ -11,8 +11,10 @@ import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../../elementos/dominio/validador_medios.dart';
 import '../../aplicacion/proveedores_recuerdos.dart';
+import '../../dominio/aspecto_medio.dart';
 import '../../dominio/enlace_medio.dart';
 import '../../dominio/recuerdo.dart';
+import '../../../elementos/dominio/tipo_elemento.dart';
 import 'vista_recuerdo.dart';
 
 /// Original del recuerdo (caché del dispositivo o enlace de `firmar-medio`).
@@ -42,10 +44,12 @@ class FotoCompleta extends ConsumerWidget {
         ],
       );
     }
-    final ancho = recuerdo.ancho;
-    final alto = recuerdo.alto;
     return AspectRatio(
-      aspectRatio: ancho != null && alto != null && alto > 0 ? ancho / alto : 4 / 3,
+      aspectRatio: aspectoMedio(
+        tipo: TipoElemento.foto,
+        ancho: recuerdo.ancho,
+        alto: recuerdo.alto,
+      ),
       child: InteractiveViewer(
         maxScale: 4,
         child: Image.file(
@@ -61,9 +65,14 @@ class FotoCompleta extends ConsumerWidget {
 
 /// Reproductor de video del recuerdo (video_player).
 class ReproductorVideoRecuerdo extends ConsumerStatefulWidget {
-  const ReproductorVideoRecuerdo({super.key, required this.recuerdo});
+  const ReproductorVideoRecuerdo({
+    super.key,
+    required this.recuerdo,
+    this.reproducirAlIniciar = false,
+  });
 
   final Recuerdo recuerdo;
+  final bool reproducirAlIniciar;
 
   @override
   ConsumerState<ReproductorVideoRecuerdo> createState() =>
@@ -85,6 +94,10 @@ class _EstadoReproductorVideo extends ConsumerState<ReproductorVideoRecuerdo> {
     _controlador = controlador;
     try {
       await controlador.initialize();
+      if (widget.reproducirAlIniciar) {
+        await controlador.setLooping(true);
+        unawaited(controlador.play());
+      }
       if (mounted) setState(() {});
     } catch (error) {
       debugPrint('Capsoul: no se pudo abrir el video: $error');
@@ -152,9 +165,14 @@ class _EstadoReproductorVideo extends ConsumerState<ReproductorVideoRecuerdo> {
 
 /// Reproductor de la nota de voz con su onda (just_audio).
 class ReproductorAudioRecuerdo extends ConsumerStatefulWidget {
-  const ReproductorAudioRecuerdo({super.key, required this.recuerdo});
+  const ReproductorAudioRecuerdo({
+    super.key,
+    required this.recuerdo,
+    this.reproducirAlIniciar = false,
+  });
 
   final Recuerdo recuerdo;
+  final bool reproducirAlIniciar;
 
   @override
   ConsumerState<ReproductorAudioRecuerdo> createState() =>
@@ -176,6 +194,9 @@ class _EstadoReproductorAudio extends ConsumerState<ReproductorAudioRecuerdo> {
     _reproductor = reproductor;
     try {
       await reproductor.setFilePath(archivo.path);
+      if (widget.reproducirAlIniciar) {
+        unawaited(reproductor.play());
+      }
       if (mounted) setState(() {});
     } catch (error) {
       debugPrint('Capsoul: no se pudo abrir la nota de voz: $error');

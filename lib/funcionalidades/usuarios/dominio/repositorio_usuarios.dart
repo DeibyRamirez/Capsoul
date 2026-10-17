@@ -15,4 +15,16 @@ abstract interface class RepositorioUsuarios {
     required String uid,
     required String nombreVisible,
   });
+
+  /// Fija `nombre_usuario` la primera vez (RPC `establecer_mi_nombre_usuario`).
+  Future<void> establecerNombreUsuario({
+    required String uid,
+    required String nombreUsuario,
+  });
+
+  /// Guarda el `public_id` del avatar en Cloudinary (`foto_public_id`).
+  Future<void> guardarFotoPerfil({
+    required String uid,
+    required String fotoPublicId,
+  });
 }

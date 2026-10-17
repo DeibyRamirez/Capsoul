@@ -97,7 +97,9 @@ void main() {
 
     await tester.tap(find.text('Viaje'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('boton-borrar-momento')));
+    await tester.tap(find.byKey(const Key('menu-acciones-ancla')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Borrar momento').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Borrar'));
     await tester.pumpAndSettle();

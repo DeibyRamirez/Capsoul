@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/componentes/fondo_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/formato/fechas.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../elementos/dominio/elemento_borrador.dart';
+import '../../elementos/dominio/tipo_elemento.dart';
+import '../../musica/dominio/referencia_musica.dart';
+import '../../musica/presentacion/componentes/escena_preview_musica.dart';
+import '../../../nucleo/enrutador/rutas_app.dart';
 import '../aplicacion/controlador_recuerdos.dart';
+import '../aplicacion/proveedores_recuerdos.dart';
 import '../dominio/filtro_recuerdos.dart';
 import '../dominio/nuevo_recuerdo.dart';
 import '../dominio/validador_recuerdo.dart';
@@ -29,8 +36,33 @@ class PantallaGuardarRecuerdo extends ConsumerStatefulWidget {
 
 class _EstadoPantallaGuardarRecuerdo
     extends ConsumerState<PantallaGuardarRecuerdo> {
+  final _claveEscenaMusica = GlobalKey<EscenaPreviewMusicaState>();
   final _titulo = TextEditingController();
   late DateTime _fecha = FiltroRecuerdos.soloDia(ref.read(proveedorReloj)());
+  late ElementoBorrador _elemento;
+  late final ControladorBorradorRecuerdoPendiente _borradorPendiente;
+
+  @override
+  void initState() {
+    super.initState();
+    _borradorPendiente = ref.read(proveedorBorradorRecuerdoPendiente.notifier);
+    _elemento = widget.elemento;
+    final musica = _elemento.referenciaMusica;
+    if (_elemento.tipo == TipoElemento.musica && musica != null) {
+      _titulo.text = musica.etiquetaCorta;
+    }
+  }
+
+  Future<void> _anadirMusica() async {
+    final refMusica =
+        await context.push<ReferenciaMusica>(RutasApp.elegirMusica);
+    if (refMusica == null || !mounted) return;
+    setState(() => _elemento = _elemento.copiarCon(referenciaMusica: refMusica));
+  }
+
+  void _quitarMusica() {
+    setState(() => _elemento = _elemento.copiarCon(quitarMusica: true));
+  }
 
   @override
   void dispose() {
@@ -54,14 +86,17 @@ class _EstadoPantallaGuardarRecuerdo
 
   Future<void> _guardar() async {
     FocusScope.of(context).unfocus();
+    await _claveEscenaMusica.currentState?.pausarPreview();
+    if (!mounted) return;
     final recuerdo = await ref.read(proveedorControladorRecuerdos.notifier).guardar(
           NuevoRecuerdo(
-            elemento: widget.elemento,
+            elemento: _elemento,
             fechaRecuerdo: _fecha,
             titulo: _titulo.text,
           ),
         );
     if (recuerdo == null || !mounted) return;
+    _borradorPendiente.limpiar();
     mostrarAvisoInformativo(context, 'Guardado en tus recuerdos.');
     context.pop(recuerdo);
   }
@@ -78,12 +113,35 @@ class _EstadoPantallaGuardarRecuerdo
     final ocupado = ref.watch(
       proveedorControladorRecuerdos.select((estado) => estado.ocupado),
     );
+    final musica = _elemento.referenciaMusica;
+    final esMusicaPura =
+        _elemento.tipo == TipoElemento.musica && musica != null;
     return PantallaCapsoul(
-      appBar: AppBar(title: const Text('Guardar recuerdo')),
+      tipoFondo: FondoCapsoulTipo.plano,
+      appBar: AppBarCapsoul(titulo: const Text('Guardar recuerdo')),
       cuerpo: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
-            VistaPreviaBorrador(elemento: widget.elemento),
+            if (esMusicaPura)
+              EscenaPreviewMusica(
+                key: _claveEscenaMusica,
+                referencia: musica,
+                reproducirAutomaticamente: true,
+              )
+            else
+              VistaPreviaBorrador(
+                elemento: _elemento,
+                alQuitarMusica: ocupado ? null : _quitarMusica,
+              ),
+            if (_elemento.tipo == TipoElemento.foto &&
+                _elemento.referenciaMusica == null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: ocupado ? null : _anadirMusica,
+                icon: const Icon(Icons.music_note_outlined),
+                label: const Text('Añadir música'),
+              ),
+            ],
             const SizedBox(height: 20),
             TextField(
               key: const Key('campo-titulo-recuerdo'),
@@ -102,15 +160,18 @@ class _EstadoPantallaGuardarRecuerdo
                 labelText: 'Fecha del recuerdo',
                 contentPadding: EdgeInsets.zero,
               ),
-              child: ListTile(
-                key: const Key('campo-fecha-recuerdo'),
-                leading: const Icon(
-                  Icons.event_outlined,
-                  color: ColoresApp.acento,
+              child: Material(
+                type: MaterialType.transparency,
+                child: ListTile(
+                  key: const Key('campo-fecha-recuerdo'),
+                  leading: const Icon(
+                    Icons.event_outlined,
+                    color: ColoresApp.acento,
+                  ),
+                  title: Text(formatearFechaCorta(_fecha)),
+                  trailing: const Icon(Icons.calendar_month_outlined),
+                  onTap: ocupado ? null : _elegirFecha,
                 ),
-                title: Text(formatearFechaCorta(_fecha)),
-                trailing: const Icon(Icons.calendar_month_outlined),
-                onTap: ocupado ? null : _elegirFecha,
               ),
             ),
             const SizedBox(height: 28),

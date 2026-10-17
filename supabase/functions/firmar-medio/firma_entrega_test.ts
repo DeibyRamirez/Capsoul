@@ -12,6 +12,7 @@ import {
   SEGUNDOS_VALIDEZ_ORIGINAL,
   urlDescargaPrivada,
   urlMiniaturaFirmada,
+  validarAvataresUsuarioIds,
   validarSolicitud,
 } from "./firma_entrega.ts";
 
@@ -44,6 +45,18 @@ function codigoDe(fn: () => unknown): string | null {
     return e instanceof ErrorSolicitud ? e.codigo : "otro";
   }
 }
+
+Deno.test("valida avatares_usuario_ids", () => {
+  afirmar(
+    validarAvataresUsuarioIds({ avatares_usuario_ids: [ID] }).length === 1,
+    "un id",
+  );
+  afirmar(
+    codigoDe(() => validarAvataresUsuarioIds({ avatares_usuario_ids: [] })) ===
+      "solicitud_invalida",
+    "vacía",
+  );
+});
 
 Deno.test("valida la lista de ids", () => {
   afirmar(validarSolicitud({ elemento_ids: [ID, ID.toUpperCase()] }).length === 1, "sin repetidos");
@@ -82,8 +95,8 @@ Deno.test("la miniatura es una descarga temporal del derivado eager, firmada con
   const timestamp = 1_790_000_000;
   for (
     const [tipo, transformacion] of [
-      ["image", "c_limit,q_auto,w_480"],
-      ["video", "c_limit,q_auto,so_0,w_480"],
+      ["image", "c_limit,w_480,q_auto"],
+      ["video", "so_0,c_limit,w_480,q_auto"],
     ] as const
   ) {
     const url = new URL(await urlMiniaturaFirmada(CREDENCIALES, PUBLIC_ID, tipo, expiresAt, timestamp));

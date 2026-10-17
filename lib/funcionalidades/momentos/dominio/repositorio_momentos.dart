@@ -15,4 +15,11 @@ abstract interface class RepositorioMomentos {
   Future<Momento?> obtener(String id);
 
   Future<void> eliminar(String id);
+
+  Future<void> actualizarMetadatos(
+    String id, {
+    required String titulo,
+    String? descripcion,
+    String? portadaId,
+  });
 }

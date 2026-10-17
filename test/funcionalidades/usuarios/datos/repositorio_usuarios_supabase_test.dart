@@ -3,7 +3,7 @@ import 'package:capsoul/funcionalidades/usuarios/datos/repositorio_usuarios_supa
 import 'package:capsoul/funcionalidades/usuarios/dominio/fallo_perfil_usuario.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:capsoul/nucleo/infraestructura/traductor_errores_backend.dart';
 
 class _AccesoSimulado extends Mock implements AccesoTablaUsuarios {}
 
@@ -106,7 +106,7 @@ void main() {
 
   test('un 42501 de Postgres se traduce a permiso_denegado', () {
     when(() => acceso.actualizarNombreVisible(any(), any())).thenThrow(
-      const PostgrestException(message: 'permission denied', code: '42501'),
+      const ErrorPostgrest(mensaje: 'permission denied', codigo: '42501'),
     );
 
     expect(
@@ -117,7 +117,7 @@ void main() {
 
   test('un CHECK violado se traduce a dato_invalido', () {
     when(() => acceso.actualizarNombreVisible(any(), any())).thenThrow(
-      const PostgrestException(message: 'check violation', code: '23514'),
+      const ErrorPostgrest(mensaje: 'check violation', codigo: '23514'),
     );
 
     expect(
@@ -134,4 +134,76 @@ void main() {
       emitsError(isA<FalloPerfilUsuario>()),
     );
   });
+
+  test(
+    'establecerNombreUsuario con el mismo @ ya fijado no llama al RPC',
+    () async {
+      when(() => acceso.leerFila('uid-1')).thenAnswer(
+        (_) async => {
+          ...filaAna,
+          'nombre_usuario': 'ana',
+        },
+      );
+
+      await repositorio.establecerNombreUsuario(
+        uid: 'uid-1',
+        nombreUsuario: 'ana',
+      );
+
+      verifyNever(() => acceso.establecerNombreUsuarioRpc(any()));
+    },
+  );
+
+  test(
+    'establecerNombreUsuario con @ distinto al ya fijado lanza ya_fijado',
+    () {
+      when(() => acceso.leerFila('uid-1')).thenAnswer(
+        (_) async => {
+          ...filaAna,
+          'nombre_usuario': 'ana',
+        },
+      );
+
+      expect(
+        () => repositorio.establecerNombreUsuario(
+          uid: 'uid-1',
+          nombreUsuario: 'otro',
+        ),
+        lanzaFalloPerfil(FalloPerfilUsuario.codigoNombreUsuarioYaFijado),
+      );
+    },
+  );
+
+  test(
+    'establecerNombreUsuario recupera si el RPC dice ya_fijado pero el perfil tiene @',
+    () async {
+      var lecturas = 0;
+      when(() => acceso.leerFila('uid-1')).thenAnswer((_) async {
+        lecturas++;
+        if (lecturas == 1) {
+          return {
+            ...filaAna,
+            'nombre_usuario': null,
+          };
+        }
+        return {
+          ...filaAna,
+          'nombre_usuario': 'nuevo',
+        };
+      });
+      when(() => acceso.establecerNombreUsuarioRpc('nuevo')).thenThrow(
+        const ErrorPostgrest(
+          mensaje: 'nombre_usuario_ya_fijado',
+          codigo: 'P0001',
+        ),
+      );
+
+      await repositorio.establecerNombreUsuario(
+        uid: 'uid-1',
+        nombreUsuario: 'nuevo',
+      );
+
+      verify(() => acceso.establecerNombreUsuarioRpc('nuevo')).called(1);
+    },
+  );
 }

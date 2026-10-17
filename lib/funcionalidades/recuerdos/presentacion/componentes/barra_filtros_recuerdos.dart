@@ -25,6 +25,7 @@ class BarraFiltrosRecuerdos extends StatelessWidget {
         TipoElemento.video => 'Videos',
         TipoElemento.audio => 'Notas de voz',
         TipoElemento.texto => 'Notas',
+        TipoElemento.musica => 'Música',
       };
 
   Future<void> _elegirFechas(BuildContext context) async {

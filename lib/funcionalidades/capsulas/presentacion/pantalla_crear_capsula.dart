@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
@@ -14,13 +15,14 @@ import '../../recuerdos/presentacion/componentes/hoja_nuevo_recuerdo.dart';
 import '../../recuerdos/presentacion/pantalla_elegir_recuerdos.dart';
 import '../aplicacion/controlador_crear_capsula.dart';
 import '../aplicacion/proveedores_capsulas.dart';
-import '../dominio/apertura_capsula.dart';
 import '../dominio/validador_capsula.dart';
 import 'componentes/botones_agregar_elemento.dart';
+import 'componentes/elegir_fecha_hora_apertura.dart';
+import 'componentes/selector_destinatarios_amigos.dart';
 import 'componentes/tarjeta_recuerdo_elegido.dart';
 
 /// Formulario "Nueva cápsula": recuerdos del banco (hasta 10), título,
-/// mensaje, fecha de apertura futura y destinatario (próximamente).
+/// mensaje, fecha de apertura futura y amigo destinatario.
 class PantallaCrearCapsula extends ConsumerStatefulWidget {
   const PantallaCrearCapsula({super.key});
 
@@ -32,7 +34,6 @@ class PantallaCrearCapsula extends ConsumerStatefulWidget {
 class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
   final _titulo = TextEditingController();
   final _mensaje = TextEditingController();
-
   @override
   void dispose() {
     _titulo.dispose();
@@ -65,22 +66,13 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
 
   Future<void> _elegirFecha() async {
     final ahora = ref.read(proveedorReloj)();
-    final primerDia = ValidadorCapsula.primerDiaSeleccionable(ahora);
     final actual = ref.read(proveedorControladorCrearCapsula).fechaApertura;
-    final elegida = await showDatePicker(
-      context: context,
-      helpText: 'Fecha de apertura',
-      cancelText: 'Cancelar',
-      confirmText: 'Elegir',
-      firstDate: primerDia,
-      lastDate: DateTime(ahora.year + 100, 12, 31),
-      initialDate: actual ?? DateTime(ahora.year + 1, ahora.month, ahora.day),
+    final elegida = await elegirFechaHoraApertura(
+      context,
+      ahora: ahora,
+      fechaActual: actual,
     );
-    if (elegida == null || !mounted) return;
-    // Se abre a las 8:00 (hora local) del día elegido.
-    _controlador.elegirFecha(
-      DateTime(elegida.year, elegida.month, elegida.day, 8),
-    );
+    if (elegida != null && mounted) _controlador.elegirFecha(elegida);
   }
 
   Future<void> _guardar() async {
@@ -109,7 +101,7 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
     final puedeAgregar = !estado.llena && !estado.guardando;
 
     return PantallaCapsoul(
-      appBar: AppBar(title: const Text('Nueva cápsula')),
+      appBar: AppBarCapsoul(titulo: const Text('Nueva cápsula')),
       cuerpo: ListView(
           key: const Key('formulario-capsula'),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -172,13 +164,15 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
             ),
             const SizedBox(height: 16),
             _CampoFecha(
-              texto: fecha == null
-                  ? 'Elige cuándo se abrirá'
-                  : 'Se abrirá el ${formatearFechaCorta(fecha)}',
+              texto: textoFechaHoraApertura(fecha),
               alTocar: estado.guardando ? null : _elegirFecha,
             ),
             const SizedBox(height: 16),
-            const _CampoDestinatario(),
+            SelectorDestinatariosAmigos(
+              seleccionados: estado.destinatariosUsuarioIds,
+              deshabilitado: estado.guardando,
+              alCambiar: _controlador.elegirDestinatarios,
+            ),
             const SizedBox(height: 28),
             BotonPrincipal(
               etiqueta: 'Guardar cápsula',
@@ -255,37 +249,18 @@ class _CampoFecha extends StatelessWidget {
         labelText: 'Fecha de apertura',
         contentPadding: EdgeInsets.zero,
       ),
-      child: ListTile(
-        key: const Key('campo-fecha'),
-        leading: const Icon(Icons.lock_clock_outlined, color: ColoresApp.acento),
-        title: Text(texto),
-        trailing: const Icon(Icons.calendar_month_outlined),
-        onTap: alTocar,
-      ),
-    );
-  }
-}
-
-class _CampoDestinatario extends StatelessWidget {
-  const _CampoDestinatario();
-
-  @override
-  Widget build(BuildContext context) {
-    return const TextField(
-      key: Key('campo-destinatario'),
-      enabled: false,
-      decoration: InputDecoration(
-        labelText: 'Destinatario',
-        hintText: 'Correo o persona de Capsoul',
-        prefixIcon: Icon(Icons.person_outline),
-        suffixIcon: Padding(
-          padding: EdgeInsets.only(right: 8),
-          child: Chip(
-            label: Text('Próximamente'),
-            visualDensity: VisualDensity.compact,
-          ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: ListTile(
+          key: const Key('campo-fecha'),
+          leading:
+              const Icon(Icons.lock_clock_outlined, color: ColoresApp.acento),
+          title: Text(texto),
+          trailing: const Icon(Icons.calendar_month_outlined),
+          onTap: alTocar,
         ),
       ),
     );
   }
 }
+

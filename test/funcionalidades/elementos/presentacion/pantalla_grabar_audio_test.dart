@@ -71,7 +71,11 @@ class _CompresorFalso implements CompresorMedios {
   }
 
   @override
-  Future<ElementoBorrador> prepararFoto(String rutaOriginal) =>
+  Future<ElementoBorrador> prepararFoto(
+    String rutaOriginal, {
+    int rotacionGrados = 0,
+    bool esCamaraFrontal = false,
+  }) =>
       throw UnimplementedError();
 
   @override

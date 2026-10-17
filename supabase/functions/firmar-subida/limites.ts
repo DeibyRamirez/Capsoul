@@ -1,4 +1,6 @@
 // Capsoul · Límites de medios y firma de Cloudinary para la Edge Function firmar-subida.
+
+import { EAGER_SUBIDA_FOTO, EAGER_SUBIDA_VIDEO } from "../transformaciones_medios.ts";
 // Lógica pura (sin red ni secretos) para poder probarla con `deno test`.
 // Los valores son los mismos de LimitesMedios (app) y de la migración 000003.
 
@@ -24,14 +26,14 @@ export const LIMITES: Record<TipoMedio, LimiteTipo> = {
     bytesMaximos: 2 * MB,
     duracionMaxima: null,
     formatos: ["jpg"],
-    eager: "c_limit,w_480,q_auto/jpg",
+    eager: EAGER_SUBIDA_FOTO,
   },
   video: {
     tipoRecurso: "video",
     bytesMaximos: 20 * MB,
     duracionMaxima: 61,
     formatos: ["mp4", "mov"],
-    eager: "so_0,c_limit,w_480,q_auto/jpg",
+    eager: EAGER_SUBIDA_VIDEO,
   },
   audio: {
     tipoRecurso: "video",
@@ -44,11 +46,16 @@ export const LIMITES: Record<TipoMedio, LimiteTipo> = {
 
 export const CUOTA_BYTES_POR_USUARIO = 200 * MB;
 
+export type ContextoFirma = "elemento" | "perfil_avatar";
+
 export interface SolicitudFirma {
   tipo: TipoMedio;
   bytes: number;
   duracionSegundos: number | null;
   formato: string | null;
+  contexto: ContextoFirma;
+  /** Solo con `perfil_avatar`: carpeta fija del usuario autenticado. */
+  uidAvatar?: string;
 }
 
 export class ErrorSolicitud extends Error {
@@ -109,7 +116,16 @@ export function validarSolicitud(cuerpo: unknown): SolicitudFirma {
     formato = datos.formato.toLowerCase();
   }
 
-  return { tipo, bytes, duracionSegundos, formato };
+  const contextoRaw = datos.contexto;
+  const contexto: ContextoFirma =
+    contextoRaw === "perfil_avatar" ? "perfil_avatar" : "elemento";
+
+  return { tipo, bytes, duracionSegundos, formato, contexto };
+}
+
+/** `public_id` fijo del avatar (sobrescribe en cada subida). */
+export function publicIdAvatarPerfil(uid: string): string {
+  return `capsoul/usuarios/${uid}/avatar`;
 }
 
 /** Lanza [ErrorSolicitud] si el archivo no cabe en la cuota del usuario. */

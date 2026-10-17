@@ -21,6 +21,7 @@ class ChipsFiltroMomentos extends StatelessWidget {
     (etiqueta: 'Videos', tipo: TipoElemento.video),
     (etiqueta: 'Audios', tipo: TipoElemento.audio),
     (etiqueta: 'Cartas', tipo: TipoElemento.texto),
+    (etiqueta: 'Música', tipo: TipoElemento.musica),
   ];
 
   @override
@@ -49,7 +50,7 @@ class ChipsFiltroMomentos extends StatelessWidget {
                   side: BorderSide(
                     color: tipoSeleccionado == opcion.tipo
                         ? ColoresApp.primario
-                        : ColoresApp.atenuado.withValues(alpha: 0.4),
+                        : ColoresApp.bordeTarjeta,
                   ),
                 ),
                 backgroundColor: ColoresApp.sobrePrimario,

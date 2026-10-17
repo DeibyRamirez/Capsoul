@@ -1,14 +1,12 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
+import '../../../nucleo/infraestructura/cliente_postgrest.dart';
 import '../../recuerdos/datos/mapeo_recuerdos.dart';
 
-/// Capa mínima sobre PostgREST para `capsulas` y `capsula_elementos` (existe para simular la base en pruebas sin imitar
-/// los builders encadenados de `supabase_flutter`).
 abstract interface class AccesoTablasCapsulas {
-  /// Inserta una fila en `capsulas` (la fila ya trae su `id`).
   Future<void> insertarCapsula(Map<String, dynamic> fila);
 
   Future<void> insertarEnlaces(List<Map<String, dynamic>> filas);
+
+  Future<void> insertarDestinatarios(List<Map<String, dynamic>> filas);
 
   Future<void> actualizarEstadoCapsula(String id, String estado);
 
@@ -17,11 +15,20 @@ abstract interface class AccesoTablasCapsulas {
   Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(String autorId);
 
   Future<Map<String, dynamic>?> leerCapsulaConElementos(String id);
+
+  Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios);
+
+  Future<List<Map<String, dynamic>>> leerCapsulasRecibidas();
+
+  Future<void> marcarCapsulaAbierta(String idCapsula);
+
+  Future<void> eliminarEnlacesDeCapsula(String capsulaId);
+
+  Future<void> eliminarDestinatariosDeCapsula(String capsulaId);
 }
 
-class AccesoTablasCapsulasSupabase implements AccesoTablasCapsulas {
-  AccesoTablasCapsulasSupabase({SupabaseClient? cliente})
-      : _clienteInyectado = cliente;
+class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
+  AccesoTablasCapsulasPostgrest(this._cliente);
 
   static const String columnasCapsula =
       'id, autor_id, titulo, mensaje, fecha_apertura, estado, liberada_en, '
@@ -30,52 +37,102 @@ class AccesoTablasCapsulasSupabase implements AccesoTablasCapsulas {
   static const String columnasConElementos = '$columnasCapsula, '
       'capsula_elementos(orden, elementos($columnasRecuerdo))';
 
+  static const String columnasConElementosYDestinatarios =
+      '$columnasConElementos, capsula_destinatarios(usuario_id)';
+
   static const int limiteLista = 50;
 
-  final SupabaseClient? _clienteInyectado;
+  final ClientePostgrest _cliente;
 
-  SupabaseClient get _cliente => _clienteInyectado ?? Supabase.instance.client;
-
-  // Sin `.select()`: el id lo genera el cliente y así el INSERT no depende
-  // de la política SELECT (RETURNING), que era la causa del 42501.
   @override
   Future<void> insertarCapsula(Map<String, dynamic> fila) async {
-    await _cliente.from('capsulas').insert(fila);
+    await _cliente.from('capsulas').insertar(fila);
   }
 
   @override
   Future<void> insertarEnlaces(List<Map<String, dynamic>> filas) async {
     if (filas.isEmpty) return;
-    await _cliente.from('capsula_elementos').insert(filas);
+    await _cliente.from('capsula_elementos').insertarMuchos(filas);
+  }
+
+  @override
+  Future<void> insertarDestinatarios(List<Map<String, dynamic>> filas) async {
+    if (filas.isEmpty) return;
+    await _cliente.from('capsula_destinatarios').insertarMuchos(filas);
   }
 
   @override
   Future<void> actualizarEstadoCapsula(String id, String estado) async {
-    await _cliente.from('capsulas').update({'estado': estado}).eq('id', id);
+    await _cliente
+        .from('capsulas')
+        .actualizar({'estado': estado})
+        .eq('id', id)
+        .ejecutar();
   }
 
   @override
   Future<void> eliminarCapsula(String id) async {
-    await _cliente.from('capsulas').delete().eq('id', id);
+    await _cliente.from('capsulas').eliminar().eq('id', id).ejecutar();
   }
 
   @override
   Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(String autorId) {
     return _cliente
         .from('capsulas')
-        .select(columnasCapsula)
+        .seleccionar(columnasCapsula)
         .eq('autor_id', autorId)
         .neq('estado', 'cancelada')
-        .order('creado_en', ascending: false)
-        .limit(limiteLista);
+        .order('creado_en', ascendente: false)
+        .limit(limiteLista)
+        .ejecutar();
   }
 
   @override
   Future<Map<String, dynamic>?> leerCapsulaConElementos(String id) {
     return _cliente
         .from('capsulas')
-        .select(columnasConElementos)
+        .seleccionar(columnasConElementosYDestinatarios)
         .eq('id', id)
         .maybeSingle();
+  }
+
+  @override
+  Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios) async {
+    await _cliente.from('capsulas').actualizar(cambios).eq('id', id).ejecutar();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> leerCapsulasRecibidas() async {
+    final filas = await _cliente.rpc('capsulas_recibidas');
+    return [
+      for (final fila in filas)
+        if (fila is Map<String, dynamic>) fila,
+    ];
+  }
+
+  @override
+  Future<void> marcarCapsulaAbierta(String idCapsula) async {
+    await _cliente.rpc(
+      'marcar_capsula_abierta',
+      parametros: {'p_capsula': idCapsula},
+    );
+  }
+
+  @override
+  Future<void> eliminarEnlacesDeCapsula(String capsulaId) async {
+    await _cliente
+        .from('capsula_elementos')
+        .eliminar()
+        .eq('capsula_id', capsulaId)
+        .ejecutar();
+  }
+
+  @override
+  Future<void> eliminarDestinatariosDeCapsula(String capsulaId) async {
+    await _cliente
+        .from('capsula_destinatarios')
+        .eliminar()
+        .eq('capsula_id', capsulaId)
+        .ejecutar();
   }
 }

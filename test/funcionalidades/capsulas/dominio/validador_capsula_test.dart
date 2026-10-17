@@ -21,6 +21,7 @@ void main() {
           for (var i = 0; i < elementos; i++)
             recuerdoPrueba('n$i', tipo: TipoElemento.texto),
         ],
+        destinatariosUsuarioIds: const ['amigo-uid'],
       );
 
   test('una cápsula completa es válida', () {
@@ -81,4 +82,41 @@ void main() {
       DateTime(2027, 1, 1),
     );
   });
+
+  test('los destinatarios (amigos) son obligatorios y no puede ser el autor', () {
+    expect(
+      ValidadorCapsula.validar(
+        capsula().copyWith(destinatariosUsuarioIds: const []),
+        ahora: ahora,
+      )?.codigo,
+      FalloCapsula.codigoDestinatarioInvalido,
+    );
+    expect(
+      ValidadorCapsula.validar(
+        capsula().copyWith(destinatariosUsuarioIds: const ['yo-uid']),
+        ahora: ahora,
+        uidAutor: 'yo-uid',
+      )?.codigo,
+      FalloCapsula.codigoDestinatarioPropio,
+    );
+    expect(
+      ValidadorCapsula.validarDestinatarios(
+        const ['a', 'a', 'b'],
+        uidAutor: 'yo',
+      ),
+      isNull,
+    );
+  });
+}
+
+extension on NuevaCapsula {
+  NuevaCapsula copyWith({List<String>? destinatariosUsuarioIds}) =>
+      NuevaCapsula(
+        titulo: titulo,
+        mensaje: mensaje,
+        fechaApertura: fechaApertura,
+        recuerdos: recuerdos,
+        destinatariosUsuarioIds:
+            destinatariosUsuarioIds ?? this.destinatariosUsuarioIds,
+      );
 }

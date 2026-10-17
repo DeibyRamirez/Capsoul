@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
 
 import '../dominio/fallo_perfil_usuario.dart';
 import '../dominio/perfil_usuario.dart';
@@ -21,6 +21,7 @@ class RepositorioUsuariosSupabase implements RepositorioUsuarios {
   static const String columnaCorreo = 'correo';
   static const String columnaFotoPublicId = 'foto_public_id';
   static const String columnaPerfilPublico = 'perfil_publico';
+  static const String columnaNombreUsuario = 'nombre_usuario';
   static const String columnaCreadoEn = 'creado_en';
 
   final AccesoTablaUsuarios _acceso;
@@ -32,6 +33,64 @@ class RepositorioUsuariosSupabase implements RepositorioUsuarios {
     await for (final idCambiado in _cambios.stream) {
       if (idCambiado == uid) yield await _leerPerfil(uid);
     }
+  }
+
+  @override
+  Future<void> establecerNombreUsuario({
+    required String uid,
+    required String nombreUsuario,
+  }) async {
+    await _proteger(() async {
+      final actual = await _leerPerfil(uid);
+      if (actual == null) {
+        throw FalloPerfilUsuario.desdeCodigo(FalloPerfilUsuario.codigoNoEncontrado);
+      }
+      if (!actual.necesitaNombreUsuario) {
+        if (_mismoNombreUsuario(actual.nombreUsuario, nombreUsuario)) {
+          _cambios.add(uid);
+          return;
+        }
+        throw FalloPerfilUsuario.desdeCodigo(
+          FalloPerfilUsuario.codigoNombreUsuarioYaFijado,
+        );
+      }
+      try {
+        await _acceso.establecerNombreUsuarioRpc(nombreUsuario);
+      } catch (error) {
+        final fallo =
+            error is FalloPerfilUsuario ? error : _traducirError(error);
+        if (fallo.codigo == FalloPerfilUsuario.codigoNombreUsuarioYaFijado) {
+          final trasGuardar = await _leerPerfil(uid);
+          if (trasGuardar != null && !trasGuardar.necesitaNombreUsuario) {
+            _cambios.add(uid);
+            return;
+          }
+        }
+        throw fallo;
+      }
+      _cambios.add(uid);
+    });
+  }
+
+  static bool _mismoNombreUsuario(String? existente, String solicitado) {
+    if (existente == null || existente.isEmpty) return false;
+    return existente.toLowerCase() == solicitado.toLowerCase();
+  }
+
+  @override
+  Future<void> guardarFotoPerfil({
+    required String uid,
+    required String fotoPublicId,
+  }) async {
+    final filas = await _proteger(
+      () => _acceso.actualizarFotoPublicId(uid, fotoPublicId),
+    );
+    if (filas == 0) {
+      throw FalloPerfilUsuario.desdeCodigo(
+        FalloPerfilUsuario.codigoNoEncontrado,
+      );
+    }
+    _cambios.add(uid);
   }
 
   @override
@@ -68,6 +127,7 @@ class RepositorioUsuariosSupabase implements RepositorioUsuarios {
       debugPrint('Capsoul: fila de usuarios con formato inválido');
       return null;
     }
+    final nombreUsuario = fila[columnaNombreUsuario];
     final fotoPublicId = fila[columnaFotoPublicId];
     final perfilPublico = fila[columnaPerfilPublico];
     final creadoEn = fila[columnaCreadoEn];
@@ -75,6 +135,7 @@ class RepositorioUsuariosSupabase implements RepositorioUsuarios {
       uid: id,
       nombreVisible: nombreVisible,
       correo: correo,
+      nombreUsuario: nombreUsuario is String ? nombreUsuario : null,
       fotoPublicId: fotoPublicId is String ? fotoPublicId : null,
       perfilPublico: perfilPublico is bool && perfilPublico,
       creadoEn: creadoEn is String ? DateTime.tryParse(creadoEn) : null,
@@ -91,17 +152,24 @@ class RepositorioUsuariosSupabase implements RepositorioUsuarios {
 
   static FalloPerfilUsuario _traducirError(Object error) {
     if (error is FalloPerfilUsuario) return error;
-    if (error is PostgrestException) {
-      final codigo = switch (error.code) {
-        // insufficient_privilege (GRANT/RLS) y JWT inválido o vencido.
-        '42501' || 'PGRST301' || 'PGRST302' || 'PGRST303' =>
+    if (error is ErrorPostgrest) {
+      final codigo = switch (error.codigo) {
+        TraductorErroresBackend.permisoDenegado ||
+        'PGRST301' ||
+        'PGRST302' ||
+        'PGRST303' =>
           FalloPerfilUsuario.codigoPermisoDenegado,
-        // check_violation (p. ej. nombre_visible fuera de 1..60).
+        'P0001' when error.mensaje.contains('nombre_usuario_ocupado') =>
+          FalloPerfilUsuario.codigoNombreUsuarioOcupado,
+        'P0001' when error.mensaje.contains('nombre_usuario_invalido') =>
+          FalloPerfilUsuario.codigoNombreUsuarioInvalido,
+        'P0001' when error.mensaje.contains('nombre_usuario_ya_fijado') =>
+          FalloPerfilUsuario.codigoNombreUsuarioYaFijado,
         '23514' => FalloPerfilUsuario.codigoDatoInvalido,
         _ => FalloPerfilUsuario.codigoDesconocido,
       };
       if (codigo == FalloPerfilUsuario.codigoDesconocido) {
-        debugPrint('Capsoul: PostgrestException no esperada: $error');
+        debugPrint('Capsoul: ErrorPostgrest no esperado: $error');
       }
       return FalloPerfilUsuario.desdeCodigo(codigo);
     }

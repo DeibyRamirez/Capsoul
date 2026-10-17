@@ -10,17 +10,25 @@ class FilaDestacadosPerfil extends StatelessWidget {
   final void Function(String etiqueta)? alTocar;
 
   static const _destacados = <({String etiqueta, IconData icono, Color fondo})>[
-    (etiqueta: 'Retos', icono: Icons.flag_outlined, fondo: Color(0xFFB8D4E8)),
-    (etiqueta: 'Cápsulas', icono: Icons.lock_outline, fondo: Color(0xFFB8D4E8)),
+    (
+      etiqueta: 'Retos',
+      icono: Icons.flag_outlined,
+      fondo: ColoresApp.pastelAzul,
+    ),
+    (
+      etiqueta: 'Cápsulas',
+      icono: Icons.lock_outline,
+      fondo: ColoresApp.pastelAzul,
+    ),
     (
       etiqueta: 'Herencias',
       icono: Icons.card_giftcard_outlined,
-      fondo: Color(0xFFC8E6C9),
+      fondo: ColoresApp.pastelVerde,
     ),
     (
       etiqueta: 'Recuerdos',
       icono: Icons.favorite_outline,
-      fondo: Color(0xFFF8BBD0),
+      fondo: ColoresApp.pastelRosa,
     ),
   ];
 
@@ -91,7 +99,10 @@ class _Destacado extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11, color: ColoresApp.primario),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: ColoresApp.primario,
+                ),
               ),
             ],
           ),

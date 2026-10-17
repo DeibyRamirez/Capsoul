@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../nucleo/tema/colores_app.dart';
+import '../../../../nucleo/tema/tema_app.dart';
 
 /// Logo "cápsoul", slogan y campana de avisos.
 class EncabezadoInicio extends StatelessWidget {
@@ -19,18 +20,18 @@ class EncabezadoInicio extends StatelessWidget {
             children: [
               Text(
                 'cápsoul',
-                style: estilos.displaySmall?.copyWith(
-                  color: ColoresApp.sobrePrimario,
-                  fontFamily: 'serif',
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1,
+                style: estilos.headlineMedium?.copyWith(
+                  color: ColoresApp.primario,
+                  fontFamily: TemaApp.fuenteTitulos,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
                 ),
               ),
               Text(
                 'Pequeñas herencias, grandes recuerdos',
                 textAlign: TextAlign.center,
-                style: estilos.bodyMedium?.copyWith(
-                  color: ColoresApp.sobrePrimario.withValues(alpha: 0.85),
+                style: estilos.bodySmall?.copyWith(
+                  color: ColoresApp.textoSecundario,
                 ),
               ),
             ],
@@ -40,7 +41,7 @@ class EncabezadoInicio extends StatelessWidget {
           tooltip: 'Avisos',
           onPressed: alTocarCampana,
           icon: const Icon(Icons.notifications_none_outlined),
-          color: ColoresApp.sobrePrimario,
+          color: ColoresApp.primario,
         ),
       ],
     );
