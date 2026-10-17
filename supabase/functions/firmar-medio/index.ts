@@ -11,7 +11,10 @@ import {
   type Credenciales,
   ErrorSolicitud,
   type FilaMedio,
+  esSolicitudAvatarPerfil,
+  esSolicitudAvataresUsuarios,
   firmarMedios,
+  validarAvataresUsuarioIds,
   validarSolicitud,
 } from "./firma_entrega.ts";
 
@@ -87,6 +90,70 @@ Deno.serve(async (solicitud: Request): Promise<Response> => {
     } catch {
       throw new ErrorSolicitud(422, "solicitud_invalida", "La solicitud no es válida.");
     }
+    if (esSolicitudAvatarPerfil(cuerpo)) {
+      const uid = datosUsuario.user.id;
+      const { data: fila, error: errorPerfil } = await supabase
+        .from("usuarios")
+        .select("foto_public_id")
+        .eq("id", uid)
+        .maybeSingle();
+      if (errorPerfil) {
+        console.error("firmar-medio: perfil falló", errorPerfil.message);
+        return error(500, "lectura_fallida", "No pudimos preparar tu avatar. Intenta de nuevo.");
+      }
+      const publicId = fila?.foto_public_id;
+      if (!publicId || typeof publicId !== "string") {
+        return responder(200, { medios: [] });
+      }
+      const medios = await firmarMedios(
+        [
+          {
+            id: uid,
+            tipo: "foto",
+            cloudinary_public_id: publicId,
+            cloudinary_tipo_recurso: "image",
+            cloudinary_version: null,
+            formato: "jpg",
+          } satisfies FilaMedio,
+        ],
+        credenciales,
+        Math.floor(Date.now() / 1000),
+      );
+      return responder(200, { medios });
+    }
+
+    if (esSolicitudAvataresUsuarios(cuerpo)) {
+      const idsUsuario = validarAvataresUsuarioIds(cuerpo);
+      const { data: perfiles, error: errorPerfiles } = await supabase
+        .from("perfiles_visibles")
+        .select("id, foto_public_id")
+        .in("id", idsUsuario);
+      if (errorPerfiles) {
+        console.error("firmar-medio: perfiles_visibles falló", errorPerfiles.message);
+        return error(500, "lectura_fallida", "No pudimos preparar los avatares. Intenta de nuevo.");
+      }
+      const filas: FilaMedio[] = [];
+      for (const fila of perfiles ?? []) {
+        const uid = fila?.id;
+        const publicId = fila?.foto_public_id;
+        if (typeof uid !== "string" || typeof publicId !== "string" || !publicId) continue;
+        filas.push({
+          id: uid,
+          tipo: "foto",
+          cloudinary_public_id: publicId,
+          cloudinary_tipo_recurso: "image",
+          cloudinary_version: null,
+          formato: "jpg",
+        });
+      }
+      const medios = await firmarMedios(
+        filas,
+        credenciales,
+        Math.floor(Date.now() / 1000),
+      );
+      return responder(200, { medios });
+    }
+
     const ids = validarSolicitud(cuerpo);
 
     // 2. Solo las filas que RLS deja ver a este usuario.

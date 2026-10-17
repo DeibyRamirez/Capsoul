@@ -12,6 +12,7 @@ import {
   firmarParametros,
   generarPublicId,
   parametrosAFirmar,
+  publicIdAvatarPerfil,
   urlSubida,
   validarCuota,
   validarSolicitud,
@@ -86,18 +87,28 @@ Deno.serve(async (solicitud: Request): Promise<Response> => {
     }
     const pedido = validarSolicitud(cuerpo);
 
-    // 3. Cuota de 200 MB (RPC con el JWT del usuario: solo ve su propio uso).
-    const { data: uso, error: errorUso } = await supabase.rpc("mi_uso_medios").single();
-    if (errorUso || !uso) {
-      console.error("mi_uso_medios falló", errorUso?.message);
-      return error(500, "cuota_no_disponible", "No pudimos revisar tu espacio. Intenta de nuevo.");
+    if (pedido.contexto === "perfil_avatar") {
+      if (pedido.tipo !== "foto") {
+        return error(422, "tipo_invalido", "El avatar debe ser una imagen.");
+      }
+    } else {
+      // 3. Cuota de 200 MB (RPC con el JWT del usuario: solo ve su propio uso).
+      const { data: uso, error: errorUso } = await supabase.rpc("mi_uso_medios").single();
+      if (errorUso || !uso) {
+        console.error("mi_uso_medios falló", errorUso?.message);
+        return error(500, "cuota_no_disponible", "No pudimos revisar tu espacio. Intenta de nuevo.");
+      }
+      const { bytes_usados, bytes_limite } = uso as { bytes_usados: number; bytes_limite: number };
+      validarCuota(Number(bytes_usados), pedido.bytes, Number(bytes_limite));
     }
-    const { bytes_usados, bytes_limite } = uso as { bytes_usados: number; bytes_limite: number };
-    validarCuota(Number(bytes_usados), pedido.bytes, Number(bytes_limite));
 
     // 4. Firma.
     const timestamp = Math.floor(Date.now() / 1000);
-    const parametros = parametrosAFirmar(pedido.tipo, generarPublicId(), timestamp);
+    const publicId =
+      pedido.contexto === "perfil_avatar"
+        ? publicIdAvatarPerfil(datosUsuario.user.id)
+        : generarPublicId();
+    const parametros = parametrosAFirmar(pedido.tipo, publicId, timestamp);
     const signature = await firmarParametros(parametros, configuracion.apiSecret);
 
     return responder(200, {
