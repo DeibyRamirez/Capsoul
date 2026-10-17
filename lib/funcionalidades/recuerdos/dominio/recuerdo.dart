@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../elementos/dominio/nota_serializada.dart';
 import '../../elementos/dominio/tipo_elemento.dart';
 import '../../musica/dominio/referencia_musica.dart';
 
@@ -61,7 +62,9 @@ class Recuerdo {
       return musica!.etiquetaCorta;
     }
     if (tipo == TipoElemento.texto) {
-      final primeraLinea = (contenidoTexto ?? '').trim().split('\n').first;
+      final cuerpo = NotaSerializada.parse(contenidoTexto).cuerpo;
+      final primeraLinea =
+          NotaSerializada.markdownAPlano(cuerpo).trim().split('\n').first;
       if (primeraLinea.isEmpty) return tipo.etiqueta;
       final runas = primeraLinea.runes.toList();
       return runas.length <= _caracteresNombreNota

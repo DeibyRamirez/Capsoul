@@ -1,3 +1,4 @@
+import 'package:capsoul/funcionalidades/elementos/dominio/nota_serializada.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
 import 'package:capsoul/funcionalidades/recuerdos/presentacion/pantalla_elegir_recuerdos.dart';
@@ -36,7 +37,8 @@ void main() {
     await _montar(tester);
     await _abrirRecuerdos(tester);
 
-    expect(find.text('Tu banco de recuerdos'), findsOneWidget);
+    expect(find.text('Recuerdos'), findsOneWidget);
+    expect(find.text('Tu banco de recuerdos.'), findsOneWidget);
     expect(find.textContaining('Aún no tienes recuerdos'), findsOneWidget);
   });
 
@@ -82,9 +84,12 @@ void main() {
     final creado = recuerdos.creados.single;
     expect(creado.titulo, 'Carta');
     expect(creado.fechaRecuerdo, DateTime(2026, 10, 3));
-    expect(creado.elemento.texto, 'Hola futuro');
+    expect(
+      NotaSerializada.parse(creado.elemento.texto).cuerpo,
+      'Hola futuro',
+    );
     // Vuelve al banco, que ya muestra el recuerdo.
-    expect(find.text('Tu banco de recuerdos'), findsOneWidget);
+    expect(find.text('Recuerdos'), findsOneWidget);
     expect(find.text('Carta'), findsOneWidget);
   });
 
@@ -98,7 +103,9 @@ void main() {
     await tester.tap(find.text('Playa'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('boton-borrar-recuerdo')));
+    await tester.tap(find.byKey(const Key('menu-acciones-visor')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Borrar recuerdo').last);
     await tester.pumpAndSettle();
 
     expect(find.text('No se puede borrar'), findsOneWidget);
@@ -115,13 +122,29 @@ void main() {
     await tester.tap(find.text('Playa'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('boton-borrar-recuerdo')));
+    await tester.tap(find.byKey(const Key('menu-acciones-visor')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Borrar recuerdo').last);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(TextButton, 'Borrar'));
     await tester.pumpAndSettle();
 
     expect(recuerdos.eliminados, ['f1']);
     expect(find.text('Playa'), findsNothing);
+  });
+
+  testWidgets('abrir visor desde el banco y cerrarlo', (tester) async {
+    await _montar(tester, iniciales: [
+      recuerdoPrueba('f1', titulo: 'Playa', propietarioId: usuarioPrueba.uid),
+    ]);
+    await _abrirRecuerdos(tester);
+    await tester.tap(find.text('Playa'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('menu-acciones-visor')), findsOneWidget);
+    await tester.tap(find.byTooltip('Cerrar'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('menu-acciones-visor')), findsNothing);
   });
 
   testWidgets('elegir recuerdos devuelve la selección sin los ya elegidos',

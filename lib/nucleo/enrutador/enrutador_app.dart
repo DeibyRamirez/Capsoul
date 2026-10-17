@@ -21,8 +21,13 @@ import '../../funcionalidades/elementos/presentacion/pantalla_capturar_video.dar
 import '../../funcionalidades/elementos/presentacion/pantalla_escribir_nota.dart';
 import '../../funcionalidades/elementos/presentacion/pantalla_grabar_audio.dart';
 import '../../funcionalidades/inicio/presentacion/pantalla_inicio.dart';
+import '../../funcionalidades/legado/presentacion/pantalla_detalle_herencia.dart';
+import '../../funcionalidades/legado/presentacion/pantalla_instrucciones_legado.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_legado.dart';
+import '../../funcionalidades/legado/presentacion/pantalla_nueva_herencia.dart';
+import '../../funcionalidades/legado/presentacion/pantalla_seguridad_legado.dart';
 import '../../funcionalidades/momentos/presentacion/pantalla_detalle_momento.dart';
+import '../../funcionalidades/momentos/presentacion/pantalla_editar_momento.dart';
 import '../../funcionalidades/momentos/presentacion/pantalla_momentos.dart';
 import '../../funcionalidades/momentos/presentacion/pantalla_nuevo_momento.dart';
 import '../../funcionalidades/navegacion/presentacion/contenedor_navegacion.dart';
@@ -30,11 +35,13 @@ import '../../funcionalidades/amistades/presentacion/pantalla_amigos.dart';
 import '../../funcionalidades/perfil/aplicacion/controlador_perfil.dart';
 import '../../funcionalidades/perfil/presentacion/pantalla_perfil.dart';
 import '../../funcionalidades/usuarios/presentacion/pantalla_elegir_nombre_usuario.dart';
-import '../../funcionalidades/recuerdos/presentacion/pantalla_detalle_recuerdo.dart';
+import '../../funcionalidades/recuerdos/aplicacion/proveedores_recuerdos.dart';
+import '../../funcionalidades/recuerdos/presentacion/pantalla_editar_recuerdo.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_elegir_recuerdos.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_guardar_recuerdo.dart';
 import '../../funcionalidades/musica/presentacion/pantalla_buscar_musica.dart';
 import '../../funcionalidades/recuerdos/presentacion/pantalla_recuerdos.dart';
+import '../../funcionalidades/retos/presentacion/pantalla_retos.dart';
 import 'rutas_app.dart';
 
 /// Enrutador de la app conectado a la sesión. Reevalúa su redirección cada
@@ -177,6 +184,14 @@ GoRouter crearEnrutadorApp({
                     builder: (context, state) => const PantallaNuevoMomento(),
                   ),
                   GoRoute(
+                    path: ':id/editar',
+                    name: 'editar-momento',
+                    parentNavigatorKey: claveNavegadorRaiz,
+                    builder: (context, state) => PantallaEditarMomento(
+                      idMomento: state.pathParameters['id'] ?? '',
+                    ),
+                  ),
+                  GoRoute(
                     path: ':id',
                     name: 'detalle-momento',
                     parentNavigatorKey: claveNavegadorRaiz,
@@ -194,6 +209,34 @@ GoRouter crearEnrutadorApp({
                 path: RutasApp.legado,
                 name: 'legado',
                 builder: (context, state) => const PantallaLegado(),
+                routes: [
+                  GoRoute(
+                    path: 'nueva',
+                    name: 'legado-nueva',
+                    parentNavigatorKey: claveNavegadorRaiz,
+                    builder: (context, state) => const PantallaNuevaHerencia(),
+                  ),
+                  GoRoute(
+                    path: 'instrucciones',
+                    name: 'legado-instrucciones',
+                    parentNavigatorKey: claveNavegadorRaiz,
+                    builder: (context, state) => const PantallaInstruccionesLegado(),
+                  ),
+                  GoRoute(
+                    path: 'seguridad',
+                    name: 'legado-seguridad',
+                    parentNavigatorKey: claveNavegadorRaiz,
+                    builder: (context, state) => const PantallaSeguridadLegado(),
+                  ),
+                  GoRoute(
+                    path: 'herencia/:id',
+                    name: 'legado-herencia-detalle',
+                    parentNavigatorKey: claveNavegadorRaiz,
+                    builder: (context, state) => PantallaDetalleHerencia(
+                      herenciaId: state.pathParameters['id'] ?? '',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -230,21 +273,25 @@ GoRouter crearEnrutadorApp({
           GoRoute(
             path: 'video',
             name: 'crear-video',
+            parentNavigatorKey: claveNavegadorRaiz,
             builder: (context, state) => const PantallaCapturarVideo(),
           ),
           GoRoute(
             path: 'audio',
             name: 'crear-audio',
+            parentNavigatorKey: claveNavegadorRaiz,
             builder: (context, state) => const PantallaGrabarAudio(),
           ),
           GoRoute(
             path: 'escribir',
             name: 'crear-escribir',
+            parentNavigatorKey: claveNavegadorRaiz,
             builder: (context, state) => const PantallaEscribirNota(),
           ),
           GoRoute(
             path: 'foto',
             name: 'crear-foto',
+            parentNavigatorKey: claveNavegadorRaiz,
             builder: (context, state) => const PantallaCapturarFoto(),
           ),
           GoRoute(
@@ -284,6 +331,12 @@ GoRouter crearEnrutadorApp({
         ],
       ),
       GoRoute(
+        path: RutasApp.retos,
+        name: 'retos',
+        parentNavigatorKey: claveNavegadorRaiz,
+        builder: (context, state) => const PantallaRetos(),
+      ),
+      GoRoute(
         path: RutasApp.recuerdos,
         name: 'recuerdos',
         parentNavigatorKey: claveNavegadorRaiz,
@@ -299,11 +352,23 @@ GoRouter crearEnrutadorApp({
           GoRoute(
             path: 'guardar',
             name: 'guardar-recuerdo',
-            redirect: (context, state) =>
-                state.extra is ElementoBorrador ? null : RutasApp.recuerdos,
-            builder: (context, state) => PantallaGuardarRecuerdo(
-              elemento: state.extra! as ElementoBorrador,
-            ),
+            redirect: (context, state) {
+              if (state.extra is ElementoBorrador) return null;
+              final pendiente = ProviderScope.containerOf(
+                context,
+                listen: false,
+              ).read(proveedorBorradorRecuerdoPendiente);
+              if (pendiente != null) return null;
+              return RutasApp.recuerdos;
+            },
+            builder: (context, state) {
+              final container = ProviderScope.containerOf(context, listen: false);
+              final elemento = borradorParaGuardarRecuerdo(
+                extra: state.extra,
+                pendiente: container.read(proveedorBorradorRecuerdoPendiente),
+              );
+              return PantallaGuardarRecuerdo(elemento: elemento!);
+            },
           ),
           GoRoute(
             path: 'elegir',
@@ -318,11 +383,20 @@ GoRouter crearEnrutadorApp({
             },
           ),
           GoRoute(
-            path: ':id',
-            name: 'detalle-recuerdo',
-            builder: (context, state) => PantallaDetalleRecuerdo(
+            path: ':id/editar',
+            name: 'editar-recuerdo',
+            builder: (context, state) => PantallaEditarRecuerdo(
               idRecuerdo: state.pathParameters['id'] ?? '',
             ),
+          ),
+          GoRoute(
+            path: ':id',
+            name: 'detalle-recuerdo',
+            redirect: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              if (id.isEmpty) return RutasApp.recuerdos;
+              return RutasApp.editarRecuerdoDe(id);
+            },
           ),
         ],
       ),

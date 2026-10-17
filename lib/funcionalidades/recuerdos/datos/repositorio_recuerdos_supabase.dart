@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/identificadores/generador_ids.dart';
 import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
+import '../../musica/dominio/referencia_musica.dart';
 import '../../elementos/dominio/elemento_borrador.dart';
 import '../../elementos/dominio/fallo_medios.dart';
 import '../../elementos/dominio/repositorio_medios.dart';
@@ -150,6 +152,32 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
     _uid();
     try {
       return await _acceso.contarCapsulasSelladas(id);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> actualizarContenidoTexto(String id, String contenidoTexto) async {
+    _uid();
+    try {
+      await _acceso.actualizar(id, {
+        'contenido_texto': contenidoTexto,
+        'bytes': utf8.encode(contenidoTexto).length,
+      });
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> actualizarMusicaPreview(String id, ReferenciaMusica musica) async {
+    _uid();
+    try {
+      await _acceso.actualizar(id, {
+        ...musica.aFilaBd(),
+        if (musica.tienePreview) 'duracion_segundos': 30,
+      });
     } catch (error) {
       throw traducirError(error);
     }

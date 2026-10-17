@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
+import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
@@ -81,9 +82,9 @@ class _EstadoPantallaElegirRecuerdos
     final yaElegidos = widget.parametros.yaElegidos;
     final cantidad = _elegidos.length;
     return PantallaCapsoul(
-      appBar: AppBar(
-        title: Text(widget.parametros.titulo),
-        actions: [
+      appBar: AppBarCapsoul(
+        titulo: Text(widget.parametros.titulo),
+        acciones: [
           TextButton(
             key: const Key('boton-listo-elegir'),
             onPressed: cantidad == 0

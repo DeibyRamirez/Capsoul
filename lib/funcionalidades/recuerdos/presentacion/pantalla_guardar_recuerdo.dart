@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/componentes/fondo_capsoul.dart';
@@ -15,6 +16,7 @@ import '../../musica/dominio/referencia_musica.dart';
 import '../../musica/presentacion/componentes/escena_preview_musica.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../aplicacion/controlador_recuerdos.dart';
+import '../aplicacion/proveedores_recuerdos.dart';
 import '../dominio/filtro_recuerdos.dart';
 import '../dominio/nuevo_recuerdo.dart';
 import '../dominio/validador_recuerdo.dart';
@@ -38,10 +40,12 @@ class _EstadoPantallaGuardarRecuerdo
   final _titulo = TextEditingController();
   late DateTime _fecha = FiltroRecuerdos.soloDia(ref.read(proveedorReloj)());
   late ElementoBorrador _elemento;
+  late final ControladorBorradorRecuerdoPendiente _borradorPendiente;
 
   @override
   void initState() {
     super.initState();
+    _borradorPendiente = ref.read(proveedorBorradorRecuerdoPendiente.notifier);
     _elemento = widget.elemento;
     final musica = _elemento.referenciaMusica;
     if (_elemento.tipo == TipoElemento.musica && musica != null) {
@@ -92,6 +96,7 @@ class _EstadoPantallaGuardarRecuerdo
           ),
         );
     if (recuerdo == null || !mounted) return;
+    _borradorPendiente.limpiar();
     mostrarAvisoInformativo(context, 'Guardado en tus recuerdos.');
     context.pop(recuerdo);
   }
@@ -113,7 +118,7 @@ class _EstadoPantallaGuardarRecuerdo
         _elemento.tipo == TipoElemento.musica && musica != null;
     return PantallaCapsoul(
       tipoFondo: FondoCapsoulTipo.plano,
-      appBar: AppBar(title: const Text('Guardar recuerdo')),
+      appBar: AppBarCapsoul(titulo: const Text('Guardar recuerdo')),
       cuerpo: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
@@ -124,32 +129,18 @@ class _EstadoPantallaGuardarRecuerdo
                 reproducirAutomaticamente: true,
               )
             else
-              VistaPreviaBorrador(elemento: _elemento),
-            if (_elemento.tipo == TipoElemento.foto) ...[
+              VistaPreviaBorrador(
+                elemento: _elemento,
+                alQuitarMusica: ocupado ? null : _quitarMusica,
+              ),
+            if (_elemento.tipo == TipoElemento.foto &&
+                _elemento.referenciaMusica == null) ...[
               const SizedBox(height: 12),
-              if (_elemento.referenciaMusica == null)
-                OutlinedButton.icon(
-                  onPressed: ocupado ? null : _anadirMusica,
-                  icon: const Icon(Icons.music_note_outlined),
-                  label: const Text('Añadir música'),
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _elemento.referenciaMusica!.etiquetaCorta,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    IconButton(
-                      tooltip: 'Quitar música',
-                      onPressed: ocupado ? null : _quitarMusica,
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
+              OutlinedButton.icon(
+                onPressed: ocupado ? null : _anadirMusica,
+                icon: const Icon(Icons.music_note_outlined),
+                label: const Text('Añadir música'),
+              ),
             ],
             const SizedBox(height: 20),
             TextField(

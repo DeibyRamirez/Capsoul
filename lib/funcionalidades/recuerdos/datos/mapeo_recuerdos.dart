@@ -10,7 +10,8 @@ const String columnasRecuerdo =
     'id, propietario_id, tipo, titulo, fecha_recuerdo, creado_en, '
     'contenido_texto, cloudinary_public_id, formato, bytes, ancho, alto, '
     'duracion_segundos, musica_proveedor, musica_id_externo, musica_titulo, '
-    'musica_artista, musica_preview_url, musica_url_completa, musica_portada_url, '
+    'musica_artista, musica_preview_url, musica_preview_proveedor, '
+    'musica_url_completa, musica_portada_url, '
     'musica_uri_profundo, musica_enlace_deezer';
 
 /// `2026-10-03` (fecha local, sin hora) para la columna `date`.

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
+import '../../retos/aplicacion/proveedores_retos.dart';
 import '../dominio/fallo_recuerdo.dart';
 import '../dominio/nuevo_recuerdo.dart';
 import '../dominio/recuerdo.dart';
@@ -50,6 +51,8 @@ class ControladorRecuerdos extends Notifier<EstadoAccionRecuerdo> {
         ref.invalidate(proveedorRecuerdo);
         ref.invalidate(proveedorUsoMedios);
         ref.invalidate(proveedorResumenInicio);
+        ref.invalidate(proveedorListaRetos);
+        ref.invalidate(proveedorRetosPendientes);
       }
       return resultado;
     } on FalloApp catch (fallo) {

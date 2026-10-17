@@ -7,6 +7,7 @@ import '../../../nucleo/infraestructura/proveedores_infraestructura.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../elementos/aplicacion/proveedores_elementos.dart';
+import '../../elementos/dominio/elemento_borrador.dart';
 import '../datos/acceso_tablas_recuerdos.dart';
 import '../datos/archivos_medio_dispositivo.dart';
 import '../datos/repositorio_recuerdos_supabase.dart';
@@ -94,3 +95,28 @@ final proveedorFiltroRecuerdos =
     NotifierProvider<ControladorFiltroRecuerdos, FiltroRecuerdos>(
   ControladorFiltroRecuerdos.new,
 );
+
+/// Borrador en tránsito hacia «Guardar recuerdo» (respaldo si go_router pierde
+/// `extra` tras un refresh de sesión o perfil).
+class ControladorBorradorRecuerdoPendiente extends Notifier<ElementoBorrador?> {
+  @override
+  ElementoBorrador? build() => null;
+
+  void establecer(ElementoBorrador borrador) => state = borrador;
+
+  void limpiar() => state = null;
+}
+
+final proveedorBorradorRecuerdoPendiente = NotifierProvider<
+    ControladorBorradorRecuerdoPendiente, ElementoBorrador?>(
+  ControladorBorradorRecuerdoPendiente.new,
+);
+
+/// Resuelve el borrador de la ruta `/recuerdos/guardar` desde `extra` o el provider.
+ElementoBorrador? borradorParaGuardarRecuerdo({
+  required Object? extra,
+  required ElementoBorrador? pendiente,
+}) {
+  if (extra is ElementoBorrador) return extra;
+  return pendiente;
+}
