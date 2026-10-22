@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/componentes/encabezado_seccion_capsoul.dart';
+import '../../../nucleo/componentes/esqueleto_capsoul.dart';
+import '../../../nucleo/componentes/estado_error_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/errores/fallo_app.dart';
-import '../../../nucleo/tema/colores_app.dart';
 import '../aplicacion/proveedor_filtro_momentos.dart';
 import '../aplicacion/proveedores_momentos.dart';
 import '../dominio/momento.dart';
@@ -66,65 +67,21 @@ class PantallaMomentos extends ConsumerWidget {
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
             momentosAsincrono.when(
-              loading: () => const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(48),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+              loading: () => const SliverEsqueletoRejillaCapsoul(),
+              error: (error, _) => SliverEstadoErrorCapsoul(
+                mensaje: mensajeParaUsuario(error),
+                alReintentar: () => ref.invalidate(proveedorMomentos),
               ),
-              error: (error, _) => SliverToBoxAdapter(
-                child: _Mensaje(
-                  texto: mensajeParaUsuario(error),
-                  accion: OutlinedButton(
-                    onPressed: () => ref.invalidate(proveedorMomentos),
-                    child: const Text('Reintentar'),
-                  ),
-                ),
-              ),
-              data: (_) => SliverToBoxAdapter(
-                child: RejillaMomentos(
-                  momentos: momentosFiltrados,
-                  mensajeVacio: filtro.esVacio
-                      ? 'Aún no tienes momentos. Junta varios recuerdos '
-                          'bajo un mismo nombre: un viaje, un cumpleaños, un año.'
-                      : 'Ningún momento coincide con tu búsqueda.',
-                ),
+              data: (_) => RejillaMomentos(
+                momentos: momentosFiltrados,
+                mensajeVacio: filtro.esVacio
+                    ? 'Aún no tienes momentos. Junta varios recuerdos '
+                        'bajo un mismo nombre: un viaje, un cumpleaños, un año.'
+                    : 'Ningún momento coincide con tu búsqueda.',
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Mensaje extends StatelessWidget {
-  const _Mensaje({required this.texto, this.accion});
-
-  final String texto;
-  final Widget? accion;
-
-  @override
-  Widget build(BuildContext context) {
-    final boton = accion;
-    return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          const SizedBox(height: 48),
-          const Icon(
-            Icons.auto_awesome_mosaic_outlined,
-            size: 48,
-            color: ColoresApp.acento,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            texto,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: ColoresApp.atenuado),
-          ),
-          if (boton != null) ...[const SizedBox(height: 16), boton],
-        ],
       ),
     );
   }

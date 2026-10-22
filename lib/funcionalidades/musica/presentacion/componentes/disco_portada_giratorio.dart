@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../nucleo/componentes/imagen_red_capsoul.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../dominio/referencia_musica.dart';
@@ -66,24 +67,29 @@ class _EstadoDiscoPortadaGiratorio extends State<DiscoPortadaGiratorio>
     Widget disco = SizedBox(
       width: tamano,
       height: tamano,
-      child: RotationTransition(
-        turns: _controlador,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: ColoresApp.primario.withValues(alpha: 0.25),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-            border: Border.all(
-              color: ColoresApp.primario.withValues(alpha: 0.35),
-              width: 3,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: ColoresApp.primario.withValues(alpha: 0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 8),
             ),
+          ],
+        ),
+        child: RotationTransition(
+          turns: _controlador,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: ColoresApp.primario.withValues(alpha: 0.35),
+                width: 3,
+              ),
+            ),
+            child: ClipOval(child: _Portada(referencia: widget.referencia, tamano: tamano)),
           ),
-          child: ClipOval(child: _Portada(referencia: widget.referencia)),
         ),
       ),
     );
@@ -125,9 +131,10 @@ class _EstadoDiscoPortadaGiratorio extends State<DiscoPortadaGiratorio>
 }
 
 class _Portada extends StatelessWidget {
-  const _Portada({required this.referencia});
+  const _Portada({required this.referencia, required this.tamano});
 
   final ReferenciaMusica referencia;
+  final double tamano;
 
   @override
   Widget build(BuildContext context) {
@@ -153,10 +160,11 @@ class _Portada extends StatelessWidget {
         ),
       );
     }
-    return Image.network(
-      url,
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => DecoratedBox(
+    return ImagenRedCapsoul(
+      url: url,
+      ancho: tamano,
+      alto: tamano,
+      marcador: DecoratedBox(
         decoration: BoxDecoration(
           color: ColoresApp.acento.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(TemaApp.radioMediano),

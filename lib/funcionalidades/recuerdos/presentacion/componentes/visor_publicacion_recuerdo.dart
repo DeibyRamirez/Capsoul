@@ -148,12 +148,15 @@ class _EstadoVisorPublicacionRecuerdo
                       child: ConstrainedBox(
                         constraints: BoxConstraints(maxHeight: maxAlto),
                         child: SingleChildScrollView(
-                          child: _ContenidoVisor(
+                          child: Hero(
+                            tag: 'recuerdo-${recuerdo.id}',
+                            child: _ContenidoVisor(
                             recuerdo: recuerdo,
                             previewMusica: _previewMusica,
                             claveEscenaMusica: _claveEscenaMusica,
                             elementoIdPersistirPreviewMusica:
                                 esPropietario ? recuerdo.id : null,
+                            ),
                           ),
                         ),
                       ),

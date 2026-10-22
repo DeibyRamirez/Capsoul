@@ -2,7 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'imagen_red_capsoul.dart';
+
 /// Imagen de avatar con URL alternativa si la principal falla o tarda demasiado.
+///
+/// El temporizador y el cambio de URL viven fuera de [build]: la imagen no
+/// dispara efectos al reconstruirse.
 class ImagenAvatarRed extends StatefulWidget {
   const ImagenAvatarRed({
     super.key,
@@ -74,6 +79,7 @@ class _ImagenAvatarRedState extends State<ImagenAvatarRed> {
       _iniciarTiempoCarga();
       return;
     }
+    if (_mostrarFallback) return;
     setState(() => _mostrarFallback = true);
   }
 
@@ -82,41 +88,24 @@ class _ImagenAvatarRedState extends State<ImagenAvatarRed> {
     if (_mostrarFallback) return widget.fallback;
 
     return ClipOval(
-      child: Image.network(
-        _urlActiva,
+      child: ImagenRedCapsoul(
         key: ValueKey(_urlActiva),
-        width: widget.tamano,
-        height: widget.tamano,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, progreso) {
-          if (progreso == null) {
-            _cargaCompletada();
-            return child;
-          }
-          return SizedBox(
-            width: widget.tamano,
-            height: widget.tamano,
-            child: Center(
-              child: SizedBox(
-                width: widget.tamano * 0.35,
-                height: widget.tamano * 0.35,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  value: progreso.expectedTotalBytes != null
-                      ? progreso.cumulativeBytesLoaded /
-                          progreso.expectedTotalBytes!
-                      : null,
-                ),
-              ),
+        url: _urlActiva,
+        ancho: widget.tamano,
+        alto: widget.tamano,
+        alListo: _cargaCompletada,
+        alError: _alErrorCarga,
+        marcador: SizedBox(
+          width: widget.tamano,
+          height: widget.tamano,
+          child: Center(
+            child: SizedBox(
+              width: widget.tamano * 0.35,
+              height: widget.tamano * 0.35,
+              child: const CircularProgressIndicator(strokeWidth: 2),
             ),
-          );
-        },
-        errorBuilder: (_, _, _) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _alErrorCarga();
-          });
-          return SizedBox(width: widget.tamano, height: widget.tamano);
-        },
+          ),
+        ),
       ),
     );
   }

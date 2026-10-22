@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
+import '../../../nucleo/tema/tipografia_app.dart';
+import '../../../nucleo/componentes/estado_error_capsoul.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
@@ -15,7 +17,6 @@ import '../dominio/estado_capsula.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
-import '../../../nucleo/componentes/menu_acciones_entidad.dart';
 import '../../../nucleo/enlaces/enlace_capsoul.dart';
 import 'componentes/animacion_apertura.dart';
 import 'componentes/cabecera_capsula.dart';
@@ -34,7 +35,7 @@ class PantallaDetalleCapsula extends ConsumerWidget {
     final capsula = ref.watch(proveedorCapsula(idCapsula));
     return Scaffold(
       body: capsula.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: _EsqueletoDetalle()),
         error: (error, _) => _EstadoSinCapsula(
           mensaje: mensajeParaUsuario(error),
           alReintentar: () => ref.invalidate(proveedorCapsula(idCapsula)),
@@ -171,6 +172,9 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
                     fechaApertura: fecha,
                     reloj: reloj,
                     alLlegar: () => setState(() {}),
+                    estilo: TipografiaApp.displayCompacto.copyWith(
+                      color: ColoresApp.sobrePrimario,
+                    ),
                   )
                 : null,
           ),
@@ -223,9 +227,6 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
                       : null,
                 ),
               ],
-              const _Titulo('Persona de confianza'),
-              const SizedBox(height: 6),
-              const _PersonaConfianza(),
             ],
           ),
         ),
@@ -366,22 +367,21 @@ class _InvitacionAbrir extends StatelessWidget {
   }
 }
 
-class _PersonaConfianza extends StatelessWidget {
-  const _PersonaConfianza();
+class _EsqueletoDetalle extends StatelessWidget {
+  const _EsqueletoDetalle();
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: ColoresApp.acento.withValues(alpha: 0.15),
-        foregroundColor: ColoresApp.primario,
-        child: const Icon(Icons.person_outline),
-      ),
-      title: const Text('Sin asignar'),
-      trailing: const Chip(
-        label: Text('Próximamente'),
-        visualDensity: VisualDensity.compact,
+    return const Padding(
+      padding: EdgeInsets.all(24),
+      child: Column(
+        children: [
+          SizedBox(height: 48),
+          ColoredBox(
+            color: ColoresApp.azul100,
+            child: SizedBox(height: 180, width: double.infinity),
+          ),
+        ],
       ),
     );
   }
@@ -402,24 +402,9 @@ class _EstadoSinCapsula extends StatelessWidget {
           const BackButton(),
           Expanded(
             child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.inventory_2_outlined,
-                        size: 48, color: ColoresApp.atenuado),
-                    const SizedBox(height: 12),
-                    Text(mensaje, textAlign: TextAlign.center),
-                    if (alReintentar != null) ...[
-                      const SizedBox(height: 16),
-                      OutlinedButton(
-                        onPressed: alReintentar,
-                        child: const Text('Reintentar'),
-                      ),
-                    ],
-                  ],
-                ),
+              child: EstadoErrorCapsoul(
+                mensaje: mensaje,
+                alReintentar: alReintentar,
               ),
             ),
           ),
@@ -448,37 +433,44 @@ class _AccionesAutor extends StatelessWidget {
   Widget build(BuildContext context) {
     final puedeEditar = capsula.estado == EstadoCapsula.borrador ||
         capsula.estado == EstadoCapsula.programada;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const _Titulo('Gestionar'),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: alCompartir,
-          icon: const Icon(Icons.share_outlined),
-          label: const Text('Compartir enlace'),
-        ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: MenuAccionesEntidad(
-            puedeEditar: puedeEditar,
-            puedeEliminar: alEliminar != null,
-            pedirConfirmacionEliminar: false,
-            etiquetaEliminar: 'Eliminar cápsula',
-            alEditar: alEditar,
-            alEliminar: alEliminar,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: MenuAnchor(
+        menuChildren: [
+          MenuItemButton(
+            onPressed: alCompartir,
+            child: const Text('Compartir enlace'),
           ),
-        ),
-        if (alCancelar != null) ...[
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: alCancelar,
-            icon: const Icon(Icons.cancel_outlined),
-            label: const Text('Cancelar programación'),
-          ),
+          if (puedeEditar)
+            MenuItemButton(
+              onPressed: alEditar,
+              child: const Text('Editar'),
+            ),
+          if (alCancelar != null)
+            MenuItemButton(
+              onPressed: alCancelar,
+              child: const Text('Cancelar programación'),
+            ),
+          if (alEliminar != null)
+            MenuItemButton(
+              onPressed: alEliminar,
+              child: const Text('Eliminar cápsula'),
+            ),
         ],
-      ],
+        builder: (context, controlador, _) {
+          return FilledButton.tonalIcon(
+            onPressed: () {
+              if (controlador.isOpen) {
+                controlador.close();
+              } else {
+                controlador.open();
+              }
+            },
+            icon: const Icon(Icons.more_horiz),
+            label: const Text('Gestionar'),
+          );
+        },
+      ),
     );
   }
 }

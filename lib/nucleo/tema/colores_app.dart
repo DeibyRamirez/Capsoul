@@ -35,8 +35,21 @@ abstract final class ColoresApp {
   /// Sombra de tarjeta: azul real al 8 %.
   static const Color sombraTarjeta = Color(0x141B316B);
 
-  /// Iconos inactivos de la barra de navegacion.
-  static const Color navInactivo = Color(0xFF8FA1C2);
+  /// Iconos y etiquetas inactivas de la barra, y hints.
+  /// #6F82A6 sobre blanco supera 4.5:1 (WCAG AA en texto pequeño).
+  static const Color navInactivo = Color(0xFF6F82A6);
+
+  /// Escala de azules derivada. No reemplaza [primario] ni [acento].
+  static const Color azul100 = Color(0xFFC9DAEE);
+  static const Color azul300 = Color(0xFF9DB8D9);
+  static const Color azul500 = Color(0xFF3D6B9A);
+  static const Color azul700 = Color(0xFF1B316B);
+  static const Color azul900 = Color(0xFF132247);
+
+  /// Grises fríos de apoyo (editorial), sin sustituir el texto de marca.
+  static const Color gris100 = Color(0xFFF5F5F7);
+  static const Color gris500 = Color(0xFF969696);
+  static const Color gris700 = Color(0xFF474747);
 
   /// Dorado calido: solo brillos, estrellas e iconos (no texto).
   static const Color dorado = Color(0xFFF59E0B);

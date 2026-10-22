@@ -58,6 +58,32 @@ class _PintorFrasco extends CustomPainter {
   final bool conRecuerdos;
   final bool conCandado;
 
+  static final Paint _vidrio = Paint();
+  static final Paint _halo = Paint();
+  static final Paint _borde = Paint()
+    ..color = ColoresApp.bordeCupula
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2;
+  static final Paint _reflejo = Paint()
+    ..color = ColoresApp.sobrePrimario.withValues(alpha: 0.35)
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+  static final Paint _luz = Paint()
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+  static final Paint _foto = Paint()
+    ..color = ColoresApp.sobrePrimario.withValues(alpha: 0.92);
+  static final Paint _fotoInterior = Paint();
+  static final Paint _tapaRelleno = Paint();
+  static final Paint _tapaBorde = Paint()
+    ..color = ColoresApp.bordeCupula
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
+  static final Paint _candadoFondo = Paint()..color = ColoresApp.primario;
+  static final Paint _candadoBorde = Paint()
+    ..color = ColoresApp.bordeCupula
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2;
+
   static const LinearGradient _degradadoMarino = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
@@ -73,76 +99,70 @@ class _PintorFrasco extends CustomPainter {
       Radius.circular(ancho * 0.22),
     );
 
-    // Halo exterior.
-    final halo = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          ColoresApp.sobrePrimario.withValues(alpha: 0.55 * brillo),
-          ColoresApp.acento.withValues(alpha: 0.18 * brillo),
-          ColoresApp.acento.withValues(alpha: 0),
-        ],
-        stops: const [0, 0.55, 1],
-      ).createShader(
-        Rect.fromCircle(center: cuerpo.center, radius: alto * 0.62),
-      );
-    canvas.drawCircle(cuerpo.center, alto * 0.62, halo);
+    _halo.shader = RadialGradient(
+      colors: [
+        ColoresApp.sobrePrimario.withValues(alpha: 0.55 * brillo),
+        ColoresApp.acento.withValues(alpha: 0.18 * brillo),
+        ColoresApp.acento.withValues(alpha: 0),
+      ],
+      stops: const [0, 0.55, 1],
+    ).createShader(
+      Rect.fromCircle(center: cuerpo.center, radius: alto * 0.62),
+    );
+    canvas.drawCircle(cuerpo.center, alto * 0.62, _halo);
 
-    // Vidrio.
-    final vidrio = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          ColoresApp.sobrePrimario.withValues(alpha: 0.45),
-          ColoresApp.acento.withValues(alpha: 0.35),
-          ColoresApp.primario.withValues(alpha: 0.55),
-        ],
-      ).createShader(cuerpo.outerRect);
-    canvas.drawRRect(cuerpo, vidrio);
+    _vidrio.shader = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        ColoresApp.sobrePrimario.withValues(alpha: 0.45),
+        ColoresApp.acento.withValues(alpha: 0.35),
+        ColoresApp.primario.withValues(alpha: 0.55),
+      ],
+    ).createShader(cuerpo.outerRect);
+    canvas.drawRRect(cuerpo, _vidrio);
 
     if (conRecuerdos) _pintarRecuerdos(canvas, cuerpo.outerRect);
     _pintarLuces(canvas, cuerpo.outerRect);
 
-    // Reflejo del vidrio.
-    final reflejo = Paint()
-      ..color = ColoresApp.sobrePrimario.withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = ancho * 0.035;
+    _reflejo.strokeWidth = ancho * 0.035;
     canvas.drawArc(
       cuerpo.outerRect.deflate(ancho * 0.08),
       math.pi * 1.05,
       math.pi * 0.35,
       false,
-      reflejo,
+      _reflejo,
     );
-    final borde = Paint()
-      ..color = ColoresApp.bordeCupula
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawRRect(cuerpo, borde);
+    canvas.drawRRect(cuerpo, _borde);
 
     _pintarTapa(canvas, size);
     if (conCandado) _pintarCandado(canvas, cuerpo.outerRect);
   }
 
+  static final List<({double x, double y, double r})> _luces = _generarLuces();
+
+  static List<({double x, double y, double r})> _generarLuces() {
+    final aleatorio = math.Random(7);
+    return [
+      for (var i = 0; i < 16; i++)
+        (
+          x: 0.15 + 0.7 * aleatorio.nextDouble(),
+          y: 0.12 + 0.78 * aleatorio.nextDouble(),
+          r: 0.015 + 0.02 * aleatorio.nextDouble(),
+        ),
+    ];
+  }
+
   void _pintarLuces(Canvas canvas, Rect area) {
     if (brillo <= 0) return;
-    final aleatorio = math.Random(7);
-    for (var i = 0; i < 16; i++) {
-      final centro = Offset(
-        area.left + area.width * (0.15 + 0.7 * aleatorio.nextDouble()),
-        area.top + area.height * (0.12 + 0.78 * aleatorio.nextDouble()),
+    _luz.color = ColoresApp.sobrePrimario.withValues(alpha: brillo.clamp(0, 1));
+    for (final luz in _luces) {
+      final radio = area.width * luz.r;
+      canvas.drawCircle(
+        Offset(area.left + area.width * luz.x, area.top + area.height * luz.y),
+        radio * 3,
+        _luz,
       );
-      final radio = area.width * (0.015 + 0.02 * aleatorio.nextDouble());
-      final luz = Paint()
-        ..shader = RadialGradient(
-          colors: [
-            ColoresApp.sobrePrimario.withValues(alpha: brillo),
-            ColoresApp.sobrePrimario.withValues(alpha: 0),
-          ],
-        ).createShader(Rect.fromCircle(center: centro, radius: radio * 3));
-      canvas.drawCircle(centro, radio * 3, luz);
     }
   }
 
@@ -164,16 +184,10 @@ class _PintorFrasco extends CustomPainter {
         Rect.fromLTWH(0, 0, area.width * 0.36, area.width * 0.3),
         const Radius.circular(4),
       );
-      canvas.drawRRect(
-        marco,
-        Paint()..color = ColoresApp.sobrePrimario.withValues(alpha: 0.92),
-      );
+      canvas.drawRRect(marco, _foto);
       final interior = marco.deflate(area.width * 0.025);
-      canvas.drawRRect(
-        interior,
-        Paint()
-          ..shader = _degradadoMarino.createShader(interior.outerRect),
-      );
+      _fotoInterior.shader = _degradadoMarino.createShader(interior.outerRect);
+      canvas.drawRRect(interior, _fotoInterior);
       canvas.restore();
     }
   }
@@ -190,46 +204,39 @@ class _PintorFrasco extends CustomPainter {
       Rect.fromCenter(center: Offset.zero, width: ancho * 0.72, height: alto * 0.1),
       Radius.circular(ancho * 0.05),
     );
-    canvas.drawRRect(
-      tapa,
-      Paint()
-        ..shader = _degradadoMarino.createShader(tapa.outerRect),
-    );
-    canvas.drawRRect(
-      tapa,
-      Paint()
-        ..color = ColoresApp.bordeCupula
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5,
-    );
+    _tapaRelleno.shader = _degradadoMarino.createShader(tapa.outerRect);
+    canvas.drawRRect(tapa, _tapaRelleno);
+    canvas.drawRRect(tapa, _tapaBorde);
     canvas.restore();
   }
+
+  static TextPainter? _iconoCandado;
+  static double _tamanoIconoCandado = -1;
 
   void _pintarCandado(Canvas canvas, Rect area) {
     final centro = Offset(area.center.dx, area.bottom - area.height * 0.12);
     final radio = area.width * 0.13;
-    canvas.drawCircle(centro, radio, Paint()..color = ColoresApp.primario);
-    canvas.drawCircle(
-      centro,
-      radio,
-      Paint()
-        ..color = ColoresApp.bordeCupula
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-    final icono = TextPainter(
-      text: TextSpan(
-        text: String.fromCharCode(Icons.lock_outline.codePoint),
-        style: TextStyle(
-          fontFamily: Icons.lock_outline.fontFamily,
-          package: Icons.lock_outline.fontPackage,
-          fontSize: radio * 1.1,
-          color: ColoresApp.sobrePrimario,
+    canvas.drawCircle(centro, radio, _candadoFondo);
+    canvas.drawCircle(centro, radio, _candadoBorde);
+    final tamano = radio * 1.1;
+    var pintado = _iconoCandado;
+    if (pintado == null || _tamanoIconoCandado != tamano) {
+      _tamanoIconoCandado = tamano;
+      pintado = TextPainter(
+        text: TextSpan(
+          text: String.fromCharCode(Icons.lock_outline.codePoint),
+          style: TextStyle(
+            fontFamily: Icons.lock_outline.fontFamily,
+            package: Icons.lock_outline.fontPackage,
+            fontSize: tamano,
+            color: ColoresApp.sobrePrimario,
+          ),
         ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    icono.paint(canvas, centro - Offset(icono.width / 2, icono.height / 2));
+        textDirection: TextDirection.ltr,
+      )..layout();
+      _iconoCandado = pintado;
+    }
+    pintado.paint(canvas, centro - Offset(pintado.width / 2, pintado.height / 2));
   }
 
   @override

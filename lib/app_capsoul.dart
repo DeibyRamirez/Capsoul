@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'nucleo/componentes/ilustracion_marca.dart';
 import 'nucleo/enrutador/enrutador_app.dart';
 import 'nucleo/enlaces/escucha_enlaces_app.dart';
 import 'nucleo/firebase/escucha_tokens_push.dart';
@@ -26,6 +27,9 @@ class AppCapsoul extends ConsumerWidget {
       supportedLocales: const [Locale('es', 'CO'), Locale('es')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       routerConfig: enrutador,
+      builder: (context, child) => PrecargaIlustracionesMarca(
+        child: child ?? const SizedBox.shrink(),
+      ),
     );
     final enPrueba =
         !kIsWeb && Platform.environment['FLUTTER_TEST'] == 'true';

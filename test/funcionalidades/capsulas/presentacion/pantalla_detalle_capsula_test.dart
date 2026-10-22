@@ -101,12 +101,8 @@ void main() {
     expect(find.text('05:30'), findsOneWidget);
     expect(find.text('Nota de voz'), findsOneWidget);
     expect(find.text('01:32'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('Persona de confianza'),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text('Persona de confianza'), findsOneWidget);
+    expect(find.text('Persona de confianza'), findsNothing);
+    expect(find.text('Próximamente'), findsNothing);
     expect(find.text('Abrir cápsula'), findsNothing);
   });
 

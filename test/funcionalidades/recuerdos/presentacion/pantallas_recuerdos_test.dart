@@ -25,7 +25,9 @@ Future<RepositorioRecuerdosFalso> _montar(
 }
 
 Future<void> _abrirRecuerdos(WidgetTester tester) async {
-  await tester.tap(find.text('Tu banco de recuerdos.'));
+  final banco = find.text('Tu banco de recuerdos.');
+  await tester.scrollUntilVisible(banco, 200);
+  await tester.tap(banco);
   await tester.pumpAndSettle();
 }
 

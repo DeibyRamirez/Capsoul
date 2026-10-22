@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../nucleo/componentes/cielo_nocturno.dart';
+import '../../../../nucleo/componentes/ilustracion_marca.dart';
 import '../../../../nucleo/tema/colores_app.dart';
-import '../../../../nucleo/tema/degradados_capsoul.dart';
-import '../../../../nucleo/tema/tema_app.dart';
+import '../../../../nucleo/tema/espaciado_app.dart';
 
-/// Diseño centrado y desplazable compartido por las pantallas de
-/// autenticación: fondo claro, banner medianoche con luciernagas y panel
-/// blanco con el formulario.
+/// Autenticación sobre la acuarela clara: el borde inferior del dibujo se
+/// funde con el fondo [ColoresApp.superficie] y el formulario sigue debajo.
 class EstructuraAutenticacion extends StatelessWidget {
   const EstructuraAutenticacion({
     super.key,
@@ -20,49 +18,48 @@ class EstructuraAutenticacion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final alto = MediaQuery.sizeOf(context).height;
+    final altoHero = alto < 700 ? 148.0 : 240.0;
     return Scaffold(
-      extendBodyBehindAppBar: mostrarAtras,
-      appBar: mostrarAtras
-          ? AppBar(
-              backgroundColor: Colors.transparent,
-              foregroundColor: ColoresApp.textoPrincipal,
-              elevation: 0,
-            )
-          : null,
-      body: DecoratedBox(
-        decoration: const BoxDecoration(gradient: DegradadosCapsoul.suave),
-        child: Stack(
+      backgroundColor: ColoresApp.superficie,
+      body: SafeArea(
+        top: false,
+        child: Column(
           children: [
-            // Banda medianoche con luciernagas detras del panel (no ocupa
-            // alto en el flujo del formulario).
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 220,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(TemaApp.radioGrande),
-                ),
-                child: const CieloNocturno(),
-              ),
-            ),
-            SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 24,
+            SizedBox(
+              height: altoHero,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const ColoredBox(color: ColoresApp.superficie),
+                  const IlustracionMarca(
+                    ruta: IlustracionesMarca.heroCalma,
+                    alineacion: Alignment.topCenter,
+                    fundirAbajo: true,
                   ),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: DecoratedBox(
-                      decoration: TemaApp.decoracionTarjeta(),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: contenido,
+                  if (mostrarAtras)
+                    const SafeArea(
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: BackButton(color: ColoresApp.textoPrincipal),
                       ),
                     ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                  EspaciadoApp.pantalla,
+                  EspaciadoApp.xs,
+                  EspaciadoApp.pantalla,
+                  EspaciadoApp.lg,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    child: contenido,
                   ),
                 ),
               ),

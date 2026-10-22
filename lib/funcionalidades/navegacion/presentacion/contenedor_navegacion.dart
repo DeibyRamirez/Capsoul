@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../funcionalidades/crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../../../nucleo/tema/colores_app.dart';
-import '../../../nucleo/tema/tema_app.dart';
 
 /// Contenedor con la barra inferior: Inicio | Momentos | + | Mi legado | Yo.
 /// El `+` central abre Crear (no es una rama persistente del shell).
@@ -66,17 +65,9 @@ class ContenedorNavegacion extends StatelessWidget {
             label: 'Momentos',
           ),
           NavigationDestination(
-            icon: Container(
-              width: 50,
-              height: 50,
-              decoration: const BoxDecoration(
-                color: ColoresApp.primario,
-                shape: BoxShape.circle,
-                boxShadow: TemaApp.sombraTarjeta,
-              ),
-              child: const Icon(Icons.add, color: ColoresApp.sobrePrimario),
-            ),
-            label: '',
+            icon: const ExcludeSemantics(child: _BotonCrear()),
+            selectedIcon: const ExcludeSemantics(child: _BotonCrear()),
+            label: 'Crear',
           ),
           const NavigationDestination(
             icon: Icon(Icons.account_balance_outlined),
@@ -90,6 +81,25 @@ class ContenedorNavegacion extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Botón central de 48 dp. El nombre accesible lo da la etiqueta «Crear».
+class _BotonCrear extends StatelessWidget {
+  const _BotonCrear();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 48,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: ColoresApp.primario,
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(Icons.add, color: ColoresApp.sobrePrimario, size: 28),
     );
   }
 }

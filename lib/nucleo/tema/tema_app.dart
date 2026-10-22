@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'colores_app.dart';
+import 'tipografia_app.dart';
 
 /// Tema Material 3 de Capsoul: modo claro, Poppins en la UI y Playfair
 /// Display en titulos de marca.
@@ -16,27 +17,30 @@ abstract final class TemaApp {
   static const double altoBoton = 48;
 
   /// Familia de la UI (assets/fonts).
-  static const String fuenteUi = 'Poppins';
+  static const String fuenteUi = TipografiaApp.fuenteUi;
 
   /// Familia de titulos de marca / hero (assets/fonts).
-  static const String fuenteTitulos = 'PlayfairDisplay';
+  static const String fuenteTitulos = TipografiaApp.fuenteTitulos;
 
   /// Sombra de tarjeta (azul real al 8 %).
   static const List<BoxShadow> sombraTarjeta = [
     BoxShadow(
       color: ColoresApp.sombraTarjeta,
-      blurRadius: 16,
-      offset: Offset(0, 6),
+      blurRadius: 8,
+      offset: Offset(0, 4),
     ),
   ];
 
-  /// Decoracion estandar de tarjeta blanca con borde y sombra.
-  static BoxDecoration decoracionTarjeta({double radio = radioGrande}) =>
+  /// Tarjeta blanca con borde. La sombra solo se usa en piezas hero.
+  static BoxDecoration decoracionTarjeta({
+    double radio = radioGrande,
+    bool conSombra = false,
+  }) =>
       BoxDecoration(
         color: ColoresApp.tarjeta,
         borderRadius: BorderRadius.circular(radio),
         border: Border.all(color: ColoresApp.bordeTarjeta),
-        boxShadow: sombraTarjeta,
+        boxShadow: conSombra ? sombraTarjeta : null,
       );
 
   static ThemeData get claro {
@@ -64,11 +68,7 @@ abstract final class TemaApp {
       bodyColor: ColoresApp.textoPrincipal,
       displayColor: ColoresApp.textoPrincipal,
     );
-    final temaTexto = textoBase.copyWith(
-      titleMedium: textoBase.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-      titleSmall: textoBase.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-      labelLarge: textoBase.labelLarge?.copyWith(fontWeight: FontWeight.w500),
-    );
+    final temaTexto = TipografiaApp.aplicar(textoBase);
 
     final bordeCampo = OutlineInputBorder(
       borderRadius: BorderRadius.circular(radioPequeno),

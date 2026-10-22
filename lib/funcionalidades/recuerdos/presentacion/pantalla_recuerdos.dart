@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../nucleo/componentes/encabezado_seccion_capsoul.dart';
+import '../../../nucleo/componentes/esqueleto_capsoul.dart';
+import '../../../nucleo/componentes/ilustracion_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
@@ -57,13 +59,11 @@ class PantallaRecuerdos extends ConsumerWidget {
             ),
             ...recuerdos.when(
               loading: () => const [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+                SliverEsqueletoRejillaCapsoul(),
               ],
               error: (error, _) => [
                 SinRecuerdos(
+                  ilustracion: NombresIlustracion.errorSinConexion,
                   mensaje: mensajeParaUsuario(error),
                   accion: OutlinedButton(
                     onPressed: () => ref.invalidate(proveedorRecuerdos(filtro)),

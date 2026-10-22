@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
+import '../../../nucleo/componentes/ilustracion_marca.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
@@ -90,9 +91,18 @@ class PantallaLegado extends ConsumerWidget {
         },
         child: CustomScrollView(
           slivers: [
+            const SliverToBoxAdapter(
+              child: SizedBox(
+                height: 220,
+                child: IlustracionMarca(
+                  ruta: IlustracionesMarca.paisajeLago,
+                  fundirAbajo: true,
+                ),
+              ),
+            ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

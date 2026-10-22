@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../nucleo/componentes/estado_vacio_capsoul.dart';
+import '../../../../nucleo/componentes/ilustracion_capsoul.dart';
 import '../../dominio/recuerdo.dart';
 import 'tarjeta_recuerdo.dart';
 
@@ -57,30 +59,27 @@ class RejillaRecuerdos extends StatelessWidget {
 
 /// Mensaje centrado cuando no hay recuerdos (como sliver).
 class SinRecuerdos extends StatelessWidget {
-  const SinRecuerdos({super.key, required this.mensaje, this.accion});
+  const SinRecuerdos({
+    super.key,
+    required this.mensaje,
+    this.accion,
+    this.ilustracion = NombresIlustracion.vacioRecuerdos,
+  });
 
   final String mensaje;
   final Widget? accion;
+  final String ilustracion;
 
   @override
   Widget build(BuildContext context) {
-    final boton = accion;
     return SliverFillRemaining(
       hasScrollBody: false,
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.photo_library_outlined,
-              size: 48,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            const SizedBox(height: 12),
-            Text(mensaje, textAlign: TextAlign.center),
-            if (boton != null) ...[const SizedBox(height: 16), boton],
-          ],
+      child: Center(
+        child: EstadoVacioCapsoul(
+          mensaje: mensaje,
+          ilustracion: ilustracion,
+          icono: Icons.photo_library_outlined,
+          accion: accion,
         ),
       ),
     );

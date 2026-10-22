@@ -26,7 +26,7 @@ Capsoul guarda recuerdos como luces dentro de una cápsula de vidrio. La UI comb
 | `sombraTarjeta` | `#141B316B` | Sombra de tarjeta (azul real 8 %) |
 | `textoPrincipal` / `sobreSuperficie` | `#111E38` | Títulos y texto principal |
 | `textoSecundario` / `atenuado` | `#5A6E94` | Subtítulos, descripciones, metadatos |
-| `navInactivo` | `#8FA1C2` | Iconos/etiquetas inactivas de la barra, hints |
+| `navInactivo` | `#6F82A6` | Iconos/etiquetas inactivas de la barra, hints |
 | `dorado` / `doradoClaro` | `#F59E0B` / `#FDE68A` | Solo brillos, estrellas, corazones e iconos (no texto) |
 | `medianoche` | `#132247` | Banners oscuros y cielo con luciérnagas |
 | `pastelAzul` / `pastelVerde` / `pastelRosa` | `#B8D4E8` / `#C8E6C9` / `#F8BBD0` | Insignias del perfil |

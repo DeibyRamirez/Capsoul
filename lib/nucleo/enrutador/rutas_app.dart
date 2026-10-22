@@ -39,12 +39,14 @@ abstract final class RutasApp {
   /// temporal).
   static const String nuevaContrasena = '/nueva-contrasena';
   static const String elegirNombreUsuario = '/elegir-usuario';
+  static const String bienvenida = '/bienvenida';
 
   static const Set<String> rutasAutenticacion = {
     iniciarSesion,
     registro,
     recuperar,
     revisaTuCorreo,
+    bienvenida,
   };
 
   /// Ubicación del detalle de la cápsula [id].
