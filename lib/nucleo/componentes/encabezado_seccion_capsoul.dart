@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../tema/colores_app.dart';
+import '../tema/espaciado_app.dart';
+import '../tema/tipografia_app.dart';
 
 /// Cabecera de pestaña: marca cápsoul, título + icono y subtítulo.
 class EncabezadoSeccionCapsoul extends StatelessWidget {
@@ -25,18 +27,20 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final estilos = Theme.of(context).textTheme;
     return Padding(
       padding: padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (mostrarMarca)
-            Text(
+            const Text(
               'cápsoul',
-              style: estilos.labelLarge?.copyWith(
-                color: ColoresApp.acento,
+              style: TextStyle(
+                fontFamily: TipografiaApp.fuenteUi,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
+                color: ColoresApp.acento,
+                letterSpacing: 1.1,
               ),
             ),
           Row(
@@ -52,10 +56,7 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
                     Flexible(
                       child: Text(
                         titulo,
-                        style: estilos.headlineMedium?.copyWith(
-                          color: ColoresApp.primario,
-                          fontWeight: FontWeight.w800,
-                        ),
+                        style: TipografiaApp.titular,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -70,13 +71,8 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
               ?acciones,
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitulo,
-            style: estilos.bodyMedium?.copyWith(
-              color: ColoresApp.atenuado,
-            ),
-          ),
+          const SizedBox(height: EspaciadoApp.xxs),
+          Text(subtitulo, style: TipografiaApp.cuerpoPequeno),
         ],
       ),
     );

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../funcionalidades/autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../funcionalidades/autenticacion/dominio/usuario_app.dart';
+import '../../funcionalidades/autenticacion/presentacion/pantalla_bienvenida.dart';
 import '../../funcionalidades/autenticacion/presentacion/pantalla_iniciar_sesion.dart';
 import '../../funcionalidades/autenticacion/presentacion/pantalla_nueva_contrasena.dart';
 import '../../funcionalidades/autenticacion/presentacion/pantalla_recuperar_contrasena.dart';
@@ -121,6 +122,11 @@ GoRouter crearEnrutadorApp({
       GoRoute(
         path: RutasApp.raiz,
         redirect: (context, state) => RutasApp.inicio,
+      ),
+      GoRoute(
+        path: RutasApp.bienvenida,
+        name: 'bienvenida',
+        builder: (context, state) => const PantallaBienvenida(),
       ),
       GoRoute(
         path: RutasApp.iniciarSesion,

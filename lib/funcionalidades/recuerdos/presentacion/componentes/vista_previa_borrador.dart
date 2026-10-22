@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../../../nucleo/componentes/imagen_red_capsoul.dart';
 import '../../../../nucleo/componentes/onda_audio.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
@@ -115,7 +116,7 @@ class _VistaMusicaBorrador extends StatelessWidget {
         if (url != null)
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.network(url, width: 120, height: 120, fit: BoxFit.cover),
+            child: ImagenRedCapsoul(url: url, ancho: 120, alto: 120),
           )
         else
           const _Icono(Icons.album_outlined),

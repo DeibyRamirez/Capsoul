@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../tema/colores_app.dart';
+import '../tema/espaciado_app.dart';
 import '../tema/tema_app.dart';
+import '../tema/tipografia_app.dart';
 
 /// Tarjeta blanca reutilizable (borde sutil, sombra azul suave, radio 20)
 /// con chip de icono y contenido flexible.
@@ -15,6 +17,7 @@ class TarjetaCapsoul extends StatelessWidget {
     this.altoMinimo,
     this.radio = TemaApp.radioGrande,
     this.borde = true,
+    this.conSombra = false,
   });
 
   final IconData? icono;
@@ -25,9 +28,11 @@ class TarjetaCapsoul extends StatelessWidget {
   final double radio;
   final bool borde;
 
+  /// Sombra solo en piezas hero. En listas queda en falso para no difuminar.
+  final bool conSombra;
+
   @override
   Widget build(BuildContext context) {
-    final estilos = Theme.of(context).textTheme;
     final decoracion = borde
         ? BoxDecoration(
             border: Border.all(color: ColoresApp.bordeTarjeta),
@@ -38,12 +43,12 @@ class TarjetaCapsoul extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radio),
-        boxShadow: TemaApp.sombraTarjeta,
+        boxShadow: conSombra ? TemaApp.sombraTarjeta : null,
       ),
       child: Material(
         color: ColoresApp.tarjeta,
         borderRadius: BorderRadius.circular(radio),
-        clipBehavior: Clip.antiAlias,
+        clipBehavior: Clip.hardEdge,
         child: InkWell(
           onTap: alTocar,
           child: Container(
@@ -52,7 +57,7 @@ class TarjetaCapsoul extends StatelessWidget {
                 ? BoxConstraints(minHeight: altoMinimo!)
                 : null,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(EspaciadoApp.md),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,7 +78,7 @@ class TarjetaCapsoul extends StatelessWidget {
                             ),
                             child: Icon(
                               icono,
-                              size: 18,
+                              size: 24,
                               color: ColoresApp.primario,
                             ),
                           ),
@@ -83,10 +88,7 @@ class TarjetaCapsoul extends StatelessWidget {
                           Expanded(
                             child: Text(
                               titulo!,
-                              style: estilos.titleSmall?.copyWith(
-                                color: ColoresApp.textoPrincipal,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: TipografiaApp.tituloPequeno,
                             ),
                           ),
                       ],

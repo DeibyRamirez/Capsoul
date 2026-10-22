@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
+import '../../../nucleo/componentes/ilustracion_capsoul.dart';
+import '../../../nucleo/tema/colores_app.dart';
+import '../../../nucleo/tema/tipografia_app.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
@@ -115,6 +118,22 @@ class _EstadoPantallaElegirNombreUsuario extends ConsumerState<PantallaElegirNom
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const IlustracionCapsoul(
+                nombre: NombresIlustracion.capsulaSellada,
+                ancho: 140,
+                alto: 120,
+                fallback: Icon(
+                  Icons.drive_file_rename_outline,
+                  size: 56,
+                  color: ColoresApp.primario,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Tu nombre en la cápsula',
+                style: TipografiaApp.titular,
+              ),
+              const SizedBox(height: 8),
               const Text(
                 'Así te encontrarán tus amigos en Capsoul. '
                 'Solo letras minúsculas, números y guion bajo.',

@@ -216,10 +216,7 @@ class _EstadoContenidoEditar extends ConsumerState<_ContenidoEditar> {
               ),
               const SizedBox(height: 8),
               IgnorePointer(
-                child: Opacity(
-                  opacity: 0.95,
-                  child: VistaRecuerdo(recuerdo: recuerdo),
-                ),
+                child: VistaRecuerdo(recuerdo: recuerdo),
               ),
               if (recuerdo.tipo == TipoElemento.texto) ...[
                 const SizedBox(height: 12),

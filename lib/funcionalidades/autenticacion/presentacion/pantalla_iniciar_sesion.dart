@@ -117,7 +117,13 @@ class _EstadoPantallaIniciarSesion
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: cargando
+                    ? null
+                    : () => context.push(RutasApp.bienvenida),
+                child: const Text('Conoce Capsoul'),
+              ),
               Wrap(
                 alignment: WrapAlignment.center,
                 crossAxisAlignment: WrapCrossAlignment.center,

@@ -105,7 +105,7 @@ BoxDecoration backgroundGradient = BoxDecoration(
   3. **Central Action Button:** Prominent floating circular primary button (`+`) in royal blue (`Color(0xFF1B316B)`).
   4. `Historia` (Book icon)
   5. `Yo` (Profile icon)
-* **Unselected Item Color:** `Color(0xFF8FA1C2)`
+* **Unselected Item Color:** `Color(0xFF6F82A6)`
 * **Selected Item Color:** `Color(0xFF1B316B)`
 
 ---

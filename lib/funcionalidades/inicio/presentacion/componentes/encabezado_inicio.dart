@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../nucleo/tema/colores_app.dart';
-import '../../../../nucleo/tema/tema_app.dart';
+import '../../../../nucleo/tema/tipografia_app.dart';
 
 /// Logo "cápsoul", slogan y campana de avisos.
 class EncabezadoInicio extends StatelessWidget {
@@ -19,11 +19,15 @@ class EncabezadoInicio extends StatelessWidget {
           child: Column(
             children: [
               Text(
+                'Hola',
+                style: TipografiaApp.display.copyWith(color: ColoresApp.primario),
+              ),
+              Text(
                 'cápsoul',
-                style: estilos.headlineMedium?.copyWith(
-                  color: ColoresApp.primario,
-                  fontFamily: TemaApp.fuenteTitulos,
-                  fontWeight: FontWeight.w700,
+                style: estilos.titleMedium?.copyWith(
+                  color: ColoresApp.acento,
+                  fontFamily: TipografiaApp.fuenteTitulos,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: 1.2,
                 ),
               ),

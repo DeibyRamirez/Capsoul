@@ -4,9 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/fondo_capsoul.dart';
+import '../../../nucleo/componentes/ilustracion_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
+import '../../../nucleo/tema/espaciado_app.dart';
+import '../../../nucleo/tema/tipografia_app.dart';
+import 'componentes/proxima_capsula_inicio.dart';
 import '../../crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../aplicacion/proveedores_inicio.dart';
 import '../dominio/resumen_inicio.dart';
@@ -65,15 +69,19 @@ class PantallaInicio extends ConsumerWidget {
                 label: const Text('Guardar algo hoy'),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: EspaciadoApp.xs),
             Text(
               '¿Qué quieres dejar para el futuro?',
               textAlign: TextAlign.center,
               style: estilos.bodySmall?.copyWith(color: ColoresApp.atenuado),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: EspaciadoApp.lg),
+            const ProximaCapsulaInicio(),
+            const SizedBox(height: EspaciadoApp.lg),
             _RejillaSecciones(resumen: resumen),
-            const SizedBox(height: 16),
+            const SizedBox(height: EspaciadoApp.md),
+            const _HaceUnAno(),
+            const SizedBox(height: EspaciadoApp.md),
             const BannerFraseInicio(),
           ],
         ),
@@ -100,7 +108,12 @@ class _RejillaSecciones extends StatelessWidget {
           'recuerdo guardado',
           'recuerdos guardados',
         ),
-        ilustracion: const IlustracionSeccion(icono: Icons.photo_outlined),
+        ilustracion: const IlustracionCapsoul(
+          nombre: NombresIlustracion.tarjetaRecuerdos,
+          ancho: 56,
+          alto: 56,
+          fallback: IlustracionSeccion(icono: Icons.photo_outlined),
+        ),
         alTocar: () => context.push(RutasApp.recuerdos),
       ),
       TarjetaSeccionInicio(
@@ -113,7 +126,12 @@ class _RejillaSecciones extends StatelessWidget {
           'reto activo',
           'retos activos',
         ),
-        ilustracion: const IlustracionSeccion(icono: Icons.terrain_outlined),
+        ilustracion: const IlustracionCapsoul(
+          nombre: NombresIlustracion.tarjetaMomentos,
+          ancho: 56,
+          alto: 56,
+          fallback: IlustracionSeccion(icono: Icons.terrain_outlined),
+        ),
         alTocar: () => context.push(RutasApp.retos),
       ),
       TarjetaSeccionInicio(
@@ -123,10 +141,15 @@ class _RejillaSecciones extends StatelessWidget {
         conteo: resumen.capsulas,
         etiquetaConteo: etiquetaConteo(
           resumen.capsulas,
-          'cápsula        creada',
-          'cápsulas       creadas',
+          'cápsula creada',
+          'cápsulas creadas',
         ),
-        ilustracion: const IlustracionSeccion(icono: Icons.hourglass_bottom),
+        ilustracion: const IlustracionCapsoul(
+          nombre: NombresIlustracion.tarjetaCapsula,
+          ancho: 56,
+          alto: 56,
+          fallback: IlustracionSeccion(icono: Icons.hourglass_bottom),
+        ),
         alTocar: () => context.push(RutasApp.capsulas),
       ),
       TarjetaSeccionInicio(
@@ -136,10 +159,15 @@ class _RejillaSecciones extends StatelessWidget {
         conteo: resumen.herencias,
         etiquetaConteo: etiquetaConteo(
           resumen.herencias,
-          'herencia        creada',
-          'herencias       creadas',
+          'herencia creada',
+          'herencias creadas',
         ),
-        ilustracion: const IlustracionSeccion(icono: Icons.redeem_outlined),
+        ilustracion: const IlustracionCapsoul(
+          nombre: NombresIlustracion.tarjetaLegado,
+          ancho: 56,
+          alto: 56,
+          fallback: IlustracionSeccion(icono: Icons.redeem_outlined),
+        ),
         alTocar: () => context.go(RutasApp.legado),
       ),
     ];
@@ -158,6 +186,39 @@ class _RejillaSecciones extends StatelessWidget {
 /// "1 cápsula creada" / "5 cápsulas creadas".
 String etiquetaConteo(int conteo, String singular, String plural) =>
     conteo == 1 ? singular : plural;
+
+class _HaceUnAno extends StatelessWidget {
+  const _HaceUnAno();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: ColoresApp.tarjeta,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: ColoresApp.bordeTarjeta),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: InkWell(
+        onTap: () => context.push(RutasApp.recuerdos),
+        child: const Padding(
+          padding: EdgeInsets.all(EspaciadoApp.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Hace un año', style: TipografiaApp.titular),
+              SizedBox(height: EspaciadoApp.xxs),
+              Text(
+                'Los días se parecen. Los recuerdos, no. Abre tu banco y mira qué guardaste.',
+                style: TipografiaApp.cuerpoPequeno,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _FilaTarjetas extends StatelessWidget {
   const _FilaTarjetas({required this.izquierda, required this.derecha});

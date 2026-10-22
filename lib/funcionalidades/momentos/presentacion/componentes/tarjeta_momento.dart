@@ -33,7 +33,7 @@ class TarjetaMomento extends StatelessWidget {
           borderRadius: BorderRadius.circular(TemaApp.radioGrande),
           side: const BorderSide(color: ColoresApp.bordeTarjeta),
         ),
-        clipBehavior: Clip.antiAlias,
+        clipBehavior: Clip.hardEdge,
         child: InkWell(
           onTap: alTocar,
           child: Column(
@@ -60,7 +60,10 @@ class TarjetaMomento extends StatelessWidget {
                           ),
                         ),
                       )
-                    : MiniaturaRecuerdoFirmada(recuerdo: portada),
+                    : Hero(
+                        tag: 'momento-${momento.id}',
+                        child: MiniaturaRecuerdoFirmada(recuerdo: portada),
+                      ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),

@@ -26,6 +26,11 @@ Finder _listaFormulario() => find
     )
     .first;
 
+Future<void> _siguiente(WidgetTester tester) async {
+  await _tocar(tester, find.text('Siguiente'));
+  await tester.pumpAndSettle();
+}
+
 /// Hace visible [objetivo] dentro del formulario y lo toca.
 Future<void> _tocar(WidgetTester tester, Finder objetivo) async {
   await tester.scrollUntilVisible(objetivo, 200, scrollable: _listaFormulario());
@@ -63,6 +68,7 @@ void main() {
     await _abrirNuevaCapsula(tester);
 
     expect(find.text('Nueva cápsula'), findsOneWidget);
+    await _siguiente(tester);
     await tester.scrollUntilVisible(find.text('Destinatarios'), 200, scrollable: _listaFormulario());
     expect(find.text('Jacobo'), findsOneWidget);
     expect(find.byKey(const Key('destinatario-amigo-1')), findsOneWidget);
@@ -74,7 +80,9 @@ void main() {
       autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
     );
     await _abrirNuevaCapsula(tester);
-    await _tocar(tester, find.text('Guardar cápsula'));
+    await _siguiente(tester);
+    await _siguiente(tester);
+    await _tocar(tester, find.text('Sellar cápsula'));
     await tester.pump();
 
     expect(find.text('Elige una fecha de apertura en el futuro.'), findsOneWidget);
@@ -97,9 +105,11 @@ void main() {
     expect(find.text('Primera'), findsNothing);
     expect(find.text('Te quiero, Jacobo'), findsAtLeastNWidgets(1));
 
+    await _siguiente(tester);
     await tester.enterText(find.byKey(const Key('campo-titulo')), 'Para Jacobo');
     await tester.enterText(find.byKey(const Key('campo-mensaje')), 'Ábrela grande');
     await _tocar(tester, find.byKey(const Key('destinatario-amigo-1')));
+    await _siguiente(tester);
     await _tocar(tester, find.byKey(const Key('campo-fecha')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Elegir'));
@@ -108,7 +118,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('Se abrirá el 3 oct 2027'), findsOneWidget);
 
-    await _tocar(tester, find.text('Guardar cápsula'));
+    await _tocar(tester, find.text('Sellar cápsula'));
     await tester.pumpAndSettle();
 
     final nueva = capsulas.creadas.single;
@@ -136,15 +146,17 @@ void main() {
     );
     await _abrirNuevaCapsula(tester);
     await _agregarNota(tester, 'Hola');
+    await _siguiente(tester);
     await tester.enterText(find.byKey(const Key('campo-titulo')), 'Para mí');
     await _tocar(tester, find.byKey(const Key('destinatario-amigo-1')));
+    await _siguiente(tester);
     await _tocar(tester, find.byKey(const Key('campo-fecha')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Elegir'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Elegir'));
     await tester.pumpAndSettle();
-    await _tocar(tester, find.text('Guardar cápsula'));
+    await _tocar(tester, find.text('Sellar cápsula'));
     await tester.pumpAndSettle();
 
     expect(

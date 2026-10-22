@@ -40,12 +40,16 @@ class RejillaBento extends StatelessWidget {
                   child: Semantics(
                     button: true,
                     label: '${c.recuerdo.tipo.etiqueta}: ${c.recuerdo.nombre}',
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(TemaApp.radioMediano),
-                      child: Material(
-                        child: InkWell(
-                          onTap: () => alTocar(c.recuerdo),
-                          child: MiniaturaRecuerdoFirmada(recuerdo: c.recuerdo),
+                    child: Hero(
+                      tag: 'recuerdo-${c.recuerdo.id}',
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(TemaApp.radioMediano),
+                        clipBehavior: Clip.hardEdge,
+                        child: Material(
+                          child: InkWell(
+                            onTap: () => alTocar(c.recuerdo),
+                            child: MiniaturaRecuerdoFirmada(recuerdo: c.recuerdo),
+                          ),
                         ),
                       ),
                     ),

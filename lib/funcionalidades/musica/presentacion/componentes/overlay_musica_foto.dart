@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../nucleo/componentes/imagen_red_capsoul.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../dominio/referencia_musica.dart';
 import 'reproductor_preview_musica.dart';
@@ -26,11 +27,10 @@ class OverlayMusicaFoto extends StatelessWidget {
               if (referencia.portadaUrl != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: Image.network(
-                    referencia.portadaUrl!,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
+                  child: ImagenRedCapsoul(
+                    url: referencia.portadaUrl!,
+                    ancho: 40,
+                    alto: 40,
                   ),
                 )
               else

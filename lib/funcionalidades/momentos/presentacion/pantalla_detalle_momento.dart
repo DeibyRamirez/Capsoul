@@ -12,6 +12,7 @@ import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
+import '../../recuerdos/presentacion/componentes/miniatura_recuerdo_firmada.dart';
 import '../../recuerdos/presentacion/navegacion_visor_recuerdo.dart';
 import '../aplicacion/proveedores_momentos.dart';
 import '../dominio/momento.dart';
@@ -117,9 +118,23 @@ class _Contenido extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final estilos = Theme.of(context).textTheme;
     final descripcion = momento.descripcion;
+    final portada = momento.portada;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
+        if (portada != null) ...[
+          Hero(
+            tag: 'momento-${momento.id}',
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(TemaApp.radioGrande),
+              child: AspectRatio(
+                aspectRatio: 16 / 10,
+                child: MiniaturaRecuerdoFirmada(recuerdo: portada),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         if (descripcion != null && descripcion.isNotEmpty) ...[
           Text(descripcion, style: estilos.bodyLarge),
           const SizedBox(height: 20),

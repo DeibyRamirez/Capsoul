@@ -12,11 +12,13 @@ class CuentaRegresiva extends StatefulWidget {
     required this.fechaApertura,
     required this.reloj,
     this.alLlegar,
+    this.estilo,
   });
 
   final DateTime fechaApertura;
   final DateTime Function() reloj;
   final VoidCallback? alLlegar;
+  final TextStyle? estilo;
 
   @override
   State<CuentaRegresiva> createState() => _EstadoCuentaRegresiva();
@@ -46,6 +48,9 @@ class _EstadoCuentaRegresiva extends State<CuentaRegresiva> {
 
   @override
   Widget build(BuildContext context) {
-    return Text(describirTiempoRestante(widget.reloj(), widget.fechaApertura));
+    return Text(
+      describirTiempoRestante(widget.reloj(), widget.fechaApertura),
+      style: widget.estilo,
+    );
   }
 }

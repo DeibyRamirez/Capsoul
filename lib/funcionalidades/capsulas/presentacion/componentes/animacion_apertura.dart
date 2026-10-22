@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../../nucleo/tema/colores_app.dart';
+import '../../../../nucleo/tema/movimiento_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 
 /// Muestra la animación de apertura a pantalla completa y espera a que
@@ -14,7 +16,7 @@ Future<void> mostrarAnimacionApertura(BuildContext context) {
     barrierDismissible: false,
     barrierLabel: 'Abriendo cápsula',
     barrierColor: ColoresApp.medianoche.withValues(alpha: 0.94),
-    transitionDuration: const Duration(milliseconds: 250),
+    transitionDuration: MovimientoApp.rapido,
     pageBuilder: (contexto, _, _) => AnimacionAperturaCapsula(
       alTerminar: () => Navigator.of(contexto).pop(),
     ),
@@ -59,11 +61,25 @@ class _EstadoAnimacionAperturaCapsula extends State<AnimacionAperturaCapsula>
   );
 
   bool _terminada = false;
+  late final List<_Chispa> _chispas = _generarChispas();
 
   @override
   void initState() {
     super.initState();
     _controlador.forward().whenComplete(_terminar);
+  }
+
+  bool _haptico = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // El cielo en bucle sí se apaga con movimiento reducido. Esta ceremonia
+    // es de una sola vez y tiene que terminar sola: si se cancela al instante,
+    // quien abre la cápsula no llega a ver el frasco.
+    if (MediaQuery.disableAnimationsOf(context) || _haptico) return;
+    _haptico = true;
+    HapticFeedback.lightImpact();
   }
 
   void _terminar() {
@@ -86,22 +102,27 @@ class _EstadoAnimacionAperturaCapsula extends State<AnimacionAperturaCapsula>
       onTap: _terminar,
       child: Material(
         type: MaterialType.transparency,
-        child: AnimatedBuilder(
-          animation: _controlador,
-          builder: (context, _) {
-            final pulso = 1 + 0.06 * math.sin(_brillo.value * math.pi);
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _PintorLucesSubiendo(progreso: _luces.value),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: CustomPaint(
+                  painter: _PintorLucesSubiendo(
+                    progreso: _luces,
+                    chispas: _chispas,
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Transform.scale(
+              ),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedBuilder(
+                  animation: Listenable.merge([_brillo, _tapa]),
+                  builder: (context, _) {
+                    final pulso = 1 + 0.06 * math.sin(_brillo.value * math.pi);
+                    return Transform.scale(
                       scale: pulso,
                       child: FrascoLuminoso(
                         tamano: 260,
@@ -109,65 +130,98 @@ class _EstadoAnimacionAperturaCapsula extends State<AnimacionAperturaCapsula>
                         aperturaTapa: _tapa.value,
                         conRecuerdos: true,
                       ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
+                FadeTransition(
+                  opacity: _texto,
+                  child: Text(
+                    '¡Tu cápsula se abrió!',
+                    style: estilos.headlineSmall?.copyWith(
+                      color: ColoresApp.sobrePrimario,
+                      fontFamily: TemaApp.fuenteTitulos,
                     ),
-                    const SizedBox(height: 32),
-                    Opacity(
-                      opacity: _texto.value,
-                      child: Text(
-                        '¡Tu cápsula se abrió!',
-                        style: estilos.headlineSmall?.copyWith(
-                          color: ColoresApp.sobrePrimario,
-                          fontFamily: TemaApp.fuenteTitulos,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: _terminar,
+                  child: const Text(
+                    'Saltar',
+                    style: TextStyle(color: ColoresApp.sobrePrimario),
+                  ),
                 ),
               ],
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
   }
+
+  static List<_Chispa> _generarChispas() {
+    final aleatorio = math.Random(5);
+    return [
+      for (var i = 0; i < 28; i++)
+        _Chispa(
+          angulo: -math.pi / 2 + (aleatorio.nextDouble() - 0.5) * 1.6,
+          distancia: 0.4 + 0.6 * aleatorio.nextDouble(),
+          factor: 0.7 + 0.3 * aleatorio.nextDouble(),
+          radio: 2 + aleatorio.nextDouble() * 3,
+        ),
+    ];
+  }
+}
+
+class _Chispa {
+  const _Chispa({
+    required this.angulo,
+    required this.distancia,
+    required this.factor,
+    required this.radio,
+  });
+
+  final double angulo;
+  final double distancia;
+  final double factor;
+  final double radio;
 }
 
 /// Luces que salen del frasco y suben desvaneciéndose.
 class _PintorLucesSubiendo extends CustomPainter {
-  _PintorLucesSubiendo({required this.progreso});
+  _PintorLucesSubiendo({required this.progreso, required this.chispas})
+    : super(repaint: progreso);
 
-  final double progreso;
+  final Animation<double> progreso;
+  final List<_Chispa> chispas;
+
+  static final Paint _halo = Paint()
+    ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (progreso <= 0) return;
-    final aleatorio = math.Random(5);
+    final avanceGlobal = progreso.value;
+    if (avanceGlobal <= 0) return;
     final origen = Offset(size.width / 2, size.height / 2 - 90);
-    for (var i = 0; i < 28; i++) {
-      final angulo = -math.pi / 2 + (aleatorio.nextDouble() - 0.5) * 1.6;
-      final distancia =
-          size.height * 0.45 * (0.4 + 0.6 * aleatorio.nextDouble());
-      final avance = (progreso * (0.7 + 0.3 * aleatorio.nextDouble())).clamp(
-        0.0,
-        1.0,
-      );
+    for (final chispa in chispas) {
+      final avance = (avanceGlobal * chispa.factor).clamp(0.0, 1.0);
       final centro =
           origen +
-          Offset(math.cos(angulo), math.sin(angulo)) * distancia * avance;
-      final radio = 2 + aleatorio.nextDouble() * 3;
-      final opacidad = (1 - avance) * 0.9;
-      final halo = Paint()
-        ..shader = RadialGradient(
-          colors: [
-            ColoresApp.sobrePrimario.withValues(alpha: opacidad),
-            ColoresApp.sobrePrimario.withValues(alpha: 0),
-          ],
-        ).createShader(Rect.fromCircle(center: centro, radius: radio * 3));
-      canvas.drawCircle(centro, radio * 3, halo);
+          Offset(math.cos(chispa.angulo), math.sin(chispa.angulo)) *
+              size.height *
+              0.45 *
+              chispa.distancia *
+              avance;
+      _halo.color = ColoresApp.sobrePrimario.withValues(
+        alpha: ((1 - avance) * 0.9).clamp(0, 1),
+      );
+      canvas.drawCircle(centro, chispa.radio * 3, _halo);
     }
   }
 
   @override
   bool shouldRepaint(_PintorLucesSubiendo anterior) =>
-      anterior.progreso != progreso;
+      !identical(anterior.progreso, progreso) ||
+      !identical(anterior.chispas, chispas);
 }

@@ -37,7 +37,7 @@ class TarjetaRecuerdo extends StatelessWidget {
             color: ColoresApp.atenuado.withValues(alpha: 0.12),
           ),
         ),
-        clipBehavior: Clip.antiAlias,
+        clipBehavior: Clip.hardEdge,
         child: InkWell(
           onTap: alTocar,
           child: Column(
@@ -45,7 +45,9 @@ class TarjetaRecuerdo extends StatelessWidget {
             children: [
               AspectRatio(
                 aspectRatio: 1,
-                child: Stack(
+                child: Hero(
+                  tag: 'recuerdo-${recuerdo.id}',
+                  child: Stack(
                   fit: StackFit.expand,
                   children: [
                     MiniaturaRecuerdoFirmada(recuerdo: recuerdo),
@@ -62,6 +64,7 @@ class TarjetaRecuerdo extends StatelessWidget {
                         child: _MarcaSeleccion(marcado: marcado),
                       ),
                   ],
+                  ),
                 ),
               ),
               Padding(

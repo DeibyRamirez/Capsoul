@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../nucleo/componentes/imagen_red_capsoul.dart';
 import '../../../../nucleo/componentes/onda_audio.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../elementos/dominio/tipo_elemento.dart';
@@ -99,10 +100,18 @@ class _PortadaMusica extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = recuerdo.musica?.portadaUrl;
     if (url != null) {
-      return Image.network(
-        url,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _iconoFallback(tamanoIcono),
+      return LayoutBuilder(
+        builder: (context, cajas) {
+          final ancho = cajas.maxWidth.isFinite ? cajas.maxWidth : 160.0;
+          final alto = cajas.maxHeight.isFinite ? cajas.maxHeight : ancho;
+          return ImagenRedCapsoul(
+            url: url,
+            ancho: ancho,
+            alto: alto,
+            ajuste: BoxFit.cover,
+            marcador: _iconoFallback(tamanoIcono),
+          );
+        },
       );
     }
     return _iconoFallback(tamanoIcono);

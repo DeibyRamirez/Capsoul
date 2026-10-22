@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/componentes/app_bar_capsoul.dart';
+import '../../../nucleo/componentes/imagen_red_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/infraestructura/cliente_funciones_api.dart';
@@ -248,12 +249,11 @@ class _Portada extends StatelessWidget {
     }
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
-      child: Image.network(
-        url,
-        width: 48,
-        height: 48,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => const Icon(Icons.album_outlined),
+      child: ImagenRedCapsoul(
+        url: url,
+        ancho: 48,
+        alto: 48,
+        marcador: const Icon(Icons.album_outlined),
       ),
     );
   }
