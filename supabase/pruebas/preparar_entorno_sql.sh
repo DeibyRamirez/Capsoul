@@ -18,7 +18,10 @@ sudo apt-get install -y \
 if ! [ -f /usr/lib/postgresql/16/lib/pg_net.so ]; then
   tmp="$(mktemp -d)"
   git clone --depth 1 --branch v0.14.0 https://github.com/supabase/pg_net.git "$tmp/pg_net"
-  make -C "$tmp/pg_net" install
+  # El Postgres de Ubuntu trae LLVM y el bitcode llama a clang de la misma
+  # versión con la que se compiló (en el runner, /usr/bin/clang-19). pg_net no
+  # necesita JIT: with_llvm=no omite ese paso y el job no depende de ese clang.
+  sudo make -C "$tmp/pg_net" with_llvm=no PG_CONFIG="$(command -v pg_config)" install
   rm -rf "$tmp"
 fi
 
