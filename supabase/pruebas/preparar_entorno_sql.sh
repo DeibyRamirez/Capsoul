@@ -25,6 +25,16 @@ if ! [ -f /usr/lib/postgresql/16/lib/pg_net.so ]; then
   rm -rf "$tmp"
 fi
 
+# En el runner el paquete ya está instalado, pero el clúster no arranca solo.
+if ! sudo pg_isready -q; then
+  if ! sudo pg_lsclusters --no-header | grep -q '^16[[:space:]]\+main'; then
+    sudo pg_createcluster 16 main --start
+  else
+    sudo pg_ctlcluster 16 main start
+  fi
+fi
+sudo pg_isready -q
+
 conf="$(sudo -u postgres psql -Atqc 'show config_file')"
 if ! sudo grep -q "^shared_preload_libraries" "$conf"; then
   echo "shared_preload_libraries = 'pg_cron,pg_net'" | sudo tee -a "$conf" >/dev/null
