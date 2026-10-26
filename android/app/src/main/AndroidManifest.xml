@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Internet en release (Supabase, Cloudinary y reproduccion de medios); en debug ya lo agrega el manifiesto de depuracion. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13+: el aviso push pide este permiso en tiempo de ejecución. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Captura de elementos: foto y video (camara) y notas de voz / audio del video (microfono). -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -57,7 +59,29 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="capsoul" android:host="amistad" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="capsoul" android:host="herencia" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="capsoul" android:host="reto" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="capsoul" android:host="amigos" />
+            </intent-filter>
         </activity>
+        <!-- Mismo id que el canal de alta importancia y que FCM HTTP v1. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="capsoul_avisos" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

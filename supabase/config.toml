@@ -11,5 +11,6 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.enviar-avisos]
-# Invocada por pg_cron con apikey de servicio; no exige JWT de usuario.
+# verify_jwt apagado: la puerta es el header x-llave-cron (secreto LLAVE_CRON).
+# pg_cron la llama cada minuto; no exige JWT de usuario.
 verify_jwt = false

@@ -20,6 +20,7 @@
 | 7 | [07-patrones-y-convenciones.md](07-patrones-y-convenciones.md) | Riverpod, go_router, nomenclatura, reglas de código |
 | 8 | [modelo_er.md](modelo_er.md) | Modelo entidad-relación de Postgres (v1.4) |
 | — | [migraciones.md](migraciones.md) | Orden y estado de migraciones `000001`–`000015` |
+| — | [avisos-push-despliegue.md](avisos-push-despliegue.md) | Secretos FCM, Vault, cron y aviso de prueba (DEV-100) |
 
 ## Otros recursos
 
