@@ -58,14 +58,35 @@ class RepositorioCapsulasFalso implements RepositorioCapsulas {
   Future<Capsula?> obtenerCapsula(String id) async => capsulas[id];
 
   final List<CapsulaRecibida> recibidas = [];
-  final List<({String id, String titulo, String? mensaje, DateTime fecha, List<String> recuerdos, List<String> destinatarios})>
-      actualizaciones = [];
+  final List<
+    ({
+      String id,
+      String titulo,
+      String? mensaje,
+      DateTime fecha,
+      List<String> recuerdos,
+      List<String> destinatarios,
+    })
+  >
+  actualizaciones = [];
 
   @override
   Future<List<CapsulaRecibida>> listarRecibidas() async => recibidas;
 
   @override
   Future<void> marcarAbierta(String idCapsula) async {}
+
+  final List<String> avisosMarcados = [];
+
+  @override
+  Future<void> marcarAvisoLeido(String idCapsula) async {
+    avisosMarcados.add(idCapsula);
+    final indice = recibidas.indexWhere((capsula) => capsula.id == idCapsula);
+    if (indice < 0) return;
+    recibidas[indice] = recibidas[indice].copiarCon(
+      leidaEn: DateTime.utc(2026, 10, 3),
+    );
+  }
 
   @override
   Future<void> actualizarMetadatosCapsula(

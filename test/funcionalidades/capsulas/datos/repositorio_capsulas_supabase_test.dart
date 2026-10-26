@@ -58,21 +58,29 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   Future<void> eliminarCapsula(String id) async => capsulasBorradas.add(id);
 
   @override
-  Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(String autorId) async =>
-      [?filaLeida, {'id': 'rota'}];
+  Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(
+    String autorId,
+  ) async => [
+    ?filaLeida,
+    {'id': 'rota'},
+  ];
 
   @override
   Future<Map<String, dynamic>?> leerCapsulaConElementos(String id) async =>
       filaLeida;
 
   @override
-  Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios) async {
+  Future<void> actualizarCapsula(
+    String id,
+    Map<String, dynamic> cambios,
+  ) async {
     operaciones.add('actualizar:$id');
   }
 
   @override
-  Future<List<Map<String, dynamic>>> leerAperturasDeUsuario(String usuarioId) async =>
-      aperturas;
+  Future<List<Map<String, dynamic>>> leerAperturasDeUsuario(
+    String usuarioId,
+  ) async => aperturas;
 
   @override
   Future<List<Map<String, dynamic>>> leerCapsulasRecibidas() async =>
@@ -81,6 +89,11 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   @override
   Future<void> marcarCapsulaAbierta(String idCapsula) async {
     operaciones.add('abierta:$idCapsula');
+  }
+
+  @override
+  Future<void> marcarAvisoLeido(String idCapsula) async {
+    operaciones.add('leido:$idCapsula');
   }
 
   @override
@@ -105,12 +118,12 @@ void main() {
   final foto = recuerdoPrueba('r-foto');
 
   NuevaCapsula nueva(List<Recuerdo> recuerdos) => NuevaCapsula(
-        titulo: '  Para Jacobo ',
-        mensaje: '  ',
-        fechaApertura: DateTime.utc(2046, 8, 13, 13),
-        recuerdos: recuerdos,
-        destinatariosUsuarioIds: const ['uid-amigo'],
-      );
+    titulo: '  Para Jacobo ',
+    mensaje: '  ',
+    fechaApertura: DateTime.utc(2046, 8, 13, 13),
+    recuerdos: recuerdos,
+    destinatariosUsuarioIds: const ['uid-amigo'],
+  );
 
   setUp(() {
     var siguienteId = 0;
@@ -138,16 +151,16 @@ void main() {
     expect(acceso.capsulas.single['autor_id'], 'uid-123');
     expect(acceso.capsulas.single['titulo'], 'Para Jacobo');
     expect(acceso.capsulas.single['mensaje'], isNull);
-    expect(acceso.capsulas.single['fecha_apertura'], '2046-08-13T13:00:00.000Z');
+    expect(
+      acceso.capsulas.single['fecha_apertura'],
+      '2046-08-13T13:00:00.000Z',
+    );
     expect(acceso.enlaces, [
       {'capsula_id': 'id-1', 'elemento_id': 'r-foto', 'orden': 0},
       {'capsula_id': 'id-1', 'elemento_id': 'r-nota', 'orden': 1},
     ]);
     expect(acceso.destinatarios, [
-      {
-        'capsula_id': 'id-1',
-        'usuario_id': 'uid-amigo',
-      },
+      {'capsula_id': 'id-1', 'usuario_id': 'uid-amigo'},
     ]);
   });
 
@@ -178,29 +191,25 @@ void main() {
     );
     expect(acceso.operaciones, contains('borrar-enlaces:id-1'));
     expect(acceso.operaciones, contains('borrar-destinatarios:id-1'));
-    expect(
-      acceso.enlaces.where((e) => e['capsula_id'] == 'id-1'),
-      [
-        {'capsula_id': 'id-1', 'elemento_id': 'r-nota', 'orden': 0},
-      ],
-    );
-    expect(
-      acceso.destinatarios.where((d) => d['capsula_id'] == 'id-1'),
-      [
-        {'capsula_id': 'id-1', 'usuario_id': 'uid-amigo'},
-        {'capsula_id': 'id-1', 'usuario_id': 'uid-otro'},
-      ],
-    );
+    expect(acceso.enlaces.where((e) => e['capsula_id'] == 'id-1'), [
+      {'capsula_id': 'id-1', 'elemento_id': 'r-nota', 'orden': 0},
+    ]);
+    expect(acceso.destinatarios.where((d) => d['capsula_id'] == 'id-1'), [
+      {'capsula_id': 'id-1', 'usuario_id': 'uid-amigo'},
+      {'capsula_id': 'id-1', 'usuario_id': 'uid-otro'},
+    ]);
   });
 
   test('valida antes de escribir nada', () async {
     await expectLater(
       repositorio.crearCapsula(nueva(const [])),
-      throwsA(isA<FalloCapsula>().having(
-        (f) => f.codigo,
-        'codigo',
-        FalloCapsula.codigoSinElementos,
-      )),
+      throwsA(
+        isA<FalloCapsula>().having(
+          (f) => f.codigo,
+          'codigo',
+          FalloCapsula.codigoSinElementos,
+        ),
+      ),
     );
     expect(acceso.operaciones, isEmpty);
   });
@@ -220,18 +229,21 @@ void main() {
 
   test('si la cápsula no se inserta, no hay nada que deshacer', () async {
     acceso.falloEnCapsula = const ErrorPostgrest(
-      mensaje: 'new row violates row-level security policy for table '
+      mensaje:
+          'new row violates row-level security policy for table '
           '"capsulas"',
       codigo: '42501',
     );
 
     await expectLater(
       repositorio.crearCapsula(nueva([nota])),
-      throwsA(isA<FalloCapsula>().having(
-        (f) => f.codigo,
-        'codigo',
-        FalloCapsula.codigoPermisoDenegado,
-      )),
+      throwsA(
+        isA<FalloCapsula>().having(
+          (f) => f.codigo,
+          'codigo',
+          FalloCapsula.codigoPermisoDenegado,
+        ),
+      ),
     );
     expect(acceso.capsulasBorradas, isEmpty);
   });
@@ -244,11 +256,13 @@ void main() {
 
     await expectLater(
       repositorio.crearCapsula(nueva([nota])),
-      throwsA(isA<FalloCapsula>().having(
-        (f) => f.codigo,
-        'codigo',
-        FalloCapsula.codigoDemasiadosElementos,
-      )),
+      throwsA(
+        isA<FalloCapsula>().having(
+          (f) => f.codigo,
+          'codigo',
+          FalloCapsula.codigoDemasiadosElementos,
+        ),
+      ),
     );
     expect(acceso.capsulasBorradas, ['id-1']);
   });
@@ -271,7 +285,8 @@ void main() {
       expect(
         RepositorioCapsulasSupabase.traducirError(
           ErrorPostgrest(
-            mensaje: 'new row violates row-level security policy for table '
+            mensaje:
+                'new row violates row-level security policy for table '
                 '"elementos"',
             codigo: '42501',
           ),
@@ -281,7 +296,8 @@ void main() {
       expect(
         RepositorioCapsulasSupabase.traducirError(
           ErrorPostgrest(
-            mensaje: 'new row violates row-level security policy for table '
+            mensaje:
+                'new row violates row-level security policy for table '
                 '"capsula_elementos"',
             codigo: '42501',
           ),
@@ -329,11 +345,7 @@ void main() {
       'liberada_en': null,
       'creado_en': '2026-10-03T15:00:00+00:00',
       'capsula_destinatarios': [
-        {
-          'usuario_id': 'uid-123',
-          'correo_externo': null,
-          'abierta_en': null,
-        },
+        {'usuario_id': 'uid-123', 'correo_externo': null, 'abierta_en': null},
         {
           'usuario_id': null,
           'correo_externo': 'otro@x.co',
@@ -365,7 +377,10 @@ void main() {
             'contenido_texto': 'Nota',
           },
         },
-        {'orden': 2, 'elementos': {'id': 'e3', 'tipo': 'desconocido'}},
+        {
+          'orden': 2,
+          'elementos': {'id': 'e3', 'tipo': 'desconocido'},
+        },
       ],
     };
 
@@ -402,11 +417,13 @@ void main() {
         {
           'capsula_id': 'c9',
           'abierta_en': '2046-08-13T14:00:00Z',
+          'leida_en': '2046-08-13T15:00:00Z',
         },
       ];
       final lista = await repositorio.listarRecibidas();
       expect(lista.single.estaAbierta, isTrue);
       expect(lista.single.abiertaEn, DateTime.utc(2046, 8, 13, 14));
+      expect(lista.single.leidaEn, DateTime.utc(2046, 8, 13, 15));
     });
 
     test('descarta filas corruptas al listar', () async {
