@@ -13,6 +13,7 @@ class CapsulaRecibida {
     required this.estado,
     this.titulo,
     this.liberadaEn,
+    this.abiertaEn,
   });
 
   final String id;
@@ -23,7 +24,12 @@ class CapsulaRecibida {
   final EstadoCapsula estado;
   final DateTime? liberadaEn;
 
+  /// `capsula_destinatarios.abierta_en` de quien mira el feed.
+  final DateTime? abiertaEn;
+
   bool get estaLiberada => estado == EstadoCapsula.liberada;
+
+  bool get estaAbierta => estaLiberada && abiertaEn != null;
 
   String get tituloVisible =>
       estaLiberada && titulo != null && titulo!.trim().isNotEmpty
@@ -47,6 +53,7 @@ class CapsulaRecibida {
     if (parsed == null) return null;
     final titulo = fila['titulo'];
     final liberada = fila['liberada_en'];
+    final abierta = fila['abierta_en'];
     return CapsulaRecibida(
       id: id,
       autorId: autorId,
@@ -55,6 +62,7 @@ class CapsulaRecibida {
       fechaApertura: parsed,
       estado: estado,
       liberadaEn: liberada is String ? DateTime.tryParse(liberada) : null,
+      abiertaEn: abierta is String ? DateTime.tryParse(abierta) : null,
     );
   }
 }

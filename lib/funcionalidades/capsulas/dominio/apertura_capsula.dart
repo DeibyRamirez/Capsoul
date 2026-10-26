@@ -13,7 +13,8 @@ enum ModoApertura {
   /// puede ver su propio contenido.
   selladaParaAutor,
 
-  /// La fecha llegó (o el servidor la liberó): se puede abrir.
+  /// El servidor ya la pasó a `liberada`: se puede abrir.
+  /// La fecha vencida no basta; hasta que corre el cron sigue sellada.
   lista,
 }
 
@@ -23,10 +24,7 @@ ModoApertura calcularModoApertura(
   required String? uidActual,
   required DateTime ahora,
 }) {
-  final fecha = capsula.fechaApertura;
-  final llego = capsula.estado == EstadoCapsula.liberada ||
-      (fecha != null && !fecha.isAfter(ahora));
-  if (llego) return ModoApertura.lista;
+  if (capsula.estado == EstadoCapsula.liberada) return ModoApertura.lista;
   return capsula.autorId == uidActual
       ? ModoApertura.selladaParaAutor
       : ModoApertura.bloqueada;

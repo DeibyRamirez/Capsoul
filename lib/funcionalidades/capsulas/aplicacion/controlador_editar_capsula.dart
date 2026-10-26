@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
-import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../elementos/dominio/limites_medios.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
@@ -137,11 +136,7 @@ class ControladorEditarCapsula extends Notifier<EstadoEditarCapsula> {
       state = state.copiarCon(error: const FalloCapsula.fechaInvalida());
       return false;
     }
-    final uidAutor = ref.read(proveedorRepositorioAutenticacion).usuarioActual?.uid;
-    final falloDest = ValidadorCapsula.validarDestinatarios(
-      destinatarios,
-      uidAutor: uidAutor,
-    );
+    final falloDest = ValidadorCapsula.validarDestinatarios(destinatarios);
     if (falloDest != null) {
       state = state.copiarCon(error: falloDest);
       return false;

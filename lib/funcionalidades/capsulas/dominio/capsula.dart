@@ -17,6 +17,8 @@ class Capsula {
     this.liberadaEn,
     this.elementos = const [],
     this.destinatariosUsuarioIds = const [],
+    this.tieneCorreoExterno = false,
+    this.abiertaEn,
   });
 
   final String id;
@@ -34,6 +36,12 @@ class Capsula {
   /// Destinatarios registrados (`capsula_destinatarios.usuario_id`).
   final List<String> destinatariosUsuarioIds;
 
+  /// Hay al menos un `correo_externo` en `capsula_destinatarios`.
+  final bool tieneCorreoExterno;
+
+  /// Primera vez que un destinatario la abrió (`abierta_en`), si ya ocurrió.
+  final DateTime? abiertaEn;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -47,7 +55,9 @@ class Capsula {
           other.liberadaEn == liberadaEn &&
           other.creadoEn == creadoEn &&
           listEquals(other.elementos, elementos) &&
-          listEquals(other.destinatariosUsuarioIds, destinatariosUsuarioIds);
+          listEquals(other.destinatariosUsuarioIds, destinatariosUsuarioIds) &&
+          other.tieneCorreoExterno == tieneCorreoExterno &&
+          other.abiertaEn == abiertaEn;
 
   @override
   int get hashCode => Object.hash(
@@ -61,6 +71,8 @@ class Capsula {
         creadoEn,
         Object.hashAll(elementos),
         Object.hashAll(destinatariosUsuarioIds),
+        tieneCorreoExterno,
+        abiertaEn,
       );
 
   @override

@@ -34,18 +34,15 @@ abstract final class ValidadorCapsula {
     return null;
   }
 
+  /// Acepta al autor en la lista: si es el único, la cápsula es para mí mismo.
   static FalloCapsula? validarDestinatarios(
-    List<String> destinatariosUsuarioIds, {
-    String? uidAutor,
-  }) {
+    List<String> destinatariosUsuarioIds,
+  ) {
     final ids = <String>{};
     for (final raw in destinatariosUsuarioIds) {
       final id = raw.trim();
       if (id.isEmpty) return const FalloCapsula.destinatarioInvalido();
-      if (!ids.add(id)) continue;
-      if (uidAutor != null && uidAutor.isNotEmpty && uidAutor == id) {
-        return const FalloCapsula.destinatarioPropio();
-      }
+      ids.add(id);
     }
     if (ids.isEmpty) return const FalloCapsula.destinatarioInvalido();
     return null;
@@ -55,12 +52,11 @@ abstract final class ValidadorCapsula {
   static FalloCapsula? validar(
     NuevaCapsula nueva, {
     required DateTime ahora,
-    String? uidAutor,
   }) {
     return validarTitulo(nueva.titulo) ??
         validarFecha(nueva.fechaApertura, ahora: ahora) ??
         validarCantidad(nueva.recuerdos.length) ??
-        validarDestinatarios(nueva.destinatariosUsuarioIds, uidAutor: uidAutor);
+        validarDestinatarios(nueva.destinatariosUsuarioIds);
   }
 
   /// Primer día que se puede elegir en el selector de fecha (mañana).

@@ -4,7 +4,8 @@
 \set ON_ERROR_STOP 1
 insert into auth.users (id, email, email_confirmed_at) values
   ('11111111-1111-1111-1111-111111111111', 'ana@capsoul.app', now()),
-  ('22222222-2222-2222-2222-222222222222', 'beto@capsoul.app', now());
+  ('22222222-2222-2222-2222-222222222222', 'beto@capsoul.app', now())
+on conflict do nothing;
 
 create or replace function pg_temp.espera_error(sql text, estado text) returns text language plpgsql as $$
 begin
@@ -31,7 +32,7 @@ with s as (insert into public.momentos (id, autor_id, titulo) values ('d0000000-
 
 -- 2. fecha_recuerdo por defecto y título
 insert into public.elementos (id, propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, bytes, ancho, alto)
-  values ('e0000000-0000-0000-0000-000000000002', auth.uid(), 'foto', 'capsoul/f1', 'image', 1000, 1600, 1200);
+  values ('e0000000-0000-0000-0000-000000000002', auth.uid(), 'foto', 'capsoul/recuerdo-f1', 'image', 1000, 1600, 1200);
 select 'OK fecha por defecto ' || fecha_recuerdo from public.elementos
   where id = 'e0000000-0000-0000-0000-000000000002' and fecha_recuerdo = (creado_en at time zone 'utc')::date;
 select pg_temp.espera_error($q$insert into public.elementos (propietario_id, tipo, contenido_texto, titulo) values (auth.uid(), 'texto', 'x', repeat('t', 121))$q$, '23514');

@@ -1,18 +1,41 @@
--- Capsoul · Pruebas nombre_usuario y solicitud por @ (requiere JWT de prueba)
+-- Capsoul · nombre_usuario y solicitud de amistad por id (000010).
+\set ON_ERROR_STOP 1
 
--- insert test users via postgres role omitted; usar IDs del fixture de pruebas_amistad_compartir
+insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) values
+  ('00000000-0000-0000-0000-00000000030a', 'nombre-a@x.co', '{"nombre_visible":"NombreA"}', now()),
+  ('00000000-0000-0000-0000-00000000030b', 'nombre-b@x.co', '{"nombre_visible":"NombreB"}', now())
+on conflict do nothing;
 
-\set request.jwt.claim.sub '00000000-0000-0000-0000-00000000020a'
-select public.establecer_mi_nombre_usuario('sharea');
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000030a', false);
+select public.establecer_mi_nombre_usuario('nombrea');
 
-\set request.jwt.claim.sub '00000000-0000-0000-0000-00000000020b'
-select public.establecer_mi_nombre_usuario('shareb');
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000030b', false);
+select public.establecer_mi_nombre_usuario('nombreb');
 
-\set request.jwt.claim.sub '00000000-0000-0000-0000-00000000020b'
-select usuario_id, nombre_visible from public.resolver_usuario_por_arroba('sharea');
+do $$
+declare encontrado uuid;
+begin
+  select usuario_id into encontrado
+  from public.resolver_usuario_por_arroba('nombrea');
+  if encontrado is distinct from '00000000-0000-0000-0000-00000000030a' then
+    raise exception 'FALLO: no se resolvió @nombrea';
+  end if;
+end $$;
 
-\set request.jwt.claim.sub '00000000-0000-0000-0000-00000000020b'
-select public.enviar_solicitud_amistad('00000000-0000-0000-0000-00000000020a');
+select public.enviar_solicitud_amistad('00000000-0000-0000-0000-00000000030a');
+reset role;
 
-\set request.jwt.claim.sub '00000000-0000-0000-0000-00000000020a'
-select amistad_id, solicitante_nombre from public.mis_solicitudes_amistad_pendientes();
+do $$
+begin
+  if not exists (
+    select 1 from public.amistades
+    where solicitante_id = '00000000-0000-0000-0000-00000000030b'
+      and receptor_id = '00000000-0000-0000-0000-00000000030a'
+      and estado = 'pendiente'
+  ) then
+    raise exception 'FALLO: no quedó la solicitud pendiente';
+  end if;
+end $$;
+
+select 'OK nombre_usuario' as r;

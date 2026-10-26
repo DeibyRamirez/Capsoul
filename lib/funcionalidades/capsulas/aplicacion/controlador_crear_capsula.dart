@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
-import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../elementos/dominio/limites_medios.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
 import '../../retos/aplicacion/proveedores_retos.dart';
@@ -119,7 +118,6 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
       state = state.copiarCon(error: const FalloCapsula.fechaInvalida());
       return null;
     }
-    final uidAutor = ref.read(proveedorRepositorioAutenticacion).usuarioActual?.uid;
     final nueva = NuevaCapsula(
       titulo: titulo,
       mensaje: mensaje,
@@ -130,7 +128,6 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
     final fallo = ValidadorCapsula.validar(
       nueva,
       ahora: ahora,
-      uidAutor: uidAutor,
     );
     if (fallo != null) {
       state = state.copiarCon(error: fallo);

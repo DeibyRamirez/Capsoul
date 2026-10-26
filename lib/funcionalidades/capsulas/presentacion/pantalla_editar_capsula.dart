@@ -8,6 +8,7 @@ import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
+import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../elementos/dominio/tipo_elemento.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
 import '../../recuerdos/presentacion/componentes/hoja_nuevo_recuerdo.dart';
@@ -18,6 +19,7 @@ import '../dominio/estado_capsula.dart';
 import '../dominio/validador_capsula.dart';
 import 'componentes/botones_agregar_elemento.dart';
 import 'componentes/elegir_fecha_hora_apertura.dart';
+import 'componentes/interruptor_capsula_para_mi.dart';
 import 'componentes/selector_destinatarios_amigos.dart';
 import 'componentes/tarjeta_recuerdo_elegido.dart';
 
@@ -136,6 +138,9 @@ class _EstadoPantallaEditarCapsula extends ConsumerState<PantallaEditarCapsula> 
             return const Center(child: CircularProgressIndicator());
           }
 
+          final uid = ref.watch(
+            proveedorEstadoAutenticacion.select((e) => e.value?.uid),
+          );
           final fecha = estado.fechaApertura;
           final total = estado.recuerdos.length;
           final puedeAgregar = !estado.llena && !estado.guardando;
@@ -206,6 +211,12 @@ class _EstadoPantallaEditarCapsula extends ConsumerState<PantallaEditarCapsula> 
                 ),
               ),
               const SizedBox(height: 16),
+              InterruptorCapsulaParaMi(
+                seleccionados: estado.destinatariosUsuarioIds,
+                uidActual: uid,
+                deshabilitado: estado.guardando,
+                alCambiar: _controlador.elegirDestinatarios,
+              ),
               SelectorDestinatariosAmigos(
                 seleccionados: estado.destinatariosUsuarioIds,
                 deshabilitado: estado.guardando,

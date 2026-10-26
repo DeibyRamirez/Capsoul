@@ -19,12 +19,18 @@ import '../../../ayudantes/falsos_recuerdos.dart';
 
 final _ahora = DateTime(2026, 10, 3, 10);
 
-Capsula _capsula({DateTime? fechaApertura}) => Capsula(
+Capsula _capsula({
+  DateTime? fechaApertura,
+  EstadoCapsula estado = EstadoCapsula.programada,
+  DateTime? liberadaEn,
+}) =>
+    Capsula(
       id: 'c1',
       autorId: 'uid-123',
       titulo: 'Para Jacobo',
       mensaje: 'Quiero que sepas que eres lo mejor que me ha pasado.',
-      estado: EstadoCapsula.programada,
+      estado: estado,
+      liberadaEn: liberadaEn,
       creadoEn: DateTime(2026, 8, 13),
       fechaApertura: fechaApertura ?? DateTime(2046, 8, 13, 8),
       elementos: [
@@ -120,24 +126,44 @@ void main() {
     expect(find.text('Video'), findsNothing);
   });
 
-  testWidgets('fecha pasada: el autor ve el contenido sin abrir cápsula',
+  testWidgets('fecha pasada sin liberar: el autor sigue viendo el sello',
       (tester) async {
     await _montar(
       tester,
       capsula: _capsula(fechaApertura: _ahora.subtract(const Duration(hours: 1))),
     );
 
-    expect(find.text('Se abrió el'), findsOneWidget);
+    expect(find.text('Abrir en'), findsOneWidget);
+    expect(find.text('Aún no liberada'), findsOneWidget);
+    expect(find.text('Se abrió el'), findsNothing);
+    expect(find.text('Ya puedes abrirla'), findsNothing);
     expect(find.text('Abrir cápsula'), findsNothing);
     expect(find.text('Video'), findsOneWidget);
     expect(find.text('Nota de voz'), findsOneWidget);
   });
 
-  testWidgets('cuando llega la fecha el invitado abre con la animación del frasco',
+  testWidgets('fecha pasada sin liberar: el invitado no puede abrir',
       (tester) async {
     await _montar(
       tester,
       capsula: _capsula(fechaApertura: _ahora.subtract(const Duration(hours: 1))),
+      uid: 'invitado-uid',
+    );
+
+    expect(find.text('Abrir cápsula'), findsNothing);
+    expect(find.text('Ya puedes abrirla'), findsNothing);
+    expect(find.text('Video'), findsNothing);
+  });
+
+  testWidgets('liberada: el invitado abre con la animación del frasco',
+      (tester) async {
+    await _montar(
+      tester,
+      capsula: _capsula(
+        fechaApertura: _ahora.subtract(const Duration(hours: 1)),
+        estado: EstadoCapsula.liberada,
+        liberadaEn: _ahora.subtract(const Duration(minutes: 5)),
+      ),
       uid: 'invitado-uid',
     );
 

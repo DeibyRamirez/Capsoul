@@ -1,13 +1,11 @@
+-- Capsoul · Amistad aceptada, cápsula compartida e invitación (000009).
 \set ON_ERROR_STOP 1
--- Requiere migración 000009. Usuarios A y B de pruebas_rls o nuevos.
 
 insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) values
- ('00000000-0000-0000-0000-00000000020a','share-a@x.co','{"nombre_visible":"ShareA"}', now()),
- ('00000000-0000-0000-0000-00000000020b','share-b@x.co','{"nombre_visible":"ShareB"}', now())
- on conflict do nothing;
-
-\set role authenticated
-\set request.jwt.claim.sub '00000000-0000-0000-0000-00000000020a'
+  ('00000000-0000-0000-0000-00000000020a', 'share-a@x.co', '{"nombre_visible":"ShareA"}', now()),
+  ('00000000-0000-0000-0000-00000000020b', 'share-b@x.co', '{"nombre_visible":"ShareB"}', now()),
+  ('00000000-0000-0000-0000-00000000020c', 'share-c@x.co', '{"nombre_visible":"ShareC"}', now())
+on conflict do nothing;
 
 insert into public.amistades (solicitante_id, receptor_id, estado, respondido_en)
 values (
@@ -15,16 +13,28 @@ values (
   '00000000-0000-0000-0000-00000000020b',
   'aceptada',
   now()
-) on conflict do nothing;
+)
+on conflict do nothing;
 
-select count(*) as amigos_a from public.mis_amigos();
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000020a', false);
 
-insert into public.elementos (id, propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso)
-values (
+do $$
+declare n integer;
+begin
+  select count(*) into n from public.mis_amigos();
+  if n < 1 then
+    raise exception 'FALLO: A no ve a su amigo aceptado';
+  end if;
+end $$;
+
+insert into public.elementos (
+  id, propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, bytes, ancho, alto
+) values (
   '12000000-0000-0000-0000-000000000001',
   '00000000-0000-0000-0000-00000000020a',
-  'foto', 'capsoul/share/1', 'image'
-) on conflict do nothing;
+  'foto', 'capsoul/share/1', 'image', 1000, 1600, 1200
+);
 
 insert into public.capsulas (id, autor_id, titulo, mensaje, fecha_apertura, estado)
 values (
@@ -34,13 +44,13 @@ values (
   'hola',
   now() + interval '1 day',
   'programada'
-) on conflict do nothing;
+);
 
 insert into public.capsula_elementos values (
   '22000000-0000-0000-0000-000000000001',
   '12000000-0000-0000-0000-000000000001',
   0
-) on conflict do nothing;
+);
 
 insert into public.capsula_destinatarios (capsula_id, usuario_id)
 values (
@@ -48,20 +58,31 @@ values (
   '00000000-0000-0000-0000-00000000020b'
 );
 
-\set request.jwt.claim.sub '00000000-0000-0000-0000-00000000020b'
-select count(*) as recibidas_b from public.capsulas_recibidas();
-select titulo from public.capsulas where id = '22000000-0000-0000-0000-000000000001';
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000020b', false);
 
-\echo '--- invitación amistad para usuario C'
-\set request.jwt.claim.sub '00000000-0000-0000-0000-00000000020a'
+do $$
+declare n integer;
+begin
+  select count(*) into n from public.capsulas_recibidas();
+  if n <> 1 then
+    raise exception 'FALLO: B debería ver 1 cápsula, vio %', n;
+  end if;
+end $$;
+
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000020a', false);
 select public.crear_invitacion_amistad(7) as token_invite \gset
 
-insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) values
- ('00000000-0000-0000-0000-00000000020c','share-c@x.co','{"nombre_visible":"ShareC"}', now())
- on conflict do nothing;
-
-\set request.jwt.claim.sub '00000000-0000-0000-0000-00000000020c'
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000020c', false);
 select public.aceptar_invitacion_amistad(:'token_invite');
-select count(*) as amigos_c_con_a from public.mis_amigos();
 
-reset role
+do $$
+declare n integer;
+begin
+  select count(*) into n from public.mis_amigos();
+  if n < 1 then
+    raise exception 'FALLO: C no quedó amigo de A';
+  end if;
+end $$;
+
+reset role;
+select 'OK amistad compartir' as r;
