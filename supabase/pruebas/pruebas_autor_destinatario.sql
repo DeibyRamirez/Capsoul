@@ -64,5 +64,62 @@ begin
   end if;
 end $$;
 
+insert into public.capsulas (id, autor_id, titulo, fecha_apertura, estado)
+values (
+  '96100000-0000-0000-0000-000000000002',
+  '96000000-0000-0000-0000-0000000000a1',
+  'Cápsula ajena',
+  now() + interval '2 days',
+  'borrador'
+);
+
+-- El amigo no edita la cápsula: no puede apuntarse, aunque sea amigo del autor.
+select set_config('request.jwt.claim.sub', '96000000-0000-0000-0000-0000000000b1', false);
+
+do $$
+begin
+  begin
+    insert into public.capsula_destinatarios (capsula_id, usuario_id)
+    values (
+      '96100000-0000-0000-0000-000000000002',
+      '96000000-0000-0000-0000-0000000000b1'
+    );
+    raise exception 'FALLO: un amigo se añadió a una cápsula que no edita';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $$;
+
 reset role;
+
+-- Defensa: si capsula_editable_por_mi dejara de exigir ser el autor, quien no
+-- es el autor ni su amigo tampoco puede apuntarse. La transacción se revierte
+-- para no dejar la función de prueba.
+begin;
+create or replace function privado.capsula_editable_por_mi(p_capsula uuid)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.capsulas c
+    where c.id = p_capsula and c.estado in ('borrador', 'programada')
+  );
+$$;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '96000000-0000-0000-0000-0000000000c1', true);
+
+do $$
+begin
+  begin
+    insert into public.capsula_destinatarios (capsula_id, usuario_id)
+    values (
+      '96100000-0000-0000-0000-000000000001',
+      '96000000-0000-0000-0000-0000000000c1'
+    );
+    raise exception 'FALLO: quien no es autor ni amigo se añadió como destinatario';
+  exception when insufficient_privilege then
+    null;
+  end;
+end $$;
+rollback;
+
 select 'OK autor destinatario' as r;
