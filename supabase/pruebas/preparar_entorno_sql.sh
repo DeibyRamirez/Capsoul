@@ -15,13 +15,20 @@ sudo apt-get install -y \
   git \
   ca-certificates
 
-if ! [ -f /usr/lib/postgresql/16/lib/pg_net.so ]; then
+pg_config_bin="$(command -v pg_config)"
+compartido="$("$pg_config_bin" --sharedir)/extension"
+# El .so puede quedar instalado sin pg_net--0.14.0.sql: el Makefile arma
+# DATA con un comodín antes de generar ese script, y CREATE EXTENSION
+# entonces no encuentra la versión 0.14.0.
+if ! [ -f /usr/lib/postgresql/16/lib/pg_net.so ] || ! [ -f "$compartido/pg_net--0.14.0.sql" ]; then
   tmp="$(mktemp -d)"
   git clone --depth 1 --branch v0.14.0 https://github.com/supabase/pg_net.git "$tmp/pg_net"
+  cp "$tmp/pg_net/sql/pg_net.sql" "$tmp/pg_net/sql/pg_net--0.14.0.sql"
   # El Postgres de Ubuntu trae LLVM y el bitcode llama a clang de la misma
   # versión con la que se compiló (en el runner, /usr/bin/clang-19). pg_net no
   # necesita JIT: with_llvm=no omite ese paso y el job no depende de ese clang.
-  sudo make -C "$tmp/pg_net" with_llvm=no PG_CONFIG="$(command -v pg_config)" install
+  sudo make -C "$tmp/pg_net" with_llvm=no PG_CONFIG="$pg_config_bin" install
+  sudo install -m 644 "$tmp/pg_net/sql/pg_net--0.14.0.sql" "$compartido/pg_net--0.14.0.sql"
   rm -rf "$tmp"
 fi
 
