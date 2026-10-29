@@ -66,8 +66,12 @@ select pg_temp.espera_error($q$insert into public.elementos (propietario_id, tip
 -- un audio pequeño todavía cabe (200 MB - 193 240 832 = 6 474 368)
 insert into public.elementos (propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, bytes, duracion_segundos)
   values (auth.uid(), 'audio', 'capsoul/cuota-a', 'video', 3000000, 200);
--- update de bytes también se valida
+-- authenticated no tiene GRANT de bytes (000007): el update se rechaza antes del trigger.
+select pg_temp.espera_error($q$update public.elementos set bytes = 20971520 where cloudinary_public_id = 'capsoul/cuota-a'$q$, '42501');
+reset role;
+-- el trigger de cuota sí corre para el rol que puede escribir la columna
 select pg_temp.espera_error($q$update public.elementos set bytes = 20971520 where cloudinary_public_id = 'capsoul/cuota-a'$q$, 'CAP01');
+set role authenticated;
 
 -- la cuota es por usuario: Beto empieza en 0
 select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);

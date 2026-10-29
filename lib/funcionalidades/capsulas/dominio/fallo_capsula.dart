@@ -18,11 +18,7 @@ class FalloCapsula implements FalloApp {
 
   const FalloCapsula.destinatarioInvalido()
       : this(codigoDestinatarioInvalido,
-            'Elige al menos un amigo que recibirá la cápsula.');
-
-  const FalloCapsula.destinatarioPropio()
-      : this(codigoDestinatarioPropio,
-            'La cápsula debe ir a otra persona.');
+            'Elige al menos un destinatario: tú o un amigo.');
 
   const FalloCapsula.demasiadosElementos()
       : this(codigoDemasiadosElementos,
@@ -58,7 +54,6 @@ class FalloCapsula implements FalloApp {
   static const String codigoFechaInvalida = 'fecha_invalida';
   static const String codigoSinElementos = 'sin_elementos';
   static const String codigoDestinatarioInvalido = 'destinatario_invalido';
-  static const String codigoDestinatarioPropio = 'destinatario_propio';
   static const String codigoDemasiadosElementos = 'demasiados_elementos';
   static const String codigoPermisoDenegado = 'permiso_denegado';
   static const String codigoPermisoRecuerdo = 'permiso_recuerdo';

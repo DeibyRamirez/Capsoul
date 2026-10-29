@@ -80,9 +80,10 @@ sequenceDiagram
 ## 4. Crear y programar una cápsula (autor)
 
 1. El autor elige recuerdos del banco o captura nuevos, título, mensaje y **fecha de apertura** futura.
-2. Elige **uno o más destinatarios** entre amigos aceptados (`mis_amigos` / selector en crear y editar cápsula). No hay búsqueda global de usuarios.
-3. El cliente inserta la cápsula en `borrador`, enlaza `capsula_elementos`, inserta filas en `capsula_destinatarios` con **`usuario_id`** (RLS exige amistad aceptada con el autor) y pasa a `programada`. La fecha de apertura incluye **día y hora** (hora local).
-4. El destinatario ve la cápsula en **Para mí** vía `capsulas_recibidas()` sin depender de vincular correo.
+2. Elige **uno o más destinatarios** entre amigos aceptados (`mis_amigos` / selector en crear y editar cápsula). Puede incluirse a sí mismo con «También para mí». No hay búsqueda global de usuarios.
+3. El cliente inserta la cápsula en `borrador`, enlaza `capsula_elementos`, inserta filas en `capsula_destinatarios` con **`usuario_id`** (amigo aceptado, o el propio autor desde la migración `20261026000016`) y pasa a `programada`. La fecha de apertura incluye **día y hora** (hora local).
+4. El feed tiene tres pestañas sin repetir la misma cápsula: **Mis cápsulas** (enviadas a otros, o todavía sin destinatario), **Para mí mismo** (el autor es el único destinatario) y **Para mí** (las envió otra persona, vía `capsulas_recibidas()`).
+5. La tarjeta usa `estado_capsula`. «Lista para abrir» solo aparece cuando el estado es `liberada`. Si la fecha ya pasó y sigue `programada`, se muestra «Aún no liberada» hasta que corra `liberar_capsulas_vencidas()`.
 
 **Archivos:** `funcionalidades/capsulas/`, `funcionalidades/amistades/`, migración `20261009000009_capsoul_amistad_compartir.sql`.
 

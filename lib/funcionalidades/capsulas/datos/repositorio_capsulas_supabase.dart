@@ -50,7 +50,6 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     final fallo = ValidadorCapsula.validar(
       nueva,
       ahora: _reloj(),
-      uidAutor: _uidActual(),
     );
     if (fallo != null) throw fallo;
 
@@ -132,11 +131,25 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
 
   @override
   Future<List<CapsulaRecibida>> listarRecibidas() async {
-    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    final uid = _uidActual();
+    if (uid == null) throw const FalloCapsula.sinSesion();
     try {
       final filas = await _acceso.leerCapsulasRecibidas();
+      final aperturas = await _acceso.leerAperturasDeUsuario(uid);
+      final abiertas = <String, String>{};
+      for (final fila in aperturas) {
+        final id = fila['capsula_id'];
+        final abierta = fila['abierta_en'];
+        if (id is String && abierta is String) abiertas[id] = abierta;
+      }
       return [
-        for (final fila in filas) ?CapsulaRecibida.desdeFilaRpc(fila),
+        for (final fila in filas)
+          ?CapsulaRecibida.desdeFilaRpc({
+            ...fila,
+            if (fila['capsula_id'] is String &&
+                abiertas.containsKey(fila['capsula_id'] as String))
+              'abierta_en': abiertas[fila['capsula_id'] as String],
+          }),
       ];
     } catch (error) {
       throw traducirError(error);
@@ -206,7 +219,6 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     if (falloCantidad != null) throw falloCantidad;
     final falloDest = ValidadorCapsula.validarDestinatarios(
       destinatariosUsuarioIds,
-      uidAutor: uid,
     );
     if (falloDest != null) throw falloDest;
 
@@ -288,12 +300,27 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
         for (final enlace in enlaces) ?recuerdoDesdeEnlace(enlace),
     ]..sort((a, b) => a.$1.compareTo(b.$1));
     final filasDest = fila['capsula_destinatarios'];
-    final destinatarios = <String>[
-      if (filasDest is List)
-        for (final filaDest in filasDest)
-          if (filaDest is Map)
-            if (filaDest['usuario_id'] is String) filaDest['usuario_id'] as String,
-    ];
+    final destinatarios = <String>[];
+    var tieneCorreoExterno = false;
+    DateTime? abiertaEn;
+    if (filasDest is List) {
+      for (final filaDest in filasDest) {
+        if (filaDest is! Map) continue;
+        final usuarioId = filaDest['usuario_id'];
+        if (usuarioId is String && usuarioId.isNotEmpty) {
+          destinatarios.add(usuarioId);
+        }
+        final correo = filaDest['correo_externo'];
+        if (correo is String && correo.trim().isNotEmpty) {
+          tieneCorreoExterno = true;
+        }
+        final abierta = _fecha(filaDest['abierta_en']);
+        if (abierta != null &&
+            (abiertaEn == null || abierta.isBefore(abiertaEn))) {
+          abiertaEn = abierta;
+        }
+      }
+    }
     return Capsula(
       id: id,
       autorId: autorId,
@@ -305,6 +332,8 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       creadoEn: creadoEn,
       elementos: List.unmodifiable([for (final (_, r) in ordenados) r]),
       destinatariosUsuarioIds: List.unmodifiable(destinatarios),
+      tieneCorreoExterno: tieneCorreoExterno,
+      abiertaEn: abiertaEn,
     );
   }
 

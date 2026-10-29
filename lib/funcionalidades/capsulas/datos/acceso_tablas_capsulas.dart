@@ -16,6 +16,9 @@ abstract interface class AccesoTablasCapsulas {
 
   Future<Map<String, dynamic>?> leerCapsulaConElementos(String id);
 
+  /// `abierta_en` del usuario en `capsula_destinatarios` (no viene en el RPC).
+  Future<List<Map<String, dynamic>>> leerAperturasDeUsuario(String usuarioId);
+
   Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios);
 
   Future<List<Map<String, dynamic>>> leerCapsulasRecibidas();
@@ -37,10 +40,17 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
   static const String columnasConElementos = '$columnasCapsula, '
       'capsula_elementos(orden, elementos($columnasRecuerdo))';
 
+  static const String columnasDestinatarios =
+      'capsula_destinatarios(usuario_id, correo_externo, abierta_en)';
+
+  static const String columnasLista = '$columnasCapsula, $columnasDestinatarios';
+
   static const String columnasConElementosYDestinatarios =
-      '$columnasConElementos, capsula_destinatarios(usuario_id)';
+      '$columnasConElementos, $columnasDestinatarios';
 
   static const int limiteLista = 50;
+
+  static const int limiteAperturas = 1000;
 
   final ClientePostgrest _cliente;
 
@@ -79,9 +89,8 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
   Future<List<Map<String, dynamic>>> leerCapsulasDeAutor(String autorId) {
     return _cliente
         .from('capsulas')
-        .seleccionar(columnasCapsula)
+        .seleccionar(columnasLista)
         .eq('autor_id', autorId)
-        .neq('estado', 'cancelada')
         .order('creado_en', ascendente: false)
         .limit(limiteLista)
         .ejecutar();
@@ -99,6 +108,16 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
   @override
   Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios) async {
     await _cliente.from('capsulas').actualizar(cambios).eq('id', id).ejecutar();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> leerAperturasDeUsuario(String usuarioId) {
+    return _cliente
+        .from('capsula_destinatarios')
+        .seleccionar('capsula_id, abierta_en')
+        .eq('usuario_id', usuarioId)
+        .limit(limiteAperturas)
+        .ejecutar();
   }
 
   @override

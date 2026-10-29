@@ -22,6 +22,8 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   Object? falloEnEnlaces;
   Object? falloEnDestinatarios;
   Map<String, dynamic>? filaLeida;
+  List<Map<String, dynamic>> filasRecibidas = [];
+  List<Map<String, dynamic>> aperturas = [];
 
   @override
   Future<void> insertarCapsula(Map<String, dynamic> fila) async {
@@ -69,7 +71,12 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> leerCapsulasRecibidas() async => [];
+  Future<List<Map<String, dynamic>>> leerAperturasDeUsuario(String usuarioId) async =>
+      aperturas;
+
+  @override
+  Future<List<Map<String, dynamic>>> leerCapsulasRecibidas() async =>
+      filasRecibidas;
 
   @override
   Future<void> marcarCapsulaAbierta(String idCapsula) async {
@@ -321,6 +328,18 @@ void main() {
       'estado': 'programada',
       'liberada_en': null,
       'creado_en': '2026-10-03T15:00:00+00:00',
+      'capsula_destinatarios': [
+        {
+          'usuario_id': 'uid-123',
+          'correo_externo': null,
+          'abierta_en': null,
+        },
+        {
+          'usuario_id': null,
+          'correo_externo': 'otro@x.co',
+          'abierta_en': '2046-08-14T10:00:00Z',
+        },
+      ],
       'capsula_elementos': [
         {
           'orden': 1,
@@ -363,6 +382,31 @@ void main() {
       );
       expect(capsula?.elementos[1].nombre, 'Canción');
       expect(capsula?.elementos[1].fechaRecuerdo, DateTime(2026, 9, 30));
+      expect(capsula?.destinatariosUsuarioIds, ['uid-123']);
+      expect(capsula?.tieneCorreoExterno, isTrue);
+      expect(capsula?.abiertaEn, DateTime.utc(2046, 8, 14, 10));
+    });
+
+    test('une abierta_en del destinatario al listado recibido', () async {
+      acceso.filasRecibidas = [
+        {
+          'capsula_id': 'c9',
+          'autor_id': 'otro',
+          'autor_nombre': 'Ana',
+          'fecha_apertura': '2046-08-13T13:00:00Z',
+          'estado': 'liberada',
+          'titulo': 'Hola',
+        },
+      ];
+      acceso.aperturas = [
+        {
+          'capsula_id': 'c9',
+          'abierta_en': '2046-08-13T14:00:00Z',
+        },
+      ];
+      final lista = await repositorio.listarRecibidas();
+      expect(lista.single.estaAbierta, isTrue);
+      expect(lista.single.abiertaEn, DateTime.utc(2046, 8, 13, 14));
     });
 
     test('descarta filas corruptas al listar', () async {

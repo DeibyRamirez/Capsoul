@@ -10,7 +10,7 @@ select id, nombre_visible from public.usuarios order by 1;
 
 -- Como A
 set role authenticated; set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
-insert into public.elementos (id, propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso) values ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-00000000000a','foto','capsoul/a/1','image');
+insert into public.elementos (id, propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, bytes, ancho, alto) values ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-00000000000a','foto','capsoul/a/1','image', 1000, 1600, 1200);
 insert into public.capsulas (id, autor_id, titulo, mensaje, fecha_apertura, estado) values ('20000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-00000000000a','Para Beto','secreto', now()+interval '1 hour','programada');
 insert into public.capsula_elementos values ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001',0);
 insert into public.capsula_destinatarios (capsula_id, usuario_id) values ('20000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-00000000000b');

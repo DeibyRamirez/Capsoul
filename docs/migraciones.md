@@ -23,6 +23,7 @@ Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). 
 | `20261016000013` | Foto de perfil en amigos |
 | `20261016000014` | Legado: vínculos cápsulas y RPC |
 | `20261016000015` | `musica_preview_proveedor` |
+| `20261026000016` | El autor puede ser destinatario de su cápsula (`capsula_destinatarios_crear`) |
 
 El estado **aplicado en remoto** puede ir por detrás del repo; usar `supabase migration list` antes de cada release.
 

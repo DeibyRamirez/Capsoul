@@ -41,3 +41,13 @@ jobs:
       - run: deno test supabase/functions/firmar-subida/
       - run: deno test supabase/functions/buscar-musica/
       - run: deno test supabase/functions/enviar-avisos/
+
+  sql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar Postgres local
+        run: bash supabase/pruebas/preparar_entorno_sql.sh
+      - name: Migraciones y aserciones
+        run: bash supabase/pruebas/ejecutar.sh

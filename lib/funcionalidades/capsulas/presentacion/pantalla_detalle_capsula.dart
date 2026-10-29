@@ -148,6 +148,10 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
     final modo = calcularModoApertura(capsula, uidActual: uid, ahora: reloj());
     final fecha = capsula.fechaApertura;
     final sellada = modo != ModoApertura.lista;
+    final esperaLiberacion = sellada &&
+        fecha != null &&
+        !fecha.isAfter(reloj()) &&
+        capsula.estado != EstadoCapsula.liberada;
     final mensaje = capsula.mensaje?.trim();
     final textoMensaje =
         (mensaje == null || mensaje.isEmpty) ? 'Sin mensaje.' : mensaje;
@@ -166,13 +170,15 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
                 : describirHorizonte(capsula.creadoEn, fecha),
             fechaApertura: fecha == null ? null : formatearFechaCorta(fecha),
             sellada: sellada,
-            cuentaRegresiva: sellada && fecha != null
-                ? CuentaRegresiva(
-                    fechaApertura: fecha,
-                    reloj: reloj,
-                    alLlegar: () => setState(() {}),
-                  )
-                : null,
+            cuentaRegresiva: !sellada || fecha == null
+                ? null
+                : esperaLiberacion
+                    ? const Text('Aún no liberada')
+                    : CuentaRegresiva(
+                        fechaApertura: fecha,
+                        reloj: reloj,
+                        alLlegar: () => setState(() {}),
+                      ),
           ),
         ),
         SliverPadding(

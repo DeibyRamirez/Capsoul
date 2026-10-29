@@ -32,14 +32,22 @@ void main() {
       );
     });
 
-    test('la fecha llegó o el servidor la liberó: lista para abrir', () {
+    test('la fecha vencida no abre: solo el estado liberada', () {
       expect(
         calcularModoApertura(
           capsula(fecha: ahora.subtract(const Duration(minutes: 1))),
           uidActual: 'otro',
           ahora: ahora,
         ),
-        ModoApertura.lista,
+        ModoApertura.bloqueada,
+      );
+      expect(
+        calcularModoApertura(
+          capsula(fecha: ahora.subtract(const Duration(minutes: 1))),
+          uidActual: 'autor',
+          ahora: ahora,
+        ),
+        ModoApertura.selladaParaAutor,
       );
       expect(
         calcularModoApertura(
