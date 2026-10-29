@@ -17,6 +17,7 @@ Capsoul solo accede al dispositivo cuando el usuario inicia una acción (captura
 | `READ_MEDIA_AUDIO` | Selector de archivos | Elegir audio | Importar nota de voz/archivo | Solo el archivo elegido |
 | `READ_EXTERNAL_STORAGE` (API ≤ 32) | — | Galería en Android antiguo | Igual que lectura de medios | Solo el archivo elegido |
 | `INTERNET` | Red | Uso normal de la app | Auth, API, subida y reproducción | Tráfico cifrado (HTTPS) |
+| `POST_NOTIFICATIONS` (Android 13+) | Alertas | Al iniciar sesión en el teléfono | Avisar cápsula liberada, amistad, legado o reto | Solo el token FCM del dispositivo |
 
 Los plugins `image_picker` y `file_picker` muestran el diálogo del sistema; no usamos `permission_handler` de forma global.
 

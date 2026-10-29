@@ -7,7 +7,10 @@ import '../infraestructura/cliente_postgrest.dart';
 /// Registro de tokens FCM en `dispositivos_push`.
 abstract interface class RegistroDispositivosPush {
   Future<void> registrarToken(String tokenFcm);
-  Future<void> eliminarToken(String tokenFcm);
+
+  /// Borra el token de este dispositivo. [uid] permite hacerlo cuando la
+  /// sesión ya se cerró y [uidActual] ya no está.
+  Future<void> eliminarToken(String tokenFcm, {String? uid});
   Future<void> eliminarTodosLosTokensDelUsuario();
 }
 
@@ -50,13 +53,13 @@ class RepositorioDispositivosPush implements RegistroDispositivosPush {
   }
 
   @override
-  Future<void> eliminarToken(String tokenFcm) async {
-    final uid = uidActual();
-    if (uid == null) return;
+  Future<void> eliminarToken(String tokenFcm, {String? uid}) async {
+    final dueno = uid ?? uidActual();
+    if (dueno == null || tokenFcm.isEmpty) return;
     await _cliente
         .from('dispositivos_push')
         .eliminar()
-        .eq('usuario_id', uid)
+        .eq('usuario_id', dueno)
         .eq('token_fcm', tokenFcm)
         .ejecutar();
   }

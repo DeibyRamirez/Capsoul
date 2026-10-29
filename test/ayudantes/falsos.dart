@@ -32,7 +32,7 @@ class RegistroDispositivosPushFalso implements RegistroDispositivosPush {
   Future<void> registrarToken(String tokenFcm) async {}
 
   @override
-  Future<void> eliminarToken(String tokenFcm) async {}
+  Future<void> eliminarToken(String tokenFcm, {String? uid}) async {}
 
   @override
   Future<void> eliminarTodosLosTokensDelUsuario() async {

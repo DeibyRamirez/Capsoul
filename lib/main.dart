@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_capsoul.dart';
 import 'nucleo/arranque/app_error_arranque.dart';
 import 'nucleo/firebase/arranque_firebase.dart';
+import 'nucleo/firebase/manejador_push_segundo_plano.dart';
 import 'nucleo/infraestructura/arranque_backend.dart';
 
 Future<void> main() async {
@@ -11,6 +12,8 @@ Future<void> main() async {
   final firebaseListo = await inicializarFirebase();
   if (!firebaseListo) {
     debugPrint('Capsoul: sigue sin Firebase (sin notificaciones push).');
+  } else {
+    registrarManejadorPushEnSegundoPlano();
   }
 
   final problemaBackend = await inicializarBackend();

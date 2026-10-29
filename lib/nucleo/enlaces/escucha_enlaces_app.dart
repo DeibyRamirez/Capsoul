@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../funcionalidades/amistades/aplicacion/proveedores_amistades.dart';
 import '../../funcionalidades/autenticacion/aplicacion/proveedores_autenticacion.dart';
+import '../enrutador/enrutador_app.dart';
 import '../enrutador/rutas_app.dart';
+import '../firebase/destino_aviso.dart';
 import 'enlace_capsoul.dart';
 import 'enlace_pendiente.dart';
 import 'proveedor_enlace_pendiente.dart';
@@ -57,7 +59,13 @@ class _EstadoEscuchaEnlacesApp extends ConsumerState<EscuchaEnlacesApp> {
     final token = EnlaceCapsoul.tokenAmistadDesde(uri);
     if (token != null) {
       _navegarAmistad(token);
+      return;
     }
+    final destino = destinoInternoDeAviso(uri.toString());
+    if (destino == null) return;
+    final sesion = ref.read(proveedorEstadoAutenticacion).value;
+    if (sesion == null || !mounted) return;
+    ref.read(proveedorEnrutadorApp).push(destino);
   }
 
   void _navegarCapsula(String id) {
