@@ -21,6 +21,9 @@ abstract interface class RepositorioCapsulas {
   /// Marca la cápsula como abierta por el destinatario (solo si está liberada).
   Future<void> marcarAbierta(String idCapsula);
 
+  /// Marca el aviso de una cápsula compartida como visto (`leida_en`).
+  Future<void> marcarAvisoLeido(String idCapsula);
+
   Future<void> actualizarMetadatosCapsula(
     String id, {
     required String titulo,

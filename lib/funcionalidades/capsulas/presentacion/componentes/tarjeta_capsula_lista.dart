@@ -9,62 +9,59 @@ import '../../dominio/apertura_capsula.dart';
 import '../../dominio/capsula.dart';
 import '../../dominio/capsula_recibida.dart';
 import '../../dominio/estado_capsula.dart';
+import '../../dominio/estado_visible_capsula.dart';
 
 class TarjetaCapsulaLista extends StatelessWidget {
   const TarjetaCapsulaLista.propia({
     super.key,
     required this.capsula,
     required this.ahora,
-    required this.uidActual,
-  })  : recibida = null;
+  }) : recibida = null;
 
   const TarjetaCapsulaLista.recibida({
     super.key,
     required this.recibida,
     required this.ahora,
-  })  : capsula = null,
-        uidActual = null;
+  }) : capsula = null;
 
   final Capsula? capsula;
   final CapsulaRecibida? recibida;
   final DateTime ahora;
-  final String? uidActual;
 
   @override
   Widget build(BuildContext context) {
     if (recibida != null) {
+      final r = recibida!;
       return _TarjetaContenido(
-        id: recibida!.id,
-        titulo: recibida!.tituloVisible,
-        descripcion: 'De ${recibida!.autorNombre}',
-        lista: _recibidaLista(recibida!, ahora),
-        fechaApertura: recibida!.fechaApertura,
+        id: r.id,
+        titulo: r.tituloVisible,
+        descripcion: 'De ${r.autorNombre}',
+        presentacion: presentarEstadoCapsula(
+          estado: r.estado,
+          abierta: r.estaAbierta,
+          fechaApertura: r.fechaApertura,
+          ahora: ahora,
+        ),
         puedeEditar: false,
       );
     }
 
     final c = capsula!;
-    final modo = calcularModoApertura(
-      c,
-      uidActual: uidActual,
-      ahora: ahora,
-    );
-    final lista = modo == ModoApertura.lista;
     final descripcion = _descripcionPropia(c);
-
     return _TarjetaContenido(
       id: c.id,
       titulo: c.titulo,
       descripcion: descripcion,
-      lista: lista,
-      fechaApertura: c.fechaApertura,
+      presentacion: presentarEstadoCapsula(
+        estado: c.estado,
+        abierta: c.abiertaEn != null,
+        fechaApertura: c.fechaApertura,
+        ahora: ahora,
+      ),
       puedeEditar: c.estado == EstadoCapsula.borrador ||
           c.estado == EstadoCapsula.programada,
     );
   }
-
-  static bool _recibidaLista(CapsulaRecibida r, DateTime ahora) =>
-      r.estaLiberada || !r.fechaApertura.isAfter(ahora);
 
   static String? _descripcionPropia(Capsula c) {
     final mensaje = c.mensaje?.trim();
@@ -82,26 +79,22 @@ class _TarjetaContenido extends StatelessWidget {
     required this.id,
     required this.titulo,
     required this.descripcion,
-    required this.lista,
-    required this.fechaApertura,
+    required this.presentacion,
     required this.puedeEditar,
   });
 
   final String id;
   final String titulo;
   final String? descripcion;
-  final bool lista;
-  final DateTime? fechaApertura;
+  final PresentacionEstadoCapsula presentacion;
   final bool puedeEditar;
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    final textoFecha = lista
-        ? 'Lista para abrir'
-        : (fechaApertura != null
-            ? formatearFechaCorta(fechaApertura!)
-            : 'Sin fecha');
+    final abierta = !presentacion.conCandado;
+    final detalle = presentacion.detalle;
+    final aviso = presentacion.aviso;
 
     return Material(
       color: ColoresApp.tarjeta,
@@ -119,8 +112,8 @@ class _TarjetaContenido extends StatelessWidget {
             children: [
               FrascoLuminoso(
                 tamano: 60,
-                brillo: lista ? 0.95 : 0.5,
-                conCandado: !lista,
+                brillo: presentacion.brilla ? 0.95 : 0.5,
+                conCandado: presentacion.conCandado,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -181,7 +174,7 @@ class _TarjetaContenido extends StatelessWidget {
                     ],
                     const SizedBox(height: 10),
                     Text(
-                      lista ? 'Estado' : 'Abrir en',
+                      'Estado',
                       style: tema.textTheme.labelSmall?.copyWith(
                         color: ColoresApp.atenuado,
                       ),
@@ -191,14 +184,14 @@ class _TarjetaContenido extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            textoFecha,
+                            presentacion.visible.etiqueta,
                             style: tema.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: ColoresApp.textoPrincipal,
                             ),
                           ),
                         ),
-                        if (!lista)
+                        if (!abierta)
                           const Icon(
                             Icons.lock_outline,
                             size: 18,
@@ -206,6 +199,25 @@ class _TarjetaContenido extends StatelessWidget {
                           ),
                       ],
                     ),
+                    if (detalle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        detalle,
+                        style: tema.textTheme.bodySmall?.copyWith(
+                          color: ColoresApp.textoSecundario,
+                        ),
+                      ),
+                    ],
+                    if (aviso != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        aviso,
+                        style: tema.textTheme.labelSmall?.copyWith(
+                          color: ColoresApp.acento,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

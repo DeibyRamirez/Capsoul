@@ -91,11 +91,20 @@ void main() {
 
     await _agregarNota(tester, 'Primera');
     await _agregarNota(tester, 'Te quiero, Jacobo');
-    expect(find.text('Te quiero, Jacobo'), findsAtLeastNWidgets(1));
-    await _tocar(tester, find.byTooltip('Quitar').first);
+    expect(
+      find.text('Te quiero, Jacobo', skipOffstage: false),
+      findsAtLeastNWidgets(1),
+    );
+    final quitar = find.byTooltip('Quitar', skipOffstage: false).first;
+    await tester.ensureVisible(quitar);
     await tester.pumpAndSettle();
-    expect(find.text('Primera'), findsNothing);
-    expect(find.text('Te quiero, Jacobo'), findsAtLeastNWidgets(1));
+    await tester.tap(quitar);
+    await tester.pumpAndSettle();
+    expect(find.text('Primera', skipOffstage: false), findsNothing);
+    expect(
+      find.text('Te quiero, Jacobo', skipOffstage: false),
+      findsAtLeastNWidgets(1),
+    );
 
     await tester.enterText(find.byKey(const Key('campo-titulo')), 'Para Jacobo');
     await tester.enterText(find.byKey(const Key('campo-mensaje')), 'Ábrela grande');
@@ -175,8 +184,8 @@ void main() {
     await tester.tap(find.byKey(const Key('boton-listo-elegir')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Recuerdos (1/10)'), findsOneWidget);
-    expect(find.text('Playa'), findsOneWidget);
+    expect(find.text('Recuerdos (1/10)', skipOffstage: false), findsOneWidget);
+    expect(find.text('Playa', skipOffstage: false), findsOneWidget);
 
     await _tocar(tester, find.byKey(const Key('boton-elegir-recuerdos')));
     await tester.pumpAndSettle();

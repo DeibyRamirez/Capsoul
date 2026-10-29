@@ -23,6 +23,7 @@ Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). 
 | `20261016000013` | Foto de perfil en amigos |
 | `20261016000014` | Legado: vínculos cápsulas y RPC |
 | `20261016000015` | `musica_preview_proveedor` |
+| `20261026000016` | El autor puede ser destinatario de su cápsula (`capsula_destinatarios_crear`) |
 
 El estado **aplicado en remoto** puede ir por detrás del repo; usar `supabase migration list` antes de cada release.
 
@@ -51,7 +52,7 @@ Orden recomendado (requiere aprobación del PO para el entorno remoto):
 
 4. **Música:** migración `000005` añade el enum `musica` **fuera** del `begin`/`commit` (PostgreSQL error `55P04` si se hace en la misma transacción).
 5. **Spotify:** `supabase secrets set SPOTIFY_CLIENT_ID=... SPOTIFY_CLIENT_SECRET=...` y `supabase functions deploy buscar-musica`.
-6. **Avisos:** `supabase functions deploy enviar-avisos` y activar job 3 solo con Vault (`project_url`, `llave_cron`) configurado.
+6. **Avisos (DEV-100):** migración `000018` (no aplicada en remoto hasta que el PO lo pida), secretos FCM y Vault. Pasos: [avisos-push-despliegue.md](avisos-push-despliegue.md).
 
 El archivo [`20261002000002_capsoul_programar_trabajos.sql`](../supabase/migrations/20261002000002_capsoul_programar_trabajos.sql) del repo **incluye** el job 3; no ejecutes el script entero en remoto hasta tener `enviar-avisos` desplegada.
 

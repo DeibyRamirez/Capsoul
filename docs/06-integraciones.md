@@ -22,7 +22,7 @@
 |---|---|
 | `firmar-subida` | Firma de subida a Cloudinary (`type=authenticated`) |
 | `firmar-medio` | URLs temporales (`elemento_ids`, `avatar_perfil`, `avatares_usuario_ids`) |
-| `enviar-avisos` | En repo; desplegar y enlazar job 3 de cron (`verify_jwt = false`, apikey de servicio) |
+| `enviar-avisos` | Push FCM HTTP v1 y correo Resend. `verify_jwt = false`; header `x-llave-cron`. Guía: [avisos-push-despliegue.md](avisos-push-despliegue.md) |
 | `buscar-musica` | Búsqueda de pistas Spotify (`preview_url`, metadatos, enlaces) |
 
 ### Migraciones
@@ -73,10 +73,12 @@ supabase functions deploy firmar-subida
 ## Firebase (FCM)
 
 - **Proyecto:** `capsoul-ebea3` (plan Spark).
+- **API:** HTTP v1 desde `enviar-avisos` (cuenta de servicio). No se usa el endpoint legacy `fcm/send`.
 - **Arranque:** `lib/nucleo/firebase/arranque_firebase.dart` + `servicio_notificaciones_push.dart`.
-- **Plataformas:** token solo en Android/iOS; en desktop/web se omite sin error.
-- **Pendiente:** guardar token en tabla `dispositivos_push` tras login.
+- **Plataformas:** el token se guarda en `dispositivos_push` en Android e iOS. Desktop y web se omiten. El envío que llega al teléfono, por ahora, es Android; iOS queda preparado para cuando haya cuenta de Apple y APNs.
+- **Canal Android:** `capsoul_avisos` (importancia alta) y permiso `POST_NOTIFICATIONS` en Android 13+.
 - **Archivos nativos:** `google-services.json`, `GoogleService-Info.plist`, `firebase_options.dart`.
+- **Despliegue:** [avisos-push-despliegue.md](avisos-push-despliegue.md).
 
 ## Resend (correo)
 

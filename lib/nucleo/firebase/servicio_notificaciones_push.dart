@@ -1,39 +1,52 @@
-import 'dart:async';
 import 'dart:io' show Platform;
 
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
-typedef RegistradorTokenPush = Future<void> Function(String token);
+import 'coordinador_avisos_push.dart';
+import 'fuente_firebase_push.dart';
+import 'presentador_avisos_android.dart';
 
-/// Inicializa FCM en Android/iOS y enlaza el token con [alRegistrarToken].
-Future<void> inicializarNotificacionesPush({
+export 'coordinador_avisos_push.dart' show RegistradorTokenPush, SesionAvisosPush;
+
+/// Arranca FCM en Android/iOS: permiso, canal, token y toque del aviso.
+///
+/// En pruebas se pueden inyectar [fuente] y [presentador]. Si no, usa Firebase
+/// y el canal nativo. Desktop y web no hacen nada.
+Future<SesionAvisosPush?> inicializarNotificacionesPush({
   RegistradorTokenPush? alRegistrarToken,
-  Future<void> Function(String token)? alPerderToken,
+  void Function(String ruta)? alAbrirRuta,
+  FuenteMensajesPush? fuente,
+  PresentadorAvisos? presentador,
+  bool? esAndroid,
+  bool? esIos,
+  int? sdkAndroid,
 }) async {
-  if (kIsWeb) return;
-  if (!Platform.isAndroid && !Platform.isIOS) return;
+  if (kIsWeb) return null;
+  final android = esAndroid ?? Platform.isAndroid;
+  final ios = esIos ?? Platform.isIOS;
+  if (!android && !ios) return null;
 
-  Future<void> publicarToken(String? token) async {
-    if (token == null || token.isEmpty || alRegistrarToken == null) return;
-    try {
-      await alRegistrarToken(token);
-    } catch (error, traza) {
-      debugPrint('Capsoul: no se pudo registrar el token push: $error');
-      debugPrintStack(stackTrace: traza);
-    }
+  final presentadorReal = presentador ?? PresentadorAvisosAndroid();
+  final nativo = presentadorReal is PresentadorAvisosAndroid
+      ? presentadorReal
+      : null;
+  if (nativo != null && alAbrirRuta != null) {
+    nativo.escucharToques(alAbrirRuta);
+  }
+  var sdk = sdkAndroid ?? 0;
+  if (sdkAndroid == null && android && nativo != null) {
+    sdk = await nativo.leerSdk();
   }
 
-  try {
-    await FirebaseMessaging.instance.requestPermission();
-    final token = await FirebaseMessaging.instance.getToken();
-    await publicarToken(token);
-    FirebaseMessaging.instance.onTokenRefresh.listen(publicarToken);
-    if (alPerderToken != null) {
-      // No hay callback nativo de borrado; se limpia en logout del usuario.
-    }
-  } catch (error, trazaPila) {
-    debugPrint('Capsoul: no se pudo inicializar FCM: $error');
-    debugPrintStack(stackTrace: trazaPila);
-  }
+  final sesion = SesionAvisosPush(
+    fuente: fuente ?? FuenteFirebasePush(),
+    presentador: presentadorReal,
+    alRegistrarToken: alRegistrarToken ?? (_) async {},
+    alAbrirRuta: alAbrirRuta ?? (_) {},
+    esAndroid: android,
+    esIos: ios,
+    sdkAndroid: sdk,
+  );
+  await sesion.iniciar();
+  return sesion;
 }

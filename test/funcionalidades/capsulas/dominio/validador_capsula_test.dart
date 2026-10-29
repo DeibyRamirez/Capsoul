@@ -83,7 +83,7 @@ void main() {
     );
   });
 
-  test('los destinatarios (amigos) son obligatorios y no puede ser el autor', () {
+  test('hace falta un destinatario y el autor puede serlo', () {
     expect(
       ValidadorCapsula.validar(
         capsula().copyWith(destinatariosUsuarioIds: const []),
@@ -93,17 +93,20 @@ void main() {
     );
     expect(
       ValidadorCapsula.validar(
-        capsula().copyWith(destinatariosUsuarioIds: const ['yo-uid']),
+        capsula().copyWith(destinatariosUsuarioIds: const []),
         ahora: ahora,
-        uidAutor: 'yo-uid',
-      )?.codigo,
-      FalloCapsula.codigoDestinatarioPropio,
+      )?.mensaje,
+      'Elige al menos un destinatario: tú o un amigo.',
     );
     expect(
-      ValidadorCapsula.validarDestinatarios(
-        const ['a', 'a', 'b'],
-        uidAutor: 'yo',
+      ValidadorCapsula.validar(
+        capsula().copyWith(destinatariosUsuarioIds: const ['yo-uid']),
+        ahora: ahora,
       ),
+      isNull,
+    );
+    expect(
+      ValidadorCapsula.validarDestinatarios(const ['a', 'a', 'b']),
       isNull,
     );
   });

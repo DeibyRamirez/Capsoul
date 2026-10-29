@@ -64,8 +64,8 @@ class _EstadoSelectorDestinatariosAmigos extends ConsumerState<SelectorDestinata
       data: (lista) {
         if (lista.isEmpty) {
           return const Text(
-            'Aún no tienes amigos en Capsoul. Invítalos desde tu perfil '
-            'y vuelve a crear la cápsula.',
+            'Aún no tienes amigos en Capsoul. Puedes guardar la cápsula '
+            'solo para ti, o invitar amigos desde tu perfil.',
             style: TextStyle(color: ColoresApp.atenuado),
           );
         }

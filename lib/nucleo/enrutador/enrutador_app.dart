@@ -20,6 +20,7 @@ import '../../funcionalidades/elementos/presentacion/pantalla_capturar_foto.dart
 import '../../funcionalidades/elementos/presentacion/pantalla_capturar_video.dart';
 import '../../funcionalidades/elementos/presentacion/pantalla_escribir_nota.dart';
 import '../../funcionalidades/elementos/presentacion/pantalla_grabar_audio.dart';
+import '../../funcionalidades/inicio/presentacion/pantalla_avisos.dart';
 import '../../funcionalidades/inicio/presentacion/pantalla_inicio.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_detalle_herencia.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_instrucciones_legado.dart';
@@ -220,13 +221,15 @@ GoRouter crearEnrutadorApp({
                     path: 'instrucciones',
                     name: 'legado-instrucciones',
                     parentNavigatorKey: claveNavegadorRaiz,
-                    builder: (context, state) => const PantallaInstruccionesLegado(),
+                    builder: (context, state) =>
+                        const PantallaInstruccionesLegado(),
                   ),
                   GoRoute(
                     path: 'seguridad',
                     name: 'legado-seguridad',
                     parentNavigatorKey: claveNavegadorRaiz,
-                    builder: (context, state) => const PantallaSeguridadLegado(),
+                    builder: (context, state) =>
+                        const PantallaSeguridadLegado(),
                   ),
                   GoRoute(
                     path: 'herencia/:id',
@@ -302,6 +305,12 @@ GoRouter crearEnrutadorApp({
         ],
       ),
       GoRoute(
+        path: RutasApp.avisos,
+        name: 'avisos',
+        parentNavigatorKey: claveNavegadorRaiz,
+        builder: (context, state) => const PantallaAvisos(),
+      ),
+      GoRoute(
         path: RutasApp.capsulas,
         name: 'capsulas',
         parentNavigatorKey: claveNavegadorRaiz,
@@ -362,7 +371,10 @@ GoRouter crearEnrutadorApp({
               return RutasApp.recuerdos;
             },
             builder: (context, state) {
-              final container = ProviderScope.containerOf(context, listen: false);
+              final container = ProviderScope.containerOf(
+                context,
+                listen: false,
+              );
               final elemento = borradorParaGuardarRecuerdo(
                 extra: state.extra,
                 pendiente: container.read(proveedorBorradorRecuerdoPendiente),
