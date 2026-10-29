@@ -31,8 +31,8 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     required this._uidActual,
     DateTime Function()? reloj,
     GeneradorIds? generarId,
-  })  : _reloj = reloj ?? DateTime.now,
-        _generarId = generarId ?? generarIdAleatorio;
+  }) : _reloj = reloj ?? DateTime.now,
+       _generarId = generarId ?? generarIdAleatorio;
 
   /// SQLSTATE propios de la migración 000003.
   static const String codigoCuotaExcedida = 'CAP01';
@@ -47,10 +47,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   Future<String> crearCapsula(NuevaCapsula nueva) async {
     final uid = _uidActual();
     if (uid == null) throw const FalloCapsula.sinSesion();
-    final fallo = ValidadorCapsula.validar(
-      nueva,
-      ahora: _reloj(),
-    );
+    final fallo = ValidadorCapsula.validar(nueva, ahora: _reloj());
     if (fallo != null) throw fallo;
 
     final destinatarios = [
@@ -80,10 +77,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       ]);
       await _acceso.insertarDestinatarios([
         for (final usuarioId in destinatarios)
-          {
-            'capsula_id': idCapsula,
-            'usuario_id': usuarioId,
-          },
+          {'capsula_id': idCapsula, 'usuario_id': usuarioId},
       ]);
       await _acceso.actualizarEstadoCapsula(
         idCapsula,
@@ -111,9 +105,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     if (uid == null) throw const FalloCapsula.sinSesion();
     try {
       final filas = await _acceso.leerCapsulasDeAutor(uid);
-      return [
-        for (final fila in filas) ?capsulaDesdeFila(fila),
-      ];
+      return [for (final fila in filas) ?capsulaDesdeFila(fila)];
     } catch (error) {
       throw traducirError(error);
     }
@@ -137,10 +129,14 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       final filas = await _acceso.leerCapsulasRecibidas();
       final aperturas = await _acceso.leerAperturasDeUsuario(uid);
       final abiertas = <String, String>{};
+      final leidas = <String, String>{};
       for (final fila in aperturas) {
         final id = fila['capsula_id'];
+        if (id is! String) continue;
         final abierta = fila['abierta_en'];
-        if (id is String && abierta is String) abiertas[id] = abierta;
+        final leida = fila['leida_en'];
+        if (abierta is String) abiertas[id] = abierta;
+        if (leida is String) leidas[id] = leida;
       }
       return [
         for (final fila in filas)
@@ -149,6 +145,9 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
             if (fila['capsula_id'] is String &&
                 abiertas.containsKey(fila['capsula_id'] as String))
               'abierta_en': abiertas[fila['capsula_id'] as String],
+            if (fila['capsula_id'] is String &&
+                leidas.containsKey(fila['capsula_id'] as String))
+              'leida_en': leidas[fila['capsula_id'] as String],
           }),
       ];
     } catch (error) {
@@ -161,6 +160,16 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     if (_uidActual() == null) throw const FalloCapsula.sinSesion();
     try {
       await _acceso.marcarCapsulaAbierta(idCapsula);
+    } catch (error) {
+      throw traducirError(error);
+    }
+  }
+
+  @override
+  Future<void> marcarAvisoLeido(String idCapsula) async {
+    if (_uidActual() == null) throw const FalloCapsula.sinSesion();
+    try {
+      await _acceso.marcarAvisoLeido(idCapsula);
     } catch (error) {
       throw traducirError(error);
     }
@@ -234,11 +243,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       await _acceso.eliminarEnlacesDeCapsula(id);
       await _acceso.insertarEnlaces([
         for (var i = 0; i < recuerdos.length; i++)
-          {
-            'capsula_id': id,
-            'elemento_id': recuerdos[i],
-            'orden': i,
-          },
+          {'capsula_id': id, 'elemento_id': recuerdos[i], 'orden': i},
       ]);
       await _acceso.eliminarDestinatariosDeCapsula(id);
       final destinatarios = [
@@ -246,10 +251,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       ];
       await _acceso.insertarDestinatarios([
         for (final usuarioId in destinatarios)
-          {
-            'capsula_id': id,
-            'usuario_id': usuarioId,
-          },
+          {'capsula_id': id, 'usuario_id': usuarioId},
       ]);
     } catch (error) {
       throw traducirError(error);
@@ -260,7 +262,10 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   Future<void> cancelarCapsula(String id) async {
     if (_uidActual() == null) throw const FalloCapsula.sinSesion();
     try {
-      await _acceso.actualizarEstadoCapsula(id, EstadoCapsula.cancelada.valorBd);
+      await _acceso.actualizarEstadoCapsula(
+        id,
+        EstadoCapsula.cancelada.valorBd,
+      );
     } catch (error) {
       throw traducirError(error);
     }
@@ -354,10 +359,10 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
   /// Mensaje de permiso según la tabla que rechazó la operación.
   @visibleForTesting
   static FalloCapsula falloPermisoPorTabla(String? tabla) => switch (tabla) {
-        'elementos' => const FalloCapsula.permisoRecuerdo(),
-        'capsula_elementos' => const FalloCapsula.permisoEnlace(),
-        _ => const FalloCapsula.permisoDenegado(),
-      };
+    'elementos' => const FalloCapsula.permisoRecuerdo(),
+    'capsula_elementos' => const FalloCapsula.permisoEnlace(),
+    _ => const FalloCapsula.permisoDenegado(),
+  };
 
   /// Traduce errores de PostgREST, red y medios a fallos de dominio.
   @visibleForTesting

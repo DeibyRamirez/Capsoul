@@ -4,6 +4,7 @@ import '../enlaces/enlace_capsoul.dart';
 abstract final class RutasApp {
   static const String raiz = '/';
   static const String inicio = '/inicio';
+  static const String avisos = '/avisos';
   static const String momentos = '/momentos';
   static const String nuevoMomento = '/momentos/nuevo';
   static const String legado = '/legado';
@@ -51,8 +52,7 @@ abstract final class RutasApp {
   static String detalleCapsulaDe(String id) =>
       '$capsulas/${Uri.encodeComponent(id)}';
 
-  static String editarCapsulaDe(String id) =>
-      '${detalleCapsulaDe(id)}/editar';
+  static String editarCapsulaDe(String id) => '${detalleCapsulaDe(id)}/editar';
 
   /// Deep link fase 1: capsoul://capsula/{id}
   static String enlaceCapsulaDe(String id) => EnlaceCapsoul.capsula(id);
@@ -61,8 +61,7 @@ abstract final class RutasApp {
   static String detalleMomentoDe(String id) =>
       '$momentos/${Uri.encodeComponent(id)}';
 
-  static String editarMomentoDe(String id) =>
-      '${detalleMomentoDe(id)}/editar';
+  static String editarMomentoDe(String id) => '${detalleMomentoDe(id)}/editar';
 
   /// Edición/gestión del recuerdo [id].
   static String editarRecuerdoDe(String id) =>
@@ -76,10 +75,7 @@ abstract final class RutasApp {
   static String revisaTuCorreoPara(String correo, {bool reenviar = false}) {
     return Uri(
       path: revisaTuCorreo,
-      queryParameters: {
-        'correo': correo,
-        if (reenviar) 'reenviar': '1',
-      },
+      queryParameters: {'correo': correo, if (reenviar) 'reenviar': '1'},
     ).toString();
   }
 }

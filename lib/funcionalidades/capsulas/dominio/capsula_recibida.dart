@@ -14,6 +14,7 @@ class CapsulaRecibida {
     this.titulo,
     this.liberadaEn,
     this.abiertaEn,
+    this.leidaEn,
   });
 
   final String id;
@@ -27,14 +28,29 @@ class CapsulaRecibida {
   /// `capsula_destinatarios.abierta_en` de quien mira el feed.
   final DateTime? abiertaEn;
 
+  /// `capsula_destinatarios.leida_en`: ya vi el aviso, aunque no abra el frasco.
+  final DateTime? leidaEn;
+
   bool get estaLiberada => estado == EstadoCapsula.liberada;
+
+  CapsulaRecibida copiarCon({DateTime? leidaEn}) => CapsulaRecibida(
+    id: id,
+    autorId: autorId,
+    autorNombre: autorNombre,
+    titulo: titulo,
+    fechaApertura: fechaApertura,
+    estado: estado,
+    liberadaEn: liberadaEn,
+    abiertaEn: abiertaEn,
+    leidaEn: leidaEn ?? this.leidaEn,
+  );
 
   bool get estaAbierta => estaLiberada && abiertaEn != null;
 
   String get tituloVisible =>
       estaLiberada && titulo != null && titulo!.trim().isNotEmpty
-          ? titulo!.trim()
-          : 'Cápsula para ti';
+      ? titulo!.trim()
+      : 'Cápsula para ti';
 
   static CapsulaRecibida? desdeFilaRpc(Map<String, dynamic> fila) {
     final id = fila['capsula_id'];
@@ -54,6 +70,7 @@ class CapsulaRecibida {
     final titulo = fila['titulo'];
     final liberada = fila['liberada_en'];
     final abierta = fila['abierta_en'];
+    final leida = fila['leida_en'];
     return CapsulaRecibida(
       id: id,
       autorId: autorId,
@@ -63,6 +80,7 @@ class CapsulaRecibida {
       estado: estado,
       liberadaEn: liberada is String ? DateTime.tryParse(liberada) : null,
       abiertaEn: abierta is String ? DateTime.tryParse(abierta) : null,
+      leidaEn: leida is String ? DateTime.tryParse(leida) : null,
     );
   }
 }

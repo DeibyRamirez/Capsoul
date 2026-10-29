@@ -7,6 +7,9 @@ import '../../../nucleo/componentes/fondo_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
+import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
+import '../../capsulas/aplicacion/proveedores_capsulas.dart';
+import '../../capsulas/dominio/avisos_capsulas.dart';
 import '../../crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../aplicacion/proveedores_inicio.dart';
 import '../dominio/resumen_inicio.dart';
@@ -38,48 +41,95 @@ class PantallaInicio extends ConsumerWidget {
     );
     final estilos = Theme.of(context).textTheme;
 
-    return PantallaCapsoul(
-      tipoFondo: FondoCapsoulTipo.suave,
-      cuerpo: RefreshIndicator(
-        onRefresh: () => ref.refresh(proveedorResumenInicio.future),
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-          children: [
-            EncabezadoInicio(
-              alTocarCampana: () => mostrarAvisoInformativo(
-                context,
-                'Los avisos llegarán pronto.',
+    final uid = ref.watch(proveedorEstadoAutenticacion).value?.uid;
+    final recibidas = ref.watch(proveedorCapsulasRecibidas).value ?? const [];
+    final avisos = avisosCapsulasCompartidas(recibidas, uid);
+    final textoBadge = textoBadgeAvisos(conteoAvisosSinLeer(avisos));
+
+    return RefrescoAvisosAlVolver(
+      child: PantallaCapsoul(
+        tipoFondo: FondoCapsoulTipo.suave,
+        cuerpo: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(proveedorResumenInicio);
+            ref.invalidate(proveedorCapsulasRecibidas);
+            await ref.read(proveedorResumenInicio.future);
+            await ref.read(proveedorCapsulasRecibidas.future);
+          },
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+            children: [
+              EncabezadoInicio(
+                textoBadge: textoBadge,
+                alTocarCampana: () => context.push(RutasApp.avisos),
               ),
-            ),
-            const SizedBox(height: 12),
-            const EscenaFrascoInicio(),
-            const SizedBox(height: 20),
-            Center(
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(220, 48),
-                  shape: const StadiumBorder(),
+              const SizedBox(height: 12),
+              const EscenaFrascoInicio(),
+              const SizedBox(height: 20),
+              Center(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(220, 48),
+                    shape: const StadiumBorder(),
+                  ),
+                  onPressed: () => HojaOpcionesCrear.mostrar(context),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Guardar algo hoy'),
                 ),
-                onPressed: () => HojaOpcionesCrear.mostrar(context),
-                icon: const Icon(Icons.add),
-                label: const Text('Guardar algo hoy'),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '¿Qué quieres dejar para el futuro?',
-              textAlign: TextAlign.center,
-              style: estilos.bodySmall?.copyWith(color: ColoresApp.atenuado),
-            ),
-            const SizedBox(height: 20),
-            _RejillaSecciones(resumen: resumen),
-            const SizedBox(height: 16),
-            const BannerFraseInicio(),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                '¿Qué quieres dejar para el futuro?',
+                textAlign: TextAlign.center,
+                style: estilos.bodySmall?.copyWith(color: ColoresApp.atenuado),
+              ),
+              const SizedBox(height: 20),
+              _RejillaSecciones(resumen: resumen),
+              const SizedBox(height: 16),
+              const BannerFraseInicio(),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// Al volver del segundo plano se vuelve a contar el badge.
+class RefrescoAvisosAlVolver extends ConsumerStatefulWidget {
+  const RefrescoAvisosAlVolver({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<RefrescoAvisosAlVolver> createState() =>
+      _EstadoRefrescoAvisosAlVolver();
+}
+
+class _EstadoRefrescoAvisosAlVolver
+    extends ConsumerState<RefrescoAvisosAlVolver>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(proveedorCapsulasRecibidas);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _RejillaSecciones extends StatelessWidget {

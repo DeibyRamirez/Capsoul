@@ -25,6 +25,8 @@ abstract interface class AccesoTablasCapsulas {
 
   Future<void> marcarCapsulaAbierta(String idCapsula);
 
+  Future<void> marcarAvisoLeido(String idCapsula);
+
   Future<void> eliminarEnlacesDeCapsula(String capsulaId);
 
   Future<void> eliminarDestinatariosDeCapsula(String capsulaId);
@@ -37,13 +39,15 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
       'id, autor_id, titulo, mensaje, fecha_apertura, estado, liberada_en, '
       'creado_en';
 
-  static const String columnasConElementos = '$columnasCapsula, '
+  static const String columnasConElementos =
+      '$columnasCapsula, '
       'capsula_elementos(orden, elementos($columnasRecuerdo))';
 
   static const String columnasDestinatarios =
       'capsula_destinatarios(usuario_id, correo_externo, abierta_en)';
 
-  static const String columnasLista = '$columnasCapsula, $columnasDestinatarios';
+  static const String columnasLista =
+      '$columnasCapsula, $columnasDestinatarios';
 
   static const String columnasConElementosYDestinatarios =
       '$columnasConElementos, $columnasDestinatarios';
@@ -106,7 +110,10 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
   }
 
   @override
-  Future<void> actualizarCapsula(String id, Map<String, dynamic> cambios) async {
+  Future<void> actualizarCapsula(
+    String id,
+    Map<String, dynamic> cambios,
+  ) async {
     await _cliente.from('capsulas').actualizar(cambios).eq('id', id).ejecutar();
   }
 
@@ -114,7 +121,7 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
   Future<List<Map<String, dynamic>>> leerAperturasDeUsuario(String usuarioId) {
     return _cliente
         .from('capsula_destinatarios')
-        .seleccionar('capsula_id, abierta_en')
+        .seleccionar('capsula_id, abierta_en, leida_en')
         .eq('usuario_id', usuarioId)
         .limit(limiteAperturas)
         .ejecutar();
@@ -133,6 +140,14 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
   Future<void> marcarCapsulaAbierta(String idCapsula) async {
     await _cliente.rpc(
       'marcar_capsula_abierta',
+      parametros: {'p_capsula': idCapsula},
+    );
+  }
+
+  @override
+  Future<void> marcarAvisoLeido(String idCapsula) async {
+    await _cliente.rpc(
+      'marcar_aviso_capsula_leido',
       parametros: {'p_capsula': idCapsula},
     );
   }
