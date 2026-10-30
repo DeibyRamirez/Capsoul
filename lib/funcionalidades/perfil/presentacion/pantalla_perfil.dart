@@ -201,7 +201,11 @@ class PantallaPerfil extends ConsumerWidget {
                           ? 'Invita a tus primeros amigos'
                           : 'Amigos e invitaciones',
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: _TrailingAmigos(
+                      pendientes: ref.watch(
+                        proveedorConteoSolicitudesPendientes,
+                      ),
+                    ),
                     onTap: () => context.push(RutasApp.amigos),
                   ),
                 ),
@@ -334,6 +338,34 @@ class _EstadoDialogoEditarNombre extends State<_DialogoEditarNombre> {
           style: FilledButton.styleFrom(minimumSize: const Size(96, 48)),
           child: const Text('Guardar'),
         ),
+      ],
+    );
+  }
+}
+
+/// Flecha de «Amigos» con el número de solicitudes pendientes.
+class _TrailingAmigos extends StatelessWidget {
+  const _TrailingAmigos({required this.pendientes});
+
+  final int pendientes;
+
+  @override
+  Widget build(BuildContext context) {
+    const flecha = Icon(Icons.chevron_right);
+    if (pendientes <= 0) return flecha;
+    final texto = pendientes > 9 ? '9+' : '$pendientes';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          label: '$pendientes solicitudes de amistad pendientes',
+          child: Badge(
+            key: const Key('badge-solicitudes-amistad'),
+            label: Text(texto),
+          ),
+        ),
+        const SizedBox(width: 8),
+        flecha,
       ],
     );
   }
