@@ -69,11 +69,14 @@ class _AccesoFalso implements AccesoTablasCapsulas {
   Future<Map<String, dynamic>?> leerCapsulaConElementos(String id) async =>
       filaLeida;
 
+  Map<String, dynamic>? ultimosCambios;
+
   @override
   Future<void> actualizarCapsula(
     String id,
     Map<String, dynamic> cambios,
   ) async {
+    ultimosCambios = cambios;
     operaciones.add('actualizar:$id');
   }
 
@@ -198,6 +201,26 @@ void main() {
       {'capsula_id': 'id-1', 'usuario_id': 'uid-amigo'},
       {'capsula_id': 'id-1', 'usuario_id': 'uid-otro'},
     ]);
+  });
+
+  test('actualizar editable guarda imagen_clave solo si es del catalogo',
+      () async {
+    await repositorio.crearCapsula(nueva([foto]));
+    Future<void> actualizar(String? clave) =>
+        repositorio.actualizarCapsulaEditable(
+          'id-1',
+          titulo: 'Titulo',
+          fechaApertura: DateTime.utc(2047, 1, 1, 10),
+          idsRecuerdosOrdenados: ['r-nota'],
+          destinatariosUsuarioIds: const ['uid-amigo'],
+          imagenClave: clave,
+        );
+    await actualizar('capsula_07');
+    expect(acceso.ultimosCambios?['imagen_clave'], 'capsula_07');
+    await actualizar('capsula_99');
+    expect(acceso.ultimosCambios?.containsKey('imagen_clave'), isFalse);
+    await actualizar(null);
+    expect(acceso.ultimosCambios?.containsKey('imagen_clave'), isFalse);
   });
 
   test('valida antes de escribir nada', () async {
