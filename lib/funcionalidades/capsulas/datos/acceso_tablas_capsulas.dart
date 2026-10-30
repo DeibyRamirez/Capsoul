@@ -37,7 +37,7 @@ class AccesoTablasCapsulasPostgrest implements AccesoTablasCapsulas {
 
   static const String columnasCapsula =
       'id, autor_id, titulo, mensaje, fecha_apertura, estado, liberada_en, '
-      'creado_en';
+      'creado_en, imagen_clave';
 
   static const String columnasConElementos =
       '$columnasCapsula, '
