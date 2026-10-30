@@ -165,11 +165,15 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 | MIG | Migración a Supabase + Cloudinary (Firebase solo FCM) | 🟡 Modelo 1.3 aplicado y Auth en Supabase; pendiente 000002 (pg_cron), Edge Functions y Cloudinary firmado |
 | S4 | Ruta crítica de cápsulas + Security Rules | 🟡 En rama local `funcionalidad/capsulas` (sin push): elementos base, crear/detalle de cápsula, Inicio, banco de recuerdos, momentos (bento), reproductores; migraciones 000003 y 000004 aplicadas; `firmar-subida` y `firmar-medio` desplegadas; falta revisión del PO y push |
 | S8 | Endurecer reglas + FCM | ⏳ |
+| IMG | Icono de app + imagenes locales de capsula | En rama local `funcionalidad/imagenes-capsula` (sin commit): migracion 000020 aplicada en remoto; PR hacia `develop` pendiente de revision |
 
 ## 6. Pendientes abiertos
 
 Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 
+- [x] (2026-10-30, aplicada en remoto con aprobacion del PO y registrada en `schema_migrations`) `20261030000020_capsoul_imagen_capsula.sql` (columna `capsulas.imagen_clave` + check, grant update, recrear
+      `capsulas_recibidas()` con `imagen_clave`). Sin ella la app falla al listar/crear capsulas. Numero 000019 reservado por el PR #9.
+- [ ] PO: revisar la rama `funcionalidad/imagenes-capsula` (icono, selector en crear/editar, tarjetas) y autorizar commit.
 - [ ] PO: la 000002 está registrada en `schema_migrations`, pero en remoto solo existen los jobs `capsoul-liberar-capsulas`
       y `capsoul-activar-herencias` (verificado el 2026-10-12). Falta `capsoul-enviar-avisos` y Vault está vacío
       (`project_url`, `llave_cron`).
@@ -389,3 +393,11 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - **2026-10-16** Corrección del CI del PR #2 (develop → main): `deno test` de `firmar-medio` con `--allow-env` acotado a `CLOUDINARY_URL`, `CLOUDINARY_ACCOUNT_URL` y `CLOUDINARY_API_PROXY` (el SDK npm de Cloudinary que usa la prueba como referencia las lee al importarse; la lógica de firma ya estaba aislada en `firma_entrega.ts`); `api/**` excluido del análisis raíz y job `api` aparte (`dart pub get` + `dart analyze --fatal-infos`); limpieza de avisos del analizador (imports, `_`, formales de inicialización, elementos null-aware, `RadioGroup` en `pantalla_nueva_herencia`, llaves, `const`); pruebas de Inicio y del botón + actualizadas a la UI actual (hoja de opciones, píldoras, etiquetas con relleno). Deno 2.9.7 instalado en el PC del PO. `flutter analyze` 0, `flutter test` 306 OK, Deno 17 OK.
 - **2026-10-26** DEV-95 / DEV-99: el feed de cápsulas tiene tres pestañas (Mis cápsulas, Para mí mismo, Para mí) sin duplicar; la tarjeta lee `estado_capsula` y una fecha vencida sigue «Programada» hasta que el cron libere. Migración nueva `20261026000016` (el autor puede insertarse como destinatario; hay que aplicarla a mano en Supabase). `liberar_capsulas_vencidas()` no tenía bug: las aserciones locales confirman una sola liberación, cero cambios al repetir y una sola fila de aviso en dos sesiones. Job `sql` en CI. `flutter analyze` 0, `flutter test` 318, Deno 17, SQL local en verde. **PO:** aplicar 000016 antes de probar «También para mí» en el teléfono.
 - **2026-10-18** CI de compilación (`.github/workflows/build.yml`, se dispara con push a `main` y `workflow_dispatch`): job `android` (ubuntu, Java 17) genera APK y AAB release y los sube como artefactos; job `ios` (macos) compila con `flutter build ios --release --no-codesign` y empaqueta `capsoul-sin-firmar.ipa` (sin firmar: no sirve para TestFlight). `env/dev.json` se crea desde secretos con `jq`, sin imprimirlos; el job falla si la clave empieza por `sbp_`/`sb_secret_`. Secretos de GitHub: **obligatorios** `SUPABASE_URL`, `SUPABASE_ANON_KEY`; opcionales `API_BASE_URL`, `BACKEND`, `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` (sin keystore firma con debug y emite `::warning::`) e `IOS_GOOGLE_SERVICE_INFO_BASE64`. `android/app/build.gradle.kts` lee `android/key.properties` (ignorado) y si no existe usa la firma debug. iOS: `ios/Podfile` con `platform :ios, '15.0'` (mínimo de Firebase iOS SDK 12), `#include?` de Pods en `Debug/Release.xcconfig`, `Info.plist` con `UIBackgroundModes` (`remote-notification`) y `LSApplicationQueriesSchemes` (`spotify`). La primera ejecución será al fusionar el PR develop → main (antes hay que crear los secretos); después, manual con *Run workflow*. Pendiente: capability Push/APNs y firma iOS desde una Mac. `flutter analyze` sin issues; `flutter build apk --release` local OK (66,4 MB, firmado con debug).
+- **2026-10-30** Rama `funcionalidad/imagenes-capsula` desde `origin/develop` (sin commit). Icono de app con
+  `flutter_launcher_icons` (Android adaptativo, fondo `#1B316B`; iOS sin alfa). 16 imagenes de
+  `assets/capsoul_assets/01_capsulas_mejoradas` a WebP q88 en `assets/imagenes_capsula/capsula_NN.webp`
+  (4,1 MB a 228 KB). Catalogo `ImagenCapsula` (claves `capsula_01`..`capsula_16`, por defecto `capsula_01`), selector
+  en crear y editar capsula, miniatura en las tarjetas de Mis capsulas (reemplaza el frasco). Columna
+  `capsulas.imagen_clave` en la migracion 000020 (sin aplicar); el update solo envia claves del catalogo.
+  Goldens en `test/capturas/goldens/`. `flutter analyze` 0 issues, 340 tests verdes, `flutter build apk --debug` OK.
+  Los originales de `assets/capsoul_assets/` quedan fuera de git.
