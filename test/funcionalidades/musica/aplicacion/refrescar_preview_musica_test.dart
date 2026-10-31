@@ -1,75 +1,64 @@
 import 'package:capsoul/funcionalidades/musica/aplicacion/refrescar_preview_musica.dart';
 import 'package:capsoul/funcionalidades/musica/dominio/referencia_musica.dart';
-import 'package:capsoul/funcionalidades/musica/dominio/repositorio_catalogo_musica.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _CatalogoFalso implements RepositorioCatalogoMusica {
-  _CatalogoFalso(this.resultados);
-
-  final List<ReferenciaMusica> resultados;
-
-  @override
-  Future<List<ReferenciaMusica>> buscar(
-    String consulta, {
-    int limite = 20,
-    String mercado = 'CO',
-  }) async {
-    return resultados.take(limite).toList();
-  }
-}
+import '../../../ayudantes/falsos_musica.dart';
 
 void main() {
-  test('refrescarPreview devuelve pista con mismo idExterno y nuevo preview', () async {
-    const actual = ReferenciaMusica(
-      idExterno: 'spotify-1',
-      titulo: 'La Plena',
-      artista: 'Artista',
-      urlCompleta: 'https://open.spotify.com/track/spotify-1',
-      previewUrl: 'https://cdns-preview.dzcdn.net/viejo.mp3',
-    );
-    final catalogo = _CatalogoFalso([
-      const ReferenciaMusica(
-        idExterno: 'otro',
-        titulo: 'Otra',
-        artista: 'X',
-        urlCompleta: 'https://open.spotify.com/track/otro',
-        previewUrl: 'https://nuevo.mp3',
-      ),
-      ReferenciaMusica(
-        idExterno: 'spotify-1',
-        titulo: 'La Plena',
-        artista: 'Artista',
-        urlCompleta: 'https://open.spotify.com/track/spotify-1',
-        previewUrl: 'https://cdns-preview.dzcdn.net/nuevo.mp3',
-        previewProveedor: ProveedorPreviewMusica.deezer,
-        enlaceDeezer: 'https://www.deezer.com/track/99',
-      ),
-    ]);
+  test('pista de Deezer guardada: vuelve a pedir /track/<id>', () async {
+    final fresca = pistaDeezerPrueba(preview: 'https://dzcdn.net/nuevo.mp3');
+    final catalogo = CatalogoMusicaFalso(porId: {'3135556': fresca});
+    final guardada = pistaDeezerPrueba(preview: null);
 
-    final resultado = await refrescarPreview(actual, catalogo);
-    expect(resultado, isNotNull);
-    expect(resultado!.idExterno, 'spotify-1');
-    expect(resultado.previewUrl, contains('nuevo.mp3'));
-    expect(resultado.previewProveedor, ProveedorPreviewMusica.deezer);
-    expect(resultado.enlaceDeezer, contains('deezer.com'));
+    final resultado = await refrescarPreview(guardada, catalogo);
+
+    expect(catalogo.idsPedidos, ['3135556']);
+    expect(catalogo.consultas, isEmpty);
+    expect(resultado?.previewUrl, 'https://dzcdn.net/nuevo.mp3');
   });
 
-  test('refrescarPreview devuelve null si no hay coincidencia con preview', () async {
-    const actual = ReferenciaMusica(
-      idExterno: 'a',
-      titulo: 'T',
-      artista: 'B',
-      urlCompleta: 'https://open.spotify.com/track/a',
-      previewUrl: 'https://viejo.mp3',
+  test('fila antigua de Spotify con enlace de Deezer usa el id', () async {
+    final catalogo = CatalogoMusicaFalso(
+      porId: {'42': pistaDeezerPrueba(id: '42', preview: 'https://dzcdn.net/42.mp3')},
     );
-    final catalogo = _CatalogoFalso([
-      const ReferenciaMusica(
-        idExterno: 'a',
-        titulo: 'T',
-        artista: 'B',
-        urlCompleta: 'https://open.spotify.com/track/a',
-      ),
-    ]);
-    expect(await refrescarPreview(actual, catalogo), isNull);
+    const antigua = ReferenciaMusica(
+      idExterno: 'sp1',
+      titulo: 'T',
+      artista: 'A',
+      urlCompleta: 'https://open.spotify.com/track/sp1',
+      previewUrl: 'https://dzcdn.net/viejo.mp3',
+      enlaceDeezer: 'https://www.deezer.com/track/42',
+    );
+
+    final resultado = await refrescarPreview(antigua, catalogo);
+
+    expect(resultado?.idExterno, 'sp1');
+    expect(resultado?.proveedor, ProveedorMusica.spotify);
+    expect(resultado?.previewUrl, 'https://dzcdn.net/42.mp3');
+  });
+
+  test('fila antigua sin id de Deezer busca por título', () async {
+    final catalogo = CatalogoMusicaFalso(respuestas: {
+      'Daft Punk One More Time': [
+        pistaDeezerPrueba(id: '9', titulo: 'Otra', preview: 'https://x/otra.mp3'),
+        pistaDeezerPrueba(id: '7', titulo: 'One More Time', preview: 'https://x/7.mp3'),
+      ],
+    });
+    const antigua = ReferenciaMusica(
+      idExterno: 'sp1',
+      titulo: 'One More Time',
+      artista: 'Daft Punk',
+      urlCompleta: 'https://open.spotify.com/track/sp1',
+    );
+
+    final resultado = await refrescarPreview(antigua, catalogo);
+
+    expect(resultado?.previewUrl, 'https://x/7.mp3');
+    expect(resultado?.enlaceDeezer, 'https://www.deezer.com/track/7');
+  });
+
+  test('devuelve null si Deezer ya no tiene la pista', () async {
+    final catalogo = CatalogoMusicaFalso();
+    expect(await refrescarPreview(pistaDeezerPrueba(), catalogo), isNull);
   });
 }

@@ -90,7 +90,7 @@ lib/
     inicio/{aplicacion,datos,dominio,presentacion}         # Inicio del mockup con conteos reales (RepositorioResumenInicio)
     recuerdos/{aplicacion,datos,dominio,presentacion}      # banco de recuerdos, URLs firmadas (firmar-medio), reproductores, elegir
     momentos/{aplicacion,datos,dominio,presentacion}       # feed vertical, crear, detalle bento, filtros perfil
-    musica/{aplicacion,datos,dominio,presentacion}       # buscar-musica, preview 30s, enlaces externos
+    musica/{aplicacion,datos,dominio,presentacion}       # API pública de Deezer, preview 30 s (streaming), enlaces externos
     legado/{aplicacion,datos,dominio,presentacion}       # herencias, wizard, persona de confianza
     retos/{aplicacion,datos,dominio,presentacion}        # retos globales
     crear/                                                 # selector + hoja opciones crear
@@ -215,6 +215,15 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] UI para **editar momentos y recuerdos** (los repositorios ya tienen `actualizarMetadatos`; falta pantalla).
 - [ ] `infra/scripts/sincronizar_migraciones.ps1` solo copia los archivos: no añade marcadores `-- migrate:up/down` y
       sobrescribiría las copias de 000006 y 000010 que ya los tienen. Las copias de 000007–000009 siguen sin marcadores dbmate.
+- [ ] PO: aplicar `20261030000023_capsoul_musica_deezer.sql` (no aplicada). Sin ella, guardar un recuerdo de música de Deezer
+      falla con 23514 (`elementos_musica_proveedor_valido` solo admitía `spotify`). Aplicarla antes de publicar la rama.
+- [ ] PO: revisar la rama local `funcionalidad/musica-deezer` (worktree `..\capsould-musica`, sin commit) y autorizar commits.
+- [ ] Música/Deezer: los términos de la API son de uso **no comercial** y piden avisar de que el streaming es de uso
+      personal (la app muestra «Vistas previas de 30 s, solo para uso personal»). Si Capsoul se monetiza hace falta un
+      acuerdo con Deezer. El crédito usa el icono de Deezer de Font Awesome; valorar el logo oficial del brand kit.
+- [ ] La Edge Function `buscar-musica` (Spotify + respaldo Deezer) ya no la usa la app: decidir si se retira y se
+      borran los secretos `SPOTIFY_*` (requiere aprobación del PO).
+- [ ] Probar en dispositivo el preview de Deezer (Android e iOS) y «Abrir en Deezer» con y sin la app instalada.
 
 ## 7. Decisiones (ADR corto)
 
@@ -401,3 +410,19 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   `capsulas.imagen_clave` en la migracion 000020 (sin aplicar); el update solo envia claves del catalogo.
   Goldens en `test/capturas/goldens/`. `flutter analyze` 0 issues, 340 tests verdes, `flutter build apk --debug` OK.
   Los originales de `assets/capsoul_assets/` quedan fuera de git.
+- **2026-10-30** Música con la API pública de Deezer (rama local `funcionalidad/musica-deezer` desde `origin/develop`,
+  worktree `..\capsould-musica`, **sin commit**). La búsqueda deja la Edge Function `buscar-musica` (Spotify) y llama
+  directo a `https://api.deezer.com/search` con `RepositorioMusicaDeezer` (http.Client inyectable, timeout 8 s, errores
+  de Deezer `{"error":{code}}` → `FalloMusica` en español; 800 → pista inexistente, 4 → cuota). Modelo inmutable
+  `PistaDeezer.fromJson`. `ControladorBusquedaMusica` (Riverpod, debounce 400 ms, número de petición para ignorar
+  respuestas viejas, estados inicial/cargando/vacío/error con Reintentar). Preview de 30 s solo en **streaming** con
+  just_audio (se quitó la descarga a archivo temporal), `CoordinadorPreviewMusica` para que solo suene uno a la vez,
+  barra de progreso, se detiene al salir y antes de abrir otra app; estado «sin vista previa». La URL del preview caduca:
+  no se guarda; al reproducir se pide `https://api.deezer.com/track/<id>`. Crédito «Música de Deezer» (logo + nota de
+  uso personal) en búsqueda, escena y franja sobre fotos. Botones: «Abrir en Deezer» (`deezer://www.deezer.com/track/<id>`
+  y si no, el enlace web), búsqueda en Spotify (`open.spotify.com/search/<consulta>`) y YouTube (`results?search_query=`),
+  con url_launcher en app externa (`AbridorEnlacesMusica` inyectable). AndroidManifest ya tenía las queries `https` y
+  `deezer`; Info.plist ya tenía `deezer`. La música se adjunta como recuerdo (`elementos` tipo `musica` o foto con
+  música), que ya se elige en cápsulas y momentos. Migración nueva `20261030000023` (sin aplicar): `musica_proveedor`
+  admite `deezer`, Deezer con id numérico y `musica_preview_url` null. Sin paquetes nuevos. `flutter analyze` 0 issues,
+  `flutter test` 388 en verde. Los registrantes de plugins aparecen modificados por finales de línea (no se restauran).

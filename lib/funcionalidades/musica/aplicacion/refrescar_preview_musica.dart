@@ -1,30 +1,43 @@
 import '../dominio/referencia_musica.dart';
 import '../dominio/repositorio_catalogo_musica.dart';
 
-/// Vuelve a resolver `previewUrl` en catálogo (p. ej. enlace caducado en BD).
+/// Pide de nuevo el preview (la URL de Deezer caduca).
+///
+/// - Si se conoce el id de Deezer: `GET /track/<id>`.
+/// - Filas antiguas sin id de Deezer: busca por artista y título.
 Future<ReferenciaMusica?> refrescarPreview(
   ReferenciaMusica actual,
   RepositorioCatalogoMusica repositorio,
 ) async {
-  final consulta = '${actual.artista} ${actual.titulo}'.trim();
+  final idDeezer = actual.idPistaDeezer;
+  if (idDeezer != null) {
+    final fresca = await repositorio.obtenerPorId(idDeezer);
+    if (fresca == null) return null;
+    if (actual.esDeezer) return fresca;
+    return actual.copiarConPreview(
+      previewUrl: fresca.previewUrl,
+      previewProveedor: fresca.previewProveedor,
+      portadaUrl: fresca.portadaUrl,
+      enlaceDeezer: fresca.enlaceDeezer,
+    );
+  }
+  final consulta = actual.consultaBusqueda;
   if (consulta.isEmpty) return null;
   final resultados = await repositorio.buscar(consulta, limite: 10);
+  final titulo = _normalizar(actual.titulo);
   for (final candidata in resultados) {
-    if (candidata.idExterno != actual.idExterno || !candidata.tienePreview) {
-      continue;
-    }
-    return ReferenciaMusica(
-      proveedor: actual.proveedor,
-      idExterno: actual.idExterno,
-      titulo: actual.titulo,
-      artista: actual.artista,
-      urlCompleta: actual.urlCompleta,
+    if (!candidata.tienePreview) continue;
+    final coincide = candidata.idExterno == actual.idExterno ||
+        _normalizar(candidata.titulo) == titulo;
+    if (!coincide) continue;
+    return actual.copiarConPreview(
       previewUrl: candidata.previewUrl,
-      previewProveedor: candidata.previewProveedor,
-      portadaUrl: candidata.portadaUrl ?? actual.portadaUrl,
-      uriProfundo: actual.uriProfundo,
-      enlaceDeezer: candidata.enlaceDeezer ?? actual.enlaceDeezer,
+      previewProveedor: candidata.previewProveedorEfectivo,
+      portadaUrl: candidata.portadaUrl,
+      enlaceDeezer: candidata.enlaceDeezer,
     );
   }
   return null;
 }
+
+String _normalizar(String texto) => texto.trim().toLowerCase();
