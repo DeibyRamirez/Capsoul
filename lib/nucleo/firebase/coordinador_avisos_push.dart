@@ -72,14 +72,20 @@ class SesionAvisosPush {
     _suscripciones.add(fuente.enPrimerPlano.listen(_mostrarEnPrimerPlano));
     _suscripciones.add(fuente.alAbrirDesdeAviso.listen(_abrir));
 
+    // Primero el aviso que abrió la app: el token en iOS puede tardar.
     try {
-      await _publicarToken(await fuente.tokenActual());
       final inicial = await fuente.mensajeQueAbrioLaApp();
       if (inicial != null) _abrir(inicial);
       if (esAndroid) {
         final pendiente = await presentador.rutaPendiente();
         if (pendiente != null && pendiente.isNotEmpty) alAbrirRuta(pendiente);
       }
+    } catch (error, traza) {
+      debugPrint('Capsoul: no se pudo abrir el aviso inicial: $error');
+      debugPrintStack(stackTrace: traza);
+    }
+    try {
+      await _publicarToken(await fuente.tokenActual());
     } catch (error, traza) {
       debugPrint('Capsoul: no se pudo enlazar FCM: $error');
       debugPrintStack(stackTrace: traza);

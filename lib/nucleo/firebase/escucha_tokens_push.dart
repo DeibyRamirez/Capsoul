@@ -13,6 +13,7 @@ import '../infraestructura/proveedores_infraestructura.dart';
 import 'destino_aviso.dart';
 import 'repositorio_dispositivos_push.dart';
 import 'servicio_notificaciones_push.dart';
+import 'token_push_actual.dart';
 import 'vinculo_token_push.dart';
 
 /// Arranque de FCM inyectable. Las pruebas lo sustituyen para no tocar Firebase.
@@ -58,6 +59,7 @@ class _EstadoEscuchaTokensPush extends ConsumerState<EscuchaTokensPush> {
     super.initState();
     _vinculo = VinculoTokenPush(
       registrar: (token) async {
+        ref.read(proveedorTokenPushActual.notifier).recordar(token);
         final uid = ref
             .read(proveedorRepositorioAutenticacion)
             .usuarioActual
