@@ -58,7 +58,7 @@ Future<void> main(List<String> args) async {
     return _error(
       501,
       'no_implementado',
-      'Configura Spotify en el VPS (ver supabase/functions/buscar-musica).',
+      'La búsqueda en el VPS no está implementada. buscar-musica usa la API pública de Deezer.',
     );
   });
 

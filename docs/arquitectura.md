@@ -207,18 +207,12 @@ Ver [`11-legado-y-retos.md`](11-legado-y-retos.md). Migraciones `000011`–`0000
 sequenceDiagram
   participant UI as EscenaPreviewMusica
   participant JA as just_audio
-  participant CDN as CDN preview
-  participant API as buscar-musica
-  participant PG as Postgres
-  UI->>JA: setAudioSource + cabeceras CDN
-  alt Source error
-    JA-->>UI: fallo
-    UI->>CDN: GET temporal (http)
-    alt sigue fallando
-      UI->>API: buscar artista+título
-      API-->>UI: nueva previewUrl
-      UI->>PG: PATCH musica_preview_* (visor propio)
-    end
+  participant DZ as api.deezer.com
+  UI->>JA: streaming del preview
+  alt URL caducada o sin clip
+    UI->>DZ: GET /track/id o /search
+    DZ-->>UI: preview nuevo
+    Note over UI: en Deezer no se guarda la URL; en filas antiguas de Spotify sí puede persistirse
   end
 ```
 

@@ -56,7 +56,7 @@ Orden recomendado (requiere aprobación del PO para el entorno remoto):
    ```
 
 4. **Música:** migración `000005` añade el enum `musica` **fuera** del `begin`/`commit` (PostgreSQL error `55P04` si se hace en la misma transacción).
-5. **Spotify:** `supabase secrets set SPOTIFY_CLIENT_ID=... SPOTIFY_CLIENT_SECRET=...` y `supabase functions deploy buscar-musica`.
+5. **Catálogo musical:** `buscar-musica` consulta la API pública de Deezer y no necesita secretos de catálogo. Desplegar funciones sigue requiriendo aprobación del PO (ver [`06-integraciones.md`](06-integraciones.md)).
 6. **Avisos (DEV-100):** migración `000018` (no aplicada en remoto hasta que el PO lo pida), secretos FCM y Vault. Pasos: [avisos-push-despliegue.md](avisos-push-despliegue.md).
 
 El archivo [`20261002000002_capsoul_programar_trabajos.sql`](../supabase/migrations/20261002000002_capsoul_programar_trabajos.sql) del repo **incluye** el job 3; no ejecutes el script entero en remoto hasta tener `enviar-avisos` desplegada.
