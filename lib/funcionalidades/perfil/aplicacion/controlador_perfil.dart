@@ -22,8 +22,7 @@ final proveedorPerfilUsuarioActual =
   return ref.watch(proveedorRepositorioUsuarios).observarPerfil(uid);
 });
 
-/// Acciones del perfil: editar nombre y cerrar sesión. (Todo usuario con
-/// sesión ya confirmó su correo: Supabase Auth lo exige.)
+/// Acciones del perfil: foto de avatar y cerrar sesión.
 class ControladorPerfil extends Notifier<AsyncValue<void>> {
   @override
   AsyncValue<void> build() => const AsyncData(null);
@@ -47,22 +46,6 @@ class ControladorPerfil extends Notifier<AsyncValue<void>> {
       );
       ref.invalidate(proveedorUrlsAvatarPerfil);
       ref.invalidate(proveedorUrlAvatarPerfil);
-      ref.invalidate(proveedorPerfilUsuarioActual);
-    });
-  }
-
-  Future<bool> actualizarNombreVisible(String nombre) {
-    final autenticacion = ref.read(proveedorRepositorioAutenticacion);
-    final usuarios = ref.read(proveedorRepositorioUsuarios);
-    final nombreLimpio = nombre.trim();
-    return _ejecutar(() async {
-      final usuario = autenticacion.usuarioActual;
-      if (usuario == null) throw const FalloAutenticacion.desconocido();
-      await usuarios.guardarNombreVisible(
-        uid: usuario.uid,
-        nombreVisible: nombreLimpio,
-      );
-      await autenticacion.actualizarNombreVisible(nombreLimpio);
       ref.invalidate(proveedorPerfilUsuarioActual);
     });
   }

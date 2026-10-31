@@ -5,7 +5,7 @@ import '../../../../nucleo/tema/tema_app.dart';
 import '../../../inicio/dominio/resumen_inicio.dart';
 import 'avatar_perfil.dart';
 
-/// Cabecera estilo Instagram: avatar, estadísticas, bio y botones de acción.
+/// Cabecera estilo Instagram: avatar, estadísticas, bio y cerrar sesión.
 class EncabezadoPerfil extends StatelessWidget {
   const EncabezadoPerfil({
     super.key,
@@ -15,7 +15,6 @@ class EncabezadoPerfil extends StatelessWidget {
     required this.resumen,
     required this.publicaciones,
     required this.ocupado,
-    required this.alEditar,
     required this.alCerrarSesion,
     this.fotoPublicId,
     this.alTocarAvatar,
@@ -27,7 +26,6 @@ class EncabezadoPerfil extends StatelessWidget {
   final ResumenInicio resumen;
   final int publicaciones;
   final bool ocupado;
-  final VoidCallback alEditar;
   final VoidCallback alCerrarSesion;
   final String? fotoPublicId;
   final VoidCallback? alTocarAvatar;
@@ -88,35 +86,11 @@ class EncabezadoPerfil extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Semantics(
-            button: true,
-            label: 'Editar nombre',
-            child: InkWell(
-              onTap: ocupado ? null : alEditar,
-              borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        nombre,
-                        style: estilos.titleMedium?.copyWith(
-                          color: ColoresApp.primario,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Icon(
-                      Icons.edit_outlined,
-                      size: 18,
-                      color: ocupado
-                          ? ColoresApp.atenuado
-                          : ColoresApp.acento,
-                    ),
-                  ],
-                ),
-              ),
+          Text(
+            nombre,
+            style: estilos.titleMedium?.copyWith(
+              color: ColoresApp.primario,
+              fontWeight: FontWeight.w700,
             ),
           ),
           if (nombreUsuario != null && nombreUsuario!.isNotEmpty) ...[
@@ -145,33 +119,19 @@ class EncabezadoPerfil extends StatelessWidget {
             texto: 'Para quienes más amo',
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: ocupado ? null : alEditar,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
-                    ),
-                  ),
-                  child: const Text('Editar nombre'),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton(
+              key: const Key('boton-cerrar-sesion'),
+              onPressed: ocupado ? null : alCerrarSesion,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(48, 40),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
                 ),
               ),
-              const SizedBox(width: 8),
-              OutlinedButton(
-                key: const Key('boton-cerrar-sesion'),
-                onPressed: ocupado ? null : alCerrarSesion,
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(48, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
-                  ),
-                ),
-                child: const Icon(Icons.logout, size: 20),
-              ),
-            ],
+              child: const Icon(Icons.logout, size: 20),
+            ),
           ),
         ],
       ),
