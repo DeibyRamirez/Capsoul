@@ -40,56 +40,11 @@ void main() {
     await abrirPerfil(tester);
 
     expect(find.text('Ana Supabase'), findsOneWidget);
-    expect(find.text('Editar nombre'), findsOneWidget);
+    expect(find.text('Editar nombre'), findsNothing);
+    expect(find.text('Editar perfil'), findsNothing);
     // Con "Confirm email" activo toda sesión tiene el correo confirmado.
     expect(find.text('Verifica tu correo electrónico'), findsNothing);
     expect(find.text('Reenviar correo'), findsNothing);
-  });
-
-  testWidgets('tocar el nombre abre el diálogo de edición', (tester) async {
-    final autenticacion =
-        RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba);
-    await montarAppCapsoul(
-      tester,
-      autenticacion: autenticacion,
-      usuarios: usuariosConAna(),
-    );
-    await abrirPerfil(tester);
-
-    await tester.tap(find.text('Ana Supabase'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Editar nombre'), findsWidgets);
-    expect(find.byType(TextFormField), findsOneWidget);
-  });
-
-  testWidgets('edita el nombre visible', (tester) async {
-    final autenticacion =
-        RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba);
-    final usuarios = usuariosConAna();
-    await montarAppCapsoul(
-      tester,
-      autenticacion: autenticacion,
-      usuarios: usuarios,
-    );
-    await abrirPerfil(tester);
-
-    expect(find.text('Verifica tu correo electrónico'), findsNothing);
-    await tester.tap(find.text('Editar nombre'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.byType(TextFormField),
-      ),
-      'Ana María',
-    );
-    await tester.tap(find.text('Guardar'));
-    await tester.pumpAndSettle();
-
-    expect(usuarios.perfiles['uid-123']?.nombreVisible, 'Ana María');
-    expect(autenticacion.usuarioActual?.nombreVisible, 'Ana María');
-    expect(find.text('Ana María'), findsOneWidget);
   });
 
   testWidgets('cerrar sesión vuelve a /iniciar-sesion', (tester) async {

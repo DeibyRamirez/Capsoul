@@ -7,10 +7,8 @@ import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
-import '../../../nucleo/tema/tema_app.dart';
 import '../../amistades/aplicacion/proveedores_amistades.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
-import '../../autenticacion/presentacion/validadores_autenticacion.dart';
 import '../../crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
 import '../../inicio/dominio/resumen_inicio.dart';
@@ -69,31 +67,6 @@ class PantallaPerfil extends ConsumerWidget {
         .subirFotoPerfil(ruta);
     if (guardado && context.mounted) {
       mostrarAvisoInformativo(context, 'Foto de perfil actualizada.');
-    }
-  }
-
-  Future<void> _editarNombre(
-    BuildContext context,
-    WidgetRef ref,
-    String nombreActual,
-  ) async {
-    final nombreNuevo = await showDialog<String>(
-      context: context,
-      builder: (_) => _DialogoEditarNombre(nombreInicial: nombreActual),
-    );
-    if (nombreNuevo == null || nombreNuevo.trim() == nombreActual) return;
-    final guardado = await ref
-        .read(proveedorControladorPerfil.notifier)
-        .actualizarNombreVisible(nombreNuevo);
-    if (!context.mounted) return;
-    if (guardado) {
-      mostrarAvisoInformativo(context, 'Nombre actualizado');
-    } else {
-      final error = ref.read(proveedorControladorPerfil).error;
-      mostrarAvisoError(
-        context,
-        error ?? 'No se pudo actualizar el nombre.',
-      );
     }
   }
 
@@ -184,7 +157,6 @@ class PantallaPerfil extends ConsumerWidget {
                   resumen: resumen,
                   publicaciones: resumen.recuerdos,
                   ocupado: ocupado,
-                  alEditar: () => _editarNombre(context, ref, nombre),
                   alCerrarSesion: () => ref
                       .read(proveedorControladorPerfil.notifier)
                       .cerrarSesion(),
@@ -288,64 +260,6 @@ class _BarraSuperior extends StatelessWidget {
           // ),
         ],
       ),
-    );
-  }
-}
-
-class _DialogoEditarNombre extends StatefulWidget {
-  const _DialogoEditarNombre({required this.nombreInicial});
-
-  final String nombreInicial;
-
-  @override
-  State<_DialogoEditarNombre> createState() => _EstadoDialogoEditarNombre();
-}
-
-class _EstadoDialogoEditarNombre extends State<_DialogoEditarNombre> {
-  final _claveFormulario = GlobalKey<FormState>();
-  late final TextEditingController _controlador =
-      TextEditingController(text: widget.nombreInicial);
-
-  @override
-  void dispose() {
-    _controlador.dispose();
-    super.dispose();
-  }
-
-  void _guardar() {
-    if (!(_claveFormulario.currentState?.validate() ?? false)) return;
-    Navigator.of(context).pop(_controlador.text.trim());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(TemaApp.radioGrande),
-      ),
-      title: const Text('Editar nombre'),
-      content: Form(
-        key: _claveFormulario,
-        child: TextFormField(
-          controller: _controlador,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Nombre'),
-          validator: ValidadoresAutenticacion.nombreVisible,
-          onFieldSubmitted: (_) => _guardar(),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: _guardar,
-          style: FilledButton.styleFrom(minimumSize: const Size(96, 48)),
-          child: const Text('Guardar'),
-        ),
-      ],
     );
   }
 }
