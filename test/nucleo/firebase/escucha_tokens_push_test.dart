@@ -26,9 +26,6 @@ class RegistroQueRespetaSesion implements RegistroDispositivosPush {
   Future<void> eliminarToken(String tokenFcm, {String? uid}) async {
     borrados.add((token: tokenFcm, uid: uid ?? uidActual()));
   }
-
-  @override
-  Future<void> eliminarTodosLosTokensDelUsuario() async {}
 }
 
 void main() {

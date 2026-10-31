@@ -121,6 +121,27 @@ void main() {
     await android.cerrar();
     await ios.cerrar();
   });
+
+  test('el aviso inicial se abre aunque el token tarde', () async {
+    final fuente = _FuenteLenta();
+    final rutas = <String>[];
+    final sesion = SesionAvisosPush(
+      fuente: fuente,
+      presentador: _PresentadorFalso(),
+      alRegistrarToken: (_) async {},
+      alAbrirRuta: rutas.add,
+      esAndroid: false,
+      esIos: true,
+      sdkAndroid: 0,
+    );
+    fuente.inicial = mensajeDesdeMapa(datos: {'ruta': 'capsoul://amigos'});
+    final inicio = sesion.iniciar();
+    await Future<void>.delayed(Duration.zero);
+    expect(rutas, ['capsoul://amigos']);
+    fuente.tokenLento.complete('token-tarde');
+    await inicio;
+    sesion.cerrar();
+  });
 }
 
 class _FuenteFalsa implements FuenteMensajesPush {
@@ -193,4 +214,11 @@ class _PresentadorFalso implements PresentadorAvisos {
 
   @override
   Future<String?> rutaPendiente() async => ruta;
+}
+
+class _FuenteLenta extends _FuenteFalsa {
+  final tokenLento = Completer<String?>();
+
+  @override
+  Future<String?> tokenActual() => tokenLento.future;
 }

@@ -26,17 +26,14 @@ const usuarioPrueba = UsuarioApp(
 
 /// Push en memoria (pruebas de widget).
 class RegistroDispositivosPushFalso implements RegistroDispositivosPush {
-  int llamadasBorrarTodos = 0;
+  final borrados = <String>[];
 
   @override
   Future<void> registrarToken(String tokenFcm) async {}
 
   @override
-  Future<void> eliminarToken(String tokenFcm, {String? uid}) async {}
-
-  @override
-  Future<void> eliminarTodosLosTokensDelUsuario() async {
-    llamadasBorrarTodos++;
+  Future<void> eliminarToken(String tokenFcm, {String? uid}) async {
+    borrados.add(tokenFcm);
   }
 }
 
