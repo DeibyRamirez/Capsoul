@@ -15,6 +15,7 @@ class CapsulaRecibida {
     this.liberadaEn,
     this.abiertaEn,
     this.leidaEn,
+    this.imagenClave,
   });
 
   final String id;
@@ -31,6 +32,9 @@ class CapsulaRecibida {
   /// `capsula_destinatarios.leida_en`: ya vi el aviso, aunque no abra el frasco.
   final DateTime? leidaEn;
 
+  /// Clave de la imagen local (`capsulas.imagen_clave`).
+  final String? imagenClave;
+
   bool get estaLiberada => estado == EstadoCapsula.liberada;
 
   CapsulaRecibida copiarCon({DateTime? leidaEn}) => CapsulaRecibida(
@@ -43,6 +47,7 @@ class CapsulaRecibida {
     liberadaEn: liberadaEn,
     abiertaEn: abiertaEn,
     leidaEn: leidaEn ?? this.leidaEn,
+    imagenClave: imagenClave,
   );
 
   bool get estaAbierta => estaLiberada && abiertaEn != null;
@@ -71,6 +76,7 @@ class CapsulaRecibida {
     final liberada = fila['liberada_en'];
     final abierta = fila['abierta_en'];
     final leida = fila['leida_en'];
+    final imagenClave = fila['imagen_clave'];
     return CapsulaRecibida(
       id: id,
       autorId: autorId,
@@ -81,6 +87,7 @@ class CapsulaRecibida {
       liberadaEn: liberada is String ? DateTime.tryParse(liberada) : null,
       abiertaEn: abierta is String ? DateTime.tryParse(abierta) : null,
       leidaEn: leida is String ? DateTime.tryParse(leida) : null,
+      imagenClave: imagenClave is String ? imagenClave : null,
     );
   }
 }

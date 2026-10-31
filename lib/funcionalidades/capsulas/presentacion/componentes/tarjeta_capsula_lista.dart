@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../../nucleo/enrutador/rutas_app.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
@@ -10,6 +9,7 @@ import '../../dominio/capsula.dart';
 import '../../dominio/capsula_recibida.dart';
 import '../../dominio/estado_capsula.dart';
 import '../../dominio/estado_visible_capsula.dart';
+import 'miniatura_imagen_capsula.dart';
 
 class TarjetaCapsulaLista extends StatelessWidget {
   const TarjetaCapsulaLista.propia({
@@ -43,6 +43,7 @@ class TarjetaCapsulaLista extends StatelessWidget {
           ahora: ahora,
         ),
         puedeEditar: false,
+        imagenClave: r.imagenClave,
       );
     }
 
@@ -60,6 +61,7 @@ class TarjetaCapsulaLista extends StatelessWidget {
       ),
       puedeEditar: c.estado == EstadoCapsula.borrador ||
           c.estado == EstadoCapsula.programada,
+      imagenClave: c.imagenClave,
     );
   }
 
@@ -81,6 +83,7 @@ class _TarjetaContenido extends StatelessWidget {
     required this.descripcion,
     required this.presentacion,
     required this.puedeEditar,
+    required this.imagenClave,
   });
 
   final String id;
@@ -88,6 +91,7 @@ class _TarjetaContenido extends StatelessWidget {
   final String? descripcion;
   final PresentacionEstadoCapsula presentacion;
   final bool puedeEditar;
+  final String? imagenClave;
 
   @override
   Widget build(BuildContext context) {
@@ -110,10 +114,10 @@ class _TarjetaContenido extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FrascoLuminoso(
-                tamano: 60,
-                brillo: presentacion.brilla ? 0.95 : 0.5,
+              MiniaturaImagenCapsula(
+                imagenClave: imagenClave,
                 conCandado: presentacion.conCandado,
+                atenuada: !presentacion.brilla,
               ),
               const SizedBox(width: 12),
               Expanded(

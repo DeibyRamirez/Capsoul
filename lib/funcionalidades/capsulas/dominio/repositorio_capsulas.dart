@@ -39,6 +39,7 @@ abstract interface class RepositorioCapsulas {
     required DateTime fechaApertura,
     required List<String> idsRecuerdosOrdenados,
     required List<String> destinatariosUsuarioIds,
+    String? imagenClave,
   });
 
   Future<void> cancelarCapsula(String id);

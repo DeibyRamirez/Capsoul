@@ -104,6 +104,7 @@ class RepositorioCapsulasFalso implements RepositorioCapsulas {
     required DateTime fechaApertura,
     required List<String> idsRecuerdosOrdenados,
     required List<String> destinatariosUsuarioIds,
+    String? imagenClave,
   }) async {
     actualizaciones.add((
       id: id,
@@ -126,6 +127,7 @@ class RepositorioCapsulasFalso implements RepositorioCapsulas {
         creadoEn: existente.creadoEn,
         elementos: existente.elementos,
         destinatariosUsuarioIds: destinatariosUsuarioIds,
+        imagenClave: imagenClave ?? existente.imagenClave,
       );
     }
   }

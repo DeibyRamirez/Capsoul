@@ -20,6 +20,7 @@ class EstadoCrearCapsula {
     this.destinatariosUsuarioIds = const {},
     this.guardando = false,
     this.error,
+    this.imagenClave,
   });
 
   /// Recuerdos elegidos, en el orden en que se guardarán.
@@ -28,6 +29,9 @@ class EstadoCrearCapsula {
   final Set<String> destinatariosUsuarioIds;
   final bool guardando;
   final FalloApp? error;
+
+  /// Clave de la imagen local elegida; `null` usa la imagen por defecto.
+  final String? imagenClave;
 
   static const int maximo = LimitesMedios.elementosMaxPorCapsula;
 
@@ -44,6 +48,7 @@ class EstadoCrearCapsula {
     Set<String>? destinatariosUsuarioIds,
     bool? guardando,
     FalloApp? error,
+    String? imagenClave,
     bool limpiarError = false,
   }) {
     return EstadoCrearCapsula(
@@ -53,6 +58,7 @@ class EstadoCrearCapsula {
           destinatariosUsuarioIds ?? this.destinatariosUsuarioIds,
       guardando: guardando ?? this.guardando,
       error: limpiarError ? null : (error ?? this.error),
+      imagenClave: imagenClave ?? this.imagenClave,
     );
   }
 }
@@ -102,6 +108,10 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
     state = state.copiarCon(fechaApertura: fecha, limpiarError: true);
   }
 
+  void elegirImagen(String clave) {
+    state = state.copiarCon(imagenClave: clave, limpiarError: true);
+  }
+
   void elegirDestinatarios(Set<String> usuarioIds) {
     state = state.copiarCon(
       destinatariosUsuarioIds: usuarioIds,
@@ -124,6 +134,7 @@ class ControladorCrearCapsula extends Notifier<EstadoCrearCapsula> {
       fechaApertura: fecha,
       recuerdos: state.recuerdos,
       destinatariosUsuarioIds: destinatarios,
+      imagenClave: state.imagenClave,
     );
     final fallo = ValidadorCapsula.validar(
       nueva,
