@@ -3,6 +3,7 @@ import 'package:just_audio/just_audio.dart';
 import '../dominio/fallo_musica.dart';
 import '../dominio/referencia_musica.dart';
 import '../dominio/repositorio_catalogo_musica.dart';
+import '../dominio/url_preview_musica.dart';
 import 'refrescar_preview_musica.dart';
 import 'reproducir_preview_musica.dart';
 
@@ -20,6 +21,9 @@ class ResultadoCargaPreview {
   final bool refrescada;
 }
 
+bool _previewListoParaStreaming(ReferenciaMusica referencia) =>
+    urlPreviewConfiable(referencia.previewUrl);
+
 /// Prepara y carga el preview en streaming.
 ///
 /// Si no hay URL (pista de Deezer guardada) la pide por id antes; si la URL
@@ -32,9 +36,9 @@ Future<ResultadoCargaPreview> intentarCargarPreviewConRefresco(
 ) async {
   var actual = referencia;
   var pedida = false;
-  if (!actual.tienePreview) {
+  if (!_previewListoParaStreaming(actual)) {
     final fresca = await refrescarPreview(actual, catalogo);
-    if (fresca == null || !fresca.tienePreview) {
+    if (fresca == null || !_previewListoParaStreaming(fresca)) {
       throw const FalloMusica(TipoFalloMusica.sinPreview);
     }
     actual = fresca;
@@ -49,7 +53,7 @@ Future<ResultadoCargaPreview> intentarCargarPreviewConRefresco(
   } catch (error, pila) {
     if (pedida) Error.throwWithStackTrace(error, pila);
     final fresca = await refrescarPreview(actual, catalogo);
-    if (fresca == null || !fresca.tienePreview) {
+    if (fresca == null || !_previewListoParaStreaming(fresca)) {
       Error.throwWithStackTrace(error, pila);
     }
     await cargarPreviewEnReproductor(reproductor, fresca);

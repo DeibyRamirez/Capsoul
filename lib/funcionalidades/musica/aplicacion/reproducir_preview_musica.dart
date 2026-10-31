@@ -1,6 +1,8 @@
 import 'package:just_audio/just_audio.dart';
 
+import '../dominio/fallo_musica.dart';
 import '../dominio/referencia_musica.dart';
+import '../dominio/url_preview_musica.dart';
 
 const _userAgentNavegador =
     'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
@@ -25,6 +27,9 @@ Map<String, String> cabecerasPreview(ReferenciaMusica referencia) {
 /// [AudioSource] en streaming para el clip de ~30 s (no se guarda a disco).
 AudioSource fuenteAudioPreview(ReferenciaMusica referencia) {
   final url = referencia.previewUrl!.trim();
+  if (!urlPreviewConfiable(url)) {
+    throw const FalloMusica(TipoFalloMusica.sinPreview);
+  }
   return AudioSource.uri(
     Uri.parse(url),
     headers: cabecerasPreview(referencia),
