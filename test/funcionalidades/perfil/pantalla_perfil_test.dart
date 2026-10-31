@@ -40,10 +40,27 @@ void main() {
     await abrirPerfil(tester);
 
     expect(find.text('Ana Supabase'), findsOneWidget);
-    expect(find.text('Editar perfil'), findsOneWidget);
+    expect(find.text('Editar nombre'), findsOneWidget);
     // Con "Confirm email" activo toda sesión tiene el correo confirmado.
     expect(find.text('Verifica tu correo electrónico'), findsNothing);
     expect(find.text('Reenviar correo'), findsNothing);
+  });
+
+  testWidgets('tocar el nombre abre el diálogo de edición', (tester) async {
+    final autenticacion =
+        RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba);
+    await montarAppCapsoul(
+      tester,
+      autenticacion: autenticacion,
+      usuarios: usuariosConAna(),
+    );
+    await abrirPerfil(tester);
+
+    await tester.tap(find.text('Ana Supabase'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar nombre'), findsWidgets);
+    expect(find.byType(TextFormField), findsOneWidget);
   });
 
   testWidgets('edita el nombre visible', (tester) async {
@@ -58,7 +75,7 @@ void main() {
     await abrirPerfil(tester);
 
     expect(find.text('Verifica tu correo electrónico'), findsNothing);
-    await tester.tap(find.text('Editar perfil'));
+    await tester.tap(find.text('Editar nombre'));
     await tester.pumpAndSettle();
     await tester.enterText(
       find.descendant(

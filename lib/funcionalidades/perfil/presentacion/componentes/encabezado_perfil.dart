@@ -88,11 +88,35 @@ class EncabezadoPerfil extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          Text(
-            nombre,
-            style: estilos.titleMedium?.copyWith(
-              color: ColoresApp.primario,
-              fontWeight: FontWeight.w700,
+          Semantics(
+            button: true,
+            label: 'Editar nombre',
+            child: InkWell(
+              onTap: ocupado ? null : alEditar,
+              borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        nombre,
+                        style: estilos.titleMedium?.copyWith(
+                          color: ColoresApp.primario,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.edit_outlined,
+                      size: 18,
+                      color: ocupado
+                          ? ColoresApp.atenuado
+                          : ColoresApp.acento,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           if (nombreUsuario != null && nombreUsuario!.isNotEmpty) ...[
@@ -132,7 +156,7 @@ class EncabezadoPerfil extends StatelessWidget {
                       borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
                     ),
                   ),
-                  child: const Text('Editar perfil'),
+                  child: const Text('Editar nombre'),
                 ),
               ),
               const SizedBox(width: 8),
