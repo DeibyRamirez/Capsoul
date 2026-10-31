@@ -97,6 +97,7 @@ flutter:
   # Imagenes locales de capsula (catalogo ImagenCapsula, WebP optimizado).
   assets:
     - assets/imagenes_capsula/
+    - assets/ilustraciones_inicio/
 
   # Fuentes del sistema de diseño (Google Fonts, licencia OFL).
   fonts:

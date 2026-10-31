@@ -3,6 +3,7 @@ import 'package:just_audio/just_audio.dart';
 import '../dominio/fallo_musica.dart';
 import '../dominio/referencia_musica.dart';
 import '../dominio/repositorio_catalogo_musica.dart';
+import '../dominio/url_preview_musica.dart';
 import 'refrescar_preview_musica.dart';
 import 'reproducir_preview_musica.dart';
 
@@ -23,10 +24,11 @@ class ResultadoCargaPreview {
 }
 
 /// True si la URL guardada no sirve y hay que pedir `/track/<id>` a Deezer:
+/// sin URL, URL no https o local (127.0.0.1/localhost),
 /// pistas de Deezer o filas antiguas cuyo preview guardado era de Deezer
 /// (esas URL firmadas caducan y responden 403).
 bool debePedirPreviewFresco(ReferenciaMusica referencia) {
-  if (!referencia.tienePreview) return true;
+  if (!urlPreviewConfiable(referencia.previewUrl)) return true;
   if (referencia.idPistaDeezer == null) return false;
   return referencia.esDeezer ||
       referencia.previewProveedorEfectivo == ProveedorPreviewMusica.deezer;
@@ -52,7 +54,7 @@ Future<ResultadoCargaPreview> intentarCargarPreviewConRefresco(
   var pedida = false;
   if (debePedirPreviewFresco(actual)) {
     final fresca = await refrescarPreview(actual, catalogo);
-    if (fresca == null || !fresca.tienePreview) {
+    if (fresca == null || !urlPreviewConfiable(fresca.previewUrl)) {
       throw const FalloMusica(TipoFalloMusica.sinPreview);
     }
     actual = fresca;
@@ -67,7 +69,7 @@ Future<ResultadoCargaPreview> intentarCargarPreviewConRefresco(
   } catch (error, pila) {
     if (pedida) Error.throwWithStackTrace(error, pila);
     final fresca = await refrescarPreview(actual, catalogo);
-    if (fresca == null || !fresca.tienePreview) {
+    if (fresca == null || !urlPreviewConfiable(fresca.previewUrl)) {
       Error.throwWithStackTrace(error, pila);
     }
     await cargarPreviewEnReproductor(reproductor, fresca);

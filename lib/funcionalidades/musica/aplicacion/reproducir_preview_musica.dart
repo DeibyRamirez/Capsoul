@@ -1,6 +1,8 @@
 import 'package:just_audio/just_audio.dart';
 
+import '../dominio/fallo_musica.dart';
 import '../dominio/referencia_musica.dart';
+import '../dominio/url_preview_musica.dart';
 
 /// [AudioSource] en streaming para el clip de ~30 s.
 ///
@@ -10,7 +12,12 @@ import '../dominio/referencia_musica.dart';
 /// en texto plano («Cleartext HTTP traffic to 127.0.0.1 not permitted»).
 /// La URL https de Deezer se reproduce directo con ExoPlayer/AVPlayer.
 AudioSource fuenteAudioPreview(ReferenciaMusica referencia) {
-  return AudioSource.uri(Uri.parse(referencia.previewUrl!.trim()));
+  final url = referencia.previewUrl!.trim();
+  // Solo https y nunca localhost/127.0.0.1 (cleartext bloqueado en Android).
+  if (!urlPreviewConfiable(url)) {
+    throw const FalloMusica(TipoFalloMusica.sinPreview);
+  }
+  return AudioSource.uri(Uri.parse(url));
 }
 
 /// Carga el clip en el reproductor por streaming desde la URL (no se

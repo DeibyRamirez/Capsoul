@@ -15,6 +15,18 @@ const _filaAntiguaConPreviewDeezer = ReferenciaMusica(
 
 void main() {
   group('debePedirPreviewFresco', () {
+    test('URL local o no https (127.0.0.1, http): pide /track/<id>', () {
+      const local = ReferenciaMusica(
+        idExterno: 'sp1',
+        titulo: 'T',
+        artista: 'A',
+        urlCompleta: 'https://open.spotify.com/track/sp1',
+        previewUrl: 'http://127.0.0.1/preview.mp3',
+        enlaceDeezer: 'https://www.deezer.com/track/42',
+      );
+      expect(debePedirPreviewFresco(local), isTrue);
+    });
+
     test('pista de Deezer sin URL: pide /track/<id>', () {
       expect(debePedirPreviewFresco(pistaDeezerPrueba(preview: null)), isTrue);
     });

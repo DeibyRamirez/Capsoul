@@ -17,6 +17,7 @@ import 'componentes/banner_frase_inicio.dart';
 import 'componentes/encabezado_inicio.dart';
 import 'componentes/escena_frasco_inicio.dart';
 import 'componentes/tarjeta_seccion_inicio.dart';
+import 'recursos_ilustraciones_inicio.dart';
 
 /// Pestaña "Inicio": la cápsula de vidrio, "Guardar algo hoy", las cuatro
 /// secciones con sus conteos y la frase de Capsoul.
@@ -111,7 +112,9 @@ class _RejillaSecciones extends StatelessWidget {
           'recuerdo guardado',
           'recuerdos guardados',
         ),
-        ilustracion: const IlustracionSeccion(icono: Icons.photo_outlined),
+        ilustracion: const IlustracionSeccion(
+          rutaAsset: IlustracionesInicio.recuerdos,
+        ),
         alTocar: () => context.push(RutasApp.recuerdos),
       ),
       TarjetaSeccionInicio(
@@ -124,7 +127,9 @@ class _RejillaSecciones extends StatelessWidget {
           'reto activo',
           'retos activos',
         ),
-        ilustracion: const IlustracionSeccion(icono: Icons.terrain_outlined),
+        ilustracion: const IlustracionSeccion(
+          rutaAsset: IlustracionesInicio.retos,
+        ),
         alTocar: () => context.push(RutasApp.retos),
       ),
       TarjetaSeccionInicio(
@@ -137,7 +142,9 @@ class _RejillaSecciones extends StatelessWidget {
           'cápsula        creada',
           'cápsulas       creadas',
         ),
-        ilustracion: const IlustracionSeccion(icono: Icons.hourglass_bottom),
+        ilustracion: const IlustracionSeccion(
+          rutaAsset: IlustracionesInicio.capsulas,
+        ),
         alTocar: () => context.push(RutasApp.capsulas),
       ),
       TarjetaSeccionInicio(
@@ -150,7 +157,9 @@ class _RejillaSecciones extends StatelessWidget {
           'herencia        creada',
           'herencias       creadas',
         ),
-        ilustracion: const IlustracionSeccion(icono: Icons.redeem_outlined),
+        ilustracion: const IlustracionSeccion(
+          rutaAsset: IlustracionesInicio.herencias,
+        ),
         alTocar: () => context.go(RutasApp.legado),
       ),
     ];
