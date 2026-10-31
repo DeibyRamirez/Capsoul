@@ -19,6 +19,7 @@ class EstadoEditarCapsula {
     this.guardando = false,
     this.error,
     this.inicializado = false,
+    this.imagenClave,
   });
 
   final List<Recuerdo> recuerdos;
@@ -27,6 +28,9 @@ class EstadoEditarCapsula {
   final bool guardando;
   final FalloApp? error;
   final bool inicializado;
+
+  /// Clave de la imagen local elegida; `null` usa la imagen por defecto.
+  final String? imagenClave;
 
   static const int maximo = LimitesMedios.elementosMaxPorCapsula;
 
@@ -43,6 +47,7 @@ class EstadoEditarCapsula {
     bool? guardando,
     FalloApp? error,
     bool? inicializado,
+    String? imagenClave,
     bool limpiarError = false,
   }) {
     return EstadoEditarCapsula(
@@ -53,6 +58,7 @@ class EstadoEditarCapsula {
       guardando: guardando ?? this.guardando,
       error: limpiarError ? null : (error ?? this.error),
       inicializado: inicializado ?? this.inicializado,
+      imagenClave: imagenClave ?? this.imagenClave,
     );
   }
 }
@@ -65,6 +71,7 @@ class ControladorEditarCapsula extends Notifier<EstadoEditarCapsula> {
     required List<Recuerdo> recuerdos,
     required DateTime? fechaApertura,
     required List<String> destinatariosUsuarioIds,
+    String? imagenClave,
   }) {
     if (state.inicializado) return;
     state = state.copiarCon(
@@ -72,6 +79,7 @@ class ControladorEditarCapsula extends Notifier<EstadoEditarCapsula> {
       fechaApertura: fechaApertura,
       destinatariosUsuarioIds: destinatariosUsuarioIds.toSet(),
       inicializado: true,
+      imagenClave: imagenClave,
       limpiarError: true,
     );
   }
@@ -114,6 +122,10 @@ class ControladorEditarCapsula extends Notifier<EstadoEditarCapsula> {
 
   void elegirFecha(DateTime fecha) {
     state = state.copiarCon(fechaApertura: fecha, limpiarError: true);
+  }
+
+  void elegirImagen(String clave) {
+    state = state.copiarCon(imagenClave: clave, limpiarError: true);
   }
 
   void elegirDestinatarios(Set<String> usuarioIds) {
@@ -168,6 +180,7 @@ class ControladorEditarCapsula extends Notifier<EstadoEditarCapsula> {
               for (final r in state.recuerdos) r.id,
             ],
             destinatariosUsuarioIds: destinatarios,
+            imagenClave: state.imagenClave,
           );
       if (ref.mounted) {
         state = state.copiarCon(guardando: false);

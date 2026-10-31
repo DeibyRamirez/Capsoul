@@ -9,6 +9,7 @@ import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
 import '../../elementos/dominio/fallo_medios.dart';
 import '../../recuerdos/datos/mapeo_recuerdos.dart';
 import '../../recuerdos/dominio/recuerdo.dart';
+import '../dominio/imagen_capsula.dart';
 import '../dominio/capsula.dart';
 import '../dominio/capsula_recibida.dart';
 import '../dominio/estado_capsula.dart';
@@ -65,6 +66,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
         'mensaje': (mensaje == null || mensaje.isEmpty) ? null : mensaje,
         'fecha_apertura': nueva.fechaApertura.toUtc().toIso8601String(),
         'estado': EstadoCapsula.borrador.valorBd,
+        'imagen_clave': ImagenCapsula.buscar(nueva.imagenClave)?.clave,
       });
       insertada = true;
       await _acceso.insertarEnlaces([
@@ -212,6 +214,7 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
     required DateTime fechaApertura,
     required List<String> idsRecuerdosOrdenados,
     required List<String> destinatariosUsuarioIds,
+    String? imagenClave,
   }) async {
     final uid = _uidActual();
     if (uid == null) throw const FalloCapsula.sinSesion();
@@ -239,6 +242,9 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
             ? null
             : textoMensaje,
         'fecha_apertura': fechaApertura.toUtc().toIso8601String(),
+        // Solo claves del catalogo local; si no, no se toca la columna.
+        if (ImagenCapsula.buscar(imagenClave) case final imagen?)
+          'imagen_clave': imagen.clave,
       });
       await _acceso.eliminarEnlacesDeCapsula(id);
       await _acceso.insertarEnlaces([
@@ -339,6 +345,9 @@ class RepositorioCapsulasSupabase implements RepositorioCapsulas {
       destinatariosUsuarioIds: List.unmodifiable(destinatarios),
       tieneCorreoExterno: tieneCorreoExterno,
       abiertaEn: abiertaEn,
+      imagenClave: fila['imagen_clave'] is String
+          ? fila['imagen_clave'] as String
+          : null,
     );
   }
 
