@@ -24,6 +24,7 @@ Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). 
 | `20261016000014` | Legado: vínculos cápsulas y RPC |
 | `20261016000015` | `musica_preview_proveedor` |
 | `20261026000016` | El autor puede ser destinatario de su cápsula (`capsula_destinatarios_crear`) |
+| `20261030000019` | Seguridad: revokes en herencia, `anon` fuera de `mis_amigos` y `mis_solicitudes_amistad_pendientes`, `search_path` vacío en 11 funciones y 5 índices de FK (aplicada en remoto el 2026-10-30) |
 | `20261030000020` | `capsulas.imagen_clave` (imagen local) + `capsulas_recibidas()` la devuelve |
 | `20261030000021` | Aviso push de solicitud de amistad (trigger `amistades_encolar_aviso`) y `amistades` en `supabase_realtime` (no aplicada en remoto) |
 
