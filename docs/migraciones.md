@@ -28,6 +28,7 @@ Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). 
 | `20261030000020` | `capsulas.imagen_clave` (imagen local) + `capsulas_recibidas()` la devuelve |
 | `20261030000021` | Aviso push de solicitud de amistad (trigger `amistades_encolar_aviso`) y `amistades` en `supabase_realtime` (no aplicada en remoto) |
 | `20261030000022` | RPC `registrar_dispositivo_push` (upsert por token, reasigna cuenta) y reactivación de avisos push «Sin tokens FCM» de las últimas 24 h (no aplicada en remoto) |
+| `20261030000023` | Música con la API pública de Deezer: `musica_proveedor` admite `deezer`; para Deezer id numérico y `musica_preview_url` null (la URL caduca, se pide `/track/<id>` al reproducir). Sin columnas nuevas, RLS y grants sin cambios (**pendiente**, no aplicada en remoto) |
 
 El estado **aplicado en remoto** puede ir por detrás del repo; usar `supabase migration list` antes de cada release.
 
