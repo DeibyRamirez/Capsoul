@@ -174,10 +174,7 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
   Future<void> actualizarMusicaPreview(String id, ReferenciaMusica musica) async {
     _uid();
     try {
-      await _acceso.actualizar(id, {
-        ...musica.aFilaBd(),
-        if (musica.tienePreview) 'duracion_segundos': 30,
-      });
+      await _acceso.actualizar(id, cambiosMusicaPreview(musica));
     } catch (error) {
       throw traducirError(error);
     }
@@ -236,6 +233,17 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
       throw traducirError(error);
     }
   }
+
+  /// Columnas que se envian al actualizar la musica de un recuerdo.
+  ///
+  /// REGLA: solo columnas con grant de UPDATE para `authenticated`. Nunca
+  /// `duracion_segundos` ni `musica_preview_proveedor` (darian 42501), y
+  /// nunca la URL del preview de Deezer (caduca; `aFilaBd` la deja en null).
+  @visibleForTesting
+  static Map<String, dynamic> cambiosMusicaPreview(ReferenciaMusica musica) =>
+      Map<String, dynamic>.of(musica.aFilaBd())
+        ..remove('musica_preview_proveedor')
+        ..remove('duracion_segundos');
 
   /// Traduce errores de PostgREST, red y medios a fallos de dominio.
   @visibleForTesting

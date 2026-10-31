@@ -1,34 +1,32 @@
 import 'package:capsoul/funcionalidades/musica/aplicacion/reproducir_preview_musica.dart';
 import 'package:capsoul/funcionalidades/musica/dominio/referencia_musica.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:just_audio/just_audio.dart';
+
+import '../../../ayudantes/falsos_musica.dart';
 
 void main() {
-  ReferenciaMusica refConPreview(String url) => ReferenciaMusica(
-        idExterno: 't1',
-        titulo: 'T',
-        artista: 'A',
-        urlCompleta: 'https://open.spotify.com/track/t1',
-        previewUrl: url,
-      );
-
-  test('cabecerasPreview incluye Referer para dzcdn', () {
-    final ref = refConPreview('https://cdns-preview.dzcdn.net/stream/x.mp3');
-    final headers = cabecerasPreview(ref);
-    expect(headers['Referer'], 'https://www.deezer.com/');
-    expect(headers['User-Agent'], isNotEmpty);
-    expect(headers['Accept'], '*/*');
+  test('el preview usa la URL https directa, sin headers (sin proxy local)', () {
+    final fuente = fuenteAudioPreview(
+      pistaDeezerPrueba(preview: '  https://cdnt-preview.dzcdn.net/api/1/1/x.mp3 '),
+    );
+    expect(fuente, isA<UriAudioSource>());
+    final uri = (fuente as UriAudioSource).uri;
+    expect(uri.toString(), 'https://cdnt-preview.dzcdn.net/api/1/1/x.mp3');
+    expect(uri.scheme, 'https');
+    expect(fuente.headers, isNull);
   });
 
-  test('cabecerasPreview incluye Referer para scdn', () {
-    final ref = refConPreview('https://p.scdn.co/mp3-preview/x');
-    final headers = cabecerasPreview(ref);
-    expect(headers['Referer'], 'https://open.spotify.com/');
-  });
-
-  test('cabecerasPreview sin Referer en host genérico', () {
-    final ref = refConPreview('https://example.com/preview.mp3');
-    final headers = cabecerasPreview(ref);
-    expect(headers.containsKey('Referer'), isFalse);
-    expect(headers['User-Agent'], isNotEmpty);
+  test('filas antiguas de Spotify tampoco usan headers', () {
+    const ref = ReferenciaMusica(
+      idExterno: 't1',
+      titulo: 'T',
+      artista: 'A',
+      urlCompleta: 'https://open.spotify.com/track/t1',
+      previewUrl: 'https://p.scdn.co/mp3-preview/x',
+    );
+    final fuente = fuenteAudioPreview(ref) as UriAudioSource;
+    expect(fuente.headers, isNull);
+    expect(fuente.uri.host, 'p.scdn.co');
   });
 }

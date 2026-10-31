@@ -4,39 +4,24 @@ import '../dominio/fallo_musica.dart';
 import '../dominio/referencia_musica.dart';
 import '../dominio/url_preview_musica.dart';
 
-const _userAgentNavegador =
-    'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 '
-    '(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
-
-/// Cabeceras HTTP para CDNs de preview (Spotify / Deezer).
-Map<String, String> cabecerasPreview(ReferenciaMusica referencia) {
-  final url = referencia.previewUrl?.trim() ?? '';
-  final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
-  final headers = <String, String>{
-    'User-Agent': _userAgentNavegador,
-    'Accept': '*/*',
-  };
-  if (host.contains('dzcdn') || host.contains('deezer')) {
-    headers['Referer'] = 'https://www.deezer.com/';
-  } else if (host.contains('scdn') || host.contains('spotify')) {
-    headers['Referer'] = 'https://open.spotify.com/';
-  }
-  return headers;
-}
-
-/// [AudioSource] en streaming para el clip de ~30 s (no se guarda a disco).
+/// [AudioSource] en streaming para el clip de ~30 s.
+///
+/// Sin headers, sin caché y sin proxy: en Android, just_audio levanta un
+/// proxy HTTP local (http://127.0.0.1) cuando se pasan headers o se usa
+/// LockCachingAudioSource/StreamAudioSource, y Android bloquea ese tráfico
+/// en texto plano («Cleartext HTTP traffic to 127.0.0.1 not permitted»).
+/// La URL https de Deezer se reproduce directo con ExoPlayer/AVPlayer.
 AudioSource fuenteAudioPreview(ReferenciaMusica referencia) {
   final url = referencia.previewUrl!.trim();
+  // Solo https y nunca localhost/127.0.0.1 (cleartext bloqueado en Android).
   if (!urlPreviewConfiable(url)) {
     throw const FalloMusica(TipoFalloMusica.sinPreview);
   }
-  return AudioSource.uri(
-    Uri.parse(url),
-    headers: cabecerasPreview(referencia),
-  );
+  return AudioSource.uri(Uri.parse(url));
 }
 
-/// Carga el clip en el reproductor por streaming desde la URL.
+/// Carga el clip en el reproductor por streaming desde la URL (no se
+/// descarga a disco).
 Future<void> cargarPreviewEnReproductor(
   AudioPlayer reproductor,
   ReferenciaMusica referencia,
