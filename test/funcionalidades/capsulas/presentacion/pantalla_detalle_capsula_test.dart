@@ -23,6 +23,7 @@ Capsula _capsula({
   DateTime? fechaApertura,
   EstadoCapsula estado = EstadoCapsula.programada,
   DateTime? liberadaEn,
+  List<String> destinatariosUsuarioIds = const ['invitado-uid'],
 }) =>
     Capsula(
       id: 'c1',
@@ -33,6 +34,7 @@ Capsula _capsula({
       liberadaEn: liberadaEn,
       creadoEn: DateTime(2026, 8, 13),
       fechaApertura: fechaApertura ?? DateTime(2046, 8, 13, 8),
+      destinatariosUsuarioIds: destinatariosUsuarioIds,
       elementos: [
         Recuerdo(
           id: 'e1',
@@ -89,7 +91,42 @@ Future<void> _montar(
 }
 
 void main() {
-  testWidgets('sellada: el autor ve candado, cuenta regresiva y su contenido',
+  testWidgets(
+      'para mí mismo sellada: el autor no ve mensaje ni contenido',
+      (tester) async {
+    await _montar(
+      tester,
+      capsula: _capsula(destinatariosUsuarioIds: ['uid-123']),
+    );
+
+    expect(find.text('Abrir en'), findsOneWidget);
+    expect(find.text('Sobre esta cápsula'), findsNothing);
+    expect(
+      find.text('Solo tú puedes ver el contenido hasta la fecha de apertura.'),
+      findsNothing,
+    );
+    expect(find.text('El contenido se revelará el 13 ago 2046.'), findsOneWidget);
+    expect(find.text('Video'), findsNothing);
+    expect(find.text('Nota de voz'), findsNothing);
+  });
+
+  testWidgets(
+      'para mí mismo con fecha pasada sin liberar: sin contenido para el autor',
+      (tester) async {
+    await _montar(
+      tester,
+      capsula: _capsula(
+        destinatariosUsuarioIds: ['uid-123'],
+        fechaApertura: _ahora.subtract(const Duration(hours: 1)),
+      ),
+    );
+
+    expect(find.text('Aún no liberada'), findsOneWidget);
+    expect(find.text('Video'), findsNothing);
+    expect(find.text('Nota de voz'), findsNothing);
+  });
+
+  testWidgets('sellada enviada: el autor ve candado, cuenta regresiva y contenido',
       (tester) async {
     await _montar(tester, capsula: _capsula());
 

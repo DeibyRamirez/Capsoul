@@ -1,4 +1,5 @@
 import 'capsula.dart';
+import 'clasificador_capsulas.dart';
 import 'estado_capsula.dart';
 
 // Se movió a núcleo (lo usan también recuerdos y momentos).
@@ -9,8 +10,8 @@ enum ModoApertura {
   /// Fecha futura y quien mira no es el autor: candado, sin contenido.
   bloqueada,
 
-  /// Fecha futura y quien mira es el autor: candado y cuenta regresiva, pero
-  /// puede ver su propio contenido.
+  /// Sellada y quien mira es el autor de una cápsula enviada a otros: candado,
+  /// cuenta regresiva y puede ver el contenido antes de liberar.
   selladaParaAutor,
 
   /// El servidor ya la pasó a `liberada`: se puede abrir.
@@ -25,9 +26,11 @@ ModoApertura calcularModoApertura(
   required DateTime ahora,
 }) {
   if (capsula.estado == EstadoCapsula.liberada) return ModoApertura.lista;
-  return capsula.autorId == uidActual
-      ? ModoApertura.selladaParaAutor
-      : ModoApertura.bloqueada;
+  if (capsula.autorId == uidActual) {
+    if (capsulaEsSoloParaSuAutor(capsula)) return ModoApertura.bloqueada;
+    return ModoApertura.selladaParaAutor;
+  }
+  return ModoApertura.bloqueada;
 }
 
 

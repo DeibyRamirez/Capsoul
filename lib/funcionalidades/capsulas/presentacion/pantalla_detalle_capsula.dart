@@ -22,8 +22,9 @@ import 'componentes/cabecera_capsula.dart';
 import 'componentes/cuenta_regresiva.dart';
 import 'componentes/tarjeta_contenido.dart';
 
-/// Detalle de una cápsula: sellada (candado y cuenta regresiva; el autor ve
-/// su contenido), o lista para abrir con la animación del frasco.
+/// Detalle de una cápsula: sellada (candado y cuenta regresiva), lista para
+/// abrir con animación, o bloqueada sin contenido (p. ej. «para mí mismo»
+/// hasta liberar; el autor de cápsulas enviadas sí ve su contenido sellado).
 class PantallaDetalleCapsula extends ConsumerWidget {
   const PantallaDetalleCapsula({super.key, required this.idCapsula});
 
