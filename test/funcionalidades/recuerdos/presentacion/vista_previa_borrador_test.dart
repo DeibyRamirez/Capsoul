@@ -4,6 +4,7 @@ import 'package:capsoul/funcionalidades/musica/dominio/referencia_musica.dart';
 import 'package:capsoul/funcionalidades/musica/presentacion/componentes/reproductor_preview_musica.dart';
 import 'package:capsoul/funcionalidades/recuerdos/presentacion/componentes/vista_previa_borrador.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 bool _tieneVolteoHorizontal(Widget widget) {
@@ -64,7 +65,7 @@ void main() {
     var quitado = false;
 
     await tester.pumpWidget(
-      MaterialApp(
+      ProviderScope(child: MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
             child: VistaPreviaBorrador(
@@ -73,7 +74,7 @@ void main() {
             ),
           ),
         ),
-      ),
+      )),
     );
     await tester.pump();
 
