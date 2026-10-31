@@ -225,6 +225,8 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
       catálogo. La app sigue buscando directo en Deezer y no la invoca. Se conservan el botón «buscar en Spotify»
       y las canciones antiguas de Spotify.
 - [ ] Probar en dispositivo el preview de Deezer (Android e iOS) y «Abrir en Deezer» con y sin la app instalada.
+- [ ] PO: aprobar (o no) la limpieza de las `musica_preview_url` de Deezer caducadas en filas antiguas (SQL en `docs/08-musica-producto-y-licencias.md`, sección «Incidencias del preview»). No es urgente: la app ya las ignora.
+- [ ] PO: revisar y hacer merge del PR de `correccion/preview-musica` hacia `develop`.
 
 ## 7. Decisiones (ADR corto)
 
@@ -283,6 +285,7 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   (CAP04 en servidor); rejilla bento de 4 columnas calculada en `distribuirBento` (función pura).
 - **2026-09-26** Riverpod como gestor de estado único; repositorios detrás de interfaces abstractas inyectadas por
   proveedores (`proveedorRepositorioAutenticacion`, `proveedorRepositorioUsuarios`) para simularlos en pruebas.
+- **2026-10-31 Preview de música (NO romper).** Reglas: `AudioSource.uri` sin headers, caché ni proxy (en Android, el proxy 127.0.0.1 de just_audio es cleartext y se bloquea); solo streaming; nunca guardar la `preview_url` de Deezer: pedir siempre `/track/<id>` y usarla en memoria; ignorar las URL `dzcdn` guardadas en filas antiguas de Spotify; el UPDATE no envía `duracion_segundos` ni `musica_preview_proveedor` (sin grant: 42501); respetar el check de la 000023; el overlay de música sobre foto no se envuelve en otro `Positioned`. Tabla de reglas y tests en `docs/08-musica-producto-y-licencias.md`, sección «Reglas del preview que no se pueden romper».
 
 ## 8. Bitácora
 
@@ -431,3 +434,4 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   (`proveedor: deezer`, máximo 10, `verify_jwt` sigue en true) y no usa secretos de catálogo. La app no cambia:
   sigue en `api.deezer.com`, con el botón «buscar en Spotify» y las canciones antiguas. Rama
   `tarea/buscar-musica-deezer`. Sin despliegue.
+- **2026-10-31** Música (rama `correccion/preview-musica`): el preview falla en Android por el proxy local de just_audio (con headers, cleartext a 127.0.0.1); ahora se reproduce directo. En filas antiguas, la URL de Deezer caducada (403) se refrescaba y se intentaba guardar con columnas sin grant, lo que daba 42501 y `permiso_denegado`; ahora la URL de Deezer vive solo en memoria y la guardada se ignora. Visor: se quitó el doble `Positioned` del overlay de música sobre foto. Detalle en `docs/08-musica-producto-y-licencias.md`.

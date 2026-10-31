@@ -14,21 +14,37 @@ class ResultadoCargaPreview {
     this.refrescada = false,
   });
 
+  /// Referencia con la URL que se reprodujo. Si la URL es de Deezer, vive
+  /// solo en memoria: caduca y nunca se guarda en la base de datos.
   final ReferenciaMusica referencia;
 
-  /// True si una fila antigua (con URL guardada) obtuvo una URL nueva y
-  /// conviene persistirla. En Deezer nunca se persiste la URL.
+  /// True solo si la URL nueva no es de Deezer y conviene persistirla.
+  /// Como el catálogo actual es Deezer, en la práctica siempre es false.
   final bool refrescada;
 }
 
-bool _previewListoParaStreaming(ReferenciaMusica referencia) =>
-    urlPreviewConfiable(referencia.previewUrl);
+/// True si la URL guardada no sirve y hay que pedir `/track/<id>` a Deezer:
+/// sin URL, URL no https o local (127.0.0.1/localhost),
+/// pistas de Deezer o filas antiguas cuyo preview guardado era de Deezer
+/// (esas URL firmadas caducan y responden 403).
+bool debePedirPreviewFresco(ReferenciaMusica referencia) {
+  if (!urlPreviewConfiable(referencia.previewUrl)) return true;
+  if (referencia.idPistaDeezer == null) return false;
+  return referencia.esDeezer ||
+      referencia.previewProveedorEfectivo == ProveedorPreviewMusica.deezer;
+}
+
+/// True si la URL del preview se puede guardar: nunca si es de Deezer.
+bool convienePersistirPreview(ReferenciaMusica referencia) =>
+    !referencia.esDeezer &&
+    referencia.previewProveedorEfectivo != ProveedorPreviewMusica.deezer;
 
 /// Prepara y carga el preview en streaming.
 ///
-/// Si no hay URL (pista de Deezer guardada) la pide por id antes; si la URL
-/// falla (caducada), la vuelve a pedir y reintenta una vez.
-/// Lanza [FalloMusica] con [TipoFalloMusica.sinPreview] si no hay clip.
+/// Si no hay URL, o la guardada es de Deezer (caduca), la pide por id antes;
+/// si una URL guardada de otro origen falla, la vuelve a pedir y reintenta
+/// una vez. Lanza [FalloMusica] con [TipoFalloMusica.sinPreview] si no hay
+/// clip.
 Future<ResultadoCargaPreview> intentarCargarPreviewConRefresco(
   AudioPlayer reproductor,
   ReferenciaMusica referencia,
@@ -36,9 +52,9 @@ Future<ResultadoCargaPreview> intentarCargarPreviewConRefresco(
 ) async {
   var actual = referencia;
   var pedida = false;
-  if (!_previewListoParaStreaming(actual)) {
+  if (debePedirPreviewFresco(actual)) {
     final fresca = await refrescarPreview(actual, catalogo);
-    if (fresca == null || !_previewListoParaStreaming(fresca)) {
+    if (fresca == null || !urlPreviewConfiable(fresca.previewUrl)) {
       throw const FalloMusica(TipoFalloMusica.sinPreview);
     }
     actual = fresca;
@@ -48,18 +64,18 @@ Future<ResultadoCargaPreview> intentarCargarPreviewConRefresco(
     await cargarPreviewEnReproductor(reproductor, actual);
     return ResultadoCargaPreview(
       referencia: actual,
-      refrescada: pedida && !actual.esDeezer,
+      refrescada: pedida && convienePersistirPreview(actual),
     );
   } catch (error, pila) {
     if (pedida) Error.throwWithStackTrace(error, pila);
     final fresca = await refrescarPreview(actual, catalogo);
-    if (fresca == null || !_previewListoParaStreaming(fresca)) {
+    if (fresca == null || !urlPreviewConfiable(fresca.previewUrl)) {
       Error.throwWithStackTrace(error, pila);
     }
     await cargarPreviewEnReproductor(reproductor, fresca);
     return ResultadoCargaPreview(
       referencia: fresca,
-      refrescada: !fresca.esDeezer,
+      refrescada: convienePersistirPreview(fresca),
     );
   }
 }

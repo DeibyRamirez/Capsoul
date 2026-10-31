@@ -391,15 +391,12 @@ class _ContenidoVisor extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             foto,
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 24,
-              child: OverlayMusicaFotoVis(
-                referencia: musica,
-                previewMusica: previewMusica,
-                reproducirAutomaticamente: true,
-              ),
+            OverlayMusicaFotoVis(
+              referencia: musica,
+              previewMusica: previewMusica,
+              reproducirAutomaticamente: true,
+              margenLateral: 16,
+              margenInferior: 24,
             ),
           ],
         );
