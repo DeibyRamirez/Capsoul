@@ -85,8 +85,15 @@ class PantallaPerfil extends ConsumerWidget {
     final guardado = await ref
         .read(proveedorControladorPerfil.notifier)
         .actualizarNombreVisible(nombreNuevo);
-    if (guardado && context.mounted) {
+    if (!context.mounted) return;
+    if (guardado) {
       mostrarAvisoInformativo(context, 'Nombre actualizado');
+    } else {
+      final error = ref.read(proveedorControladorPerfil).error;
+      mostrarAvisoError(
+        context,
+        error ?? 'No se pudo actualizar el nombre.',
+      );
     }
   }
 

@@ -117,19 +117,43 @@ class _Contenido extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final estilos = Theme.of(context).textTheme;
     final descripcion = momento.descripcion;
+    final cantidad = momento.recuerdos.length;
+    final subtituloElementos = cantidad == 1
+        ? '1 elemento'
+        : '$cantidad elementos';
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
         if (descripcion != null && descripcion.isNotEmpty) ...[
-          Text(descripcion, style: estilos.bodyLarge),
-          const SizedBox(height: 20),
-        ],
-        Text(
-          'Evidencias',
-          style: estilos.titleMedium?.copyWith(
-            fontFamily: TemaApp.fuenteTitulos,
-            color: ColoresApp.primario,
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: ColoresApp.fondoInicio,
+              borderRadius: BorderRadius.circular(TemaApp.radioMediano),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(descripcion, style: estilos.bodyLarge),
+            ),
           ),
+          const SizedBox(height: 24),
+        ],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Text(
+                'Elementos',
+                style: estilos.titleMedium?.copyWith(
+                  fontFamily: TemaApp.fuenteTitulos,
+                  color: ColoresApp.primario,
+                ),
+              ),
+            ),
+            Text(
+              subtituloElementos,
+              style: estilos.bodyMedium?.copyWith(color: ColoresApp.atenuado),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         RejillaBento(

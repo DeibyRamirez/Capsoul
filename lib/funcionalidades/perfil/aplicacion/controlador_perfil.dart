@@ -63,6 +63,7 @@ class ControladorPerfil extends Notifier<AsyncValue<void>> {
         nombreVisible: nombreLimpio,
       );
       await autenticacion.actualizarNombreVisible(nombreLimpio);
+      ref.invalidate(proveedorPerfilUsuarioActual);
     });
   }
 
