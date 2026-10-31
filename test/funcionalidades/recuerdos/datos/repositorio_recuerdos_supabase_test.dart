@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:capsoul/nucleo/infraestructura/traductor_errores_backend.dart';
 
 import '../../../ayudantes/falsos_capsulas.dart';
+import '../../../ayudantes/falsos_musica.dart';
 
 class _AccesoFalso implements AccesoTablasRecuerdos {
   final List<Map<String, dynamic>> insertadas = [];
@@ -52,8 +53,12 @@ class _AccesoFalso implements AccesoTablasRecuerdos {
   @override
   Future<int> contarCapsulasSelladas(String id) async => 2;
 
+  Map<String, dynamic>? ultimosCambios;
+
   @override
-  Future<void> actualizar(String id, Map<String, dynamic> cambios) async {}
+  Future<void> actualizar(String id, Map<String, dynamic> cambios) async {
+    ultimosCambios = cambios;
+  }
 
   @override
   Future<int> eliminar(String id) async {
@@ -221,6 +226,13 @@ void main() {
       ),
       const FalloRecuerdo.sesionVencida(),
     );
+    // Un check de Postgres (23514) es dato invalido, no permiso denegado.
+    expect(
+      RepositorioRecuerdosSupabase.traducirError(
+        const ErrorPostgrest(codigo: '23514', mensaje: 'check'),
+      ),
+      const FalloRecuerdo.datoInvalido(),
+    );
   });
 
   test('borrar 0 filas es permiso denegado', () async {
@@ -290,5 +302,15 @@ void main() {
     });
     expect(recuerdo?.fechaRecuerdo, DateTime(2026, 10, 3));
     expect(recuerdoDesdeFila({'id': 'a', 'tipo': 'otro'}), isNull);
+  });
+
+  test('actualizarMusicaPreview no envia columnas sin grant ni la URL de Deezer',
+      () async {
+    await repositorio.actualizarMusicaPreview('x', pistaDeezerPrueba());
+    final cambios = acceso.ultimosCambios!;
+    expect(cambios.containsKey('duracion_segundos'), isFalse);
+    expect(cambios.containsKey('musica_preview_proveedor'), isFalse);
+    expect(cambios['musica_preview_url'], isNull);
+    expect(cambios['musica_id_externo'], '3135556');
   });
 }
