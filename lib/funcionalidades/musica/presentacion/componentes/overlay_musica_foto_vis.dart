@@ -13,11 +13,18 @@ class OverlayMusicaFotoVis extends StatefulWidget {
     required this.referencia,
     required this.previewMusica,
     this.reproducirAutomaticamente = false,
+    this.margenLateral = 12,
+    this.margenInferior = 12,
   });
 
   final ReferenciaMusica referencia;
   final PreviewMusicaCompartido previewMusica;
   final bool reproducirAutomaticamente;
+
+  /// Margen respecto a la foto. El overlay ya es un [Positioned]: no se debe
+  /// envolver en otro (Flutter lanza Incorrect use of ParentDataWidget).
+  final double margenLateral;
+  final double margenInferior;
 
   @override
   State<OverlayMusicaFotoVis> createState() => _EstadoOverlayMusicaFotoVis();
@@ -29,7 +36,8 @@ class _EstadoOverlayMusicaFotoVis extends State<OverlayMusicaFotoVis> {
   @override
   void initState() {
     super.initState();
-    if (widget.reproducirAutomaticamente && widget.referencia.tienePreview) {
+    if (widget.reproducirAutomaticamente &&
+        widget.referencia.puedeReproducirPreview) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _claveReproductor.currentState?.reproducirSiPuede();
       });
@@ -40,9 +48,9 @@ class _EstadoOverlayMusicaFotoVis extends State<OverlayMusicaFotoVis> {
   Widget build(BuildContext context) {
     final referencia = widget.referencia;
     return Positioned(
-      left: 12,
-      right: 12,
-      bottom: 12,
+      left: widget.margenLateral,
+      right: widget.margenLateral,
+      bottom: widget.margenInferior,
       child: Material(
         color: ColoresApp.primario.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(12),
