@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 
+import 'aviso_push.dart';
 import 'coordinador_avisos_push.dart';
 import 'fuente_firebase_push.dart';
 import 'presentador_avisos_android.dart';
@@ -15,6 +16,7 @@ export 'coordinador_avisos_push.dart' show RegistradorTokenPush, SesionAvisosPus
 Future<SesionAvisosPush?> inicializarNotificacionesPush({
   RegistradorTokenPush? alRegistrarToken,
   void Function(String ruta)? alAbrirRuta,
+  void Function(MensajePush mensaje)? alRecibirEnPrimerPlano,
   FuenteMensajesPush? fuente,
   PresentadorAvisos? presentador,
   bool? esAndroid,
@@ -46,6 +48,7 @@ Future<SesionAvisosPush?> inicializarNotificacionesPush({
     esAndroid: android,
     esIos: ios,
     sdkAndroid: sdk,
+    alRecibirEnPrimerPlano: alRecibirEnPrimerPlano,
   );
   await sesion.iniciar();
   return sesion;

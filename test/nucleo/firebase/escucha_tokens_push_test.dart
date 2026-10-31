@@ -170,7 +170,11 @@ void main() {
       UncontrolledProviderScope(
         container: contenedor,
         child: EscuchaTokensPush(
-          iniciador: ({required alRegistrarToken, required alAbrirRuta}) async {
+          iniciador: ({
+            required alRegistrarToken,
+            required alAbrirRuta,
+            required alRecibirEnPrimerPlano,
+          }) async {
             inicios++;
             await alRegistrarToken('token-fcm');
             return null;
@@ -203,7 +207,11 @@ Widget _escucha({
       proveedorRepositorioDispositivosPush.overrideWithValue(registro),
     ],
     child: EscuchaTokensPush(
-      iniciador: ({required alRegistrarToken, required alAbrirRuta}) async {
+      iniciador: ({
+            required alRegistrarToken,
+            required alAbrirRuta,
+            required alRecibirEnPrimerPlano,
+          }) async {
         alIniciar?.call();
         await alRegistrarToken('token-fcm');
         return null;

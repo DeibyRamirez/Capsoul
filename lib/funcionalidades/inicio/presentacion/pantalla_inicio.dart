@@ -46,8 +46,7 @@ class PantallaInicio extends ConsumerWidget {
     final avisos = avisosCapsulasCompartidas(recibidas, uid);
     final textoBadge = textoBadgeAvisos(conteoAvisosSinLeer(avisos));
 
-    return RefrescoAvisosAlVolver(
-      child: PantallaCapsoul(
+    return PantallaCapsoul(
         tipoFondo: FondoCapsoulTipo.suave,
         cuerpo: RefreshIndicator(
           onRefresh: () async {
@@ -90,46 +89,8 @@ class PantallaInicio extends ConsumerWidget {
             ],
           ),
         ),
-      ),
     );
   }
-}
-
-/// Al volver del segundo plano se vuelve a contar el badge.
-class RefrescoAvisosAlVolver extends ConsumerStatefulWidget {
-  const RefrescoAvisosAlVolver({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  ConsumerState<RefrescoAvisosAlVolver> createState() =>
-      _EstadoRefrescoAvisosAlVolver();
-}
-
-class _EstadoRefrescoAvisosAlVolver
-    extends ConsumerState<RefrescoAvisosAlVolver>
-    with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      ref.invalidate(proveedorCapsulasRecibidas);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }
 
 class _RejillaSecciones extends StatelessWidget {

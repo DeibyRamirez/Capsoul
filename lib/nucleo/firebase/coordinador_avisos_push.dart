@@ -37,6 +37,7 @@ class SesionAvisosPush {
     required this.esAndroid,
     required this.esIos,
     required this.sdkAndroid,
+    this.alRecibirEnPrimerPlano,
   });
 
   final FuenteMensajesPush fuente;
@@ -46,6 +47,10 @@ class SesionAvisosPush {
   final bool esAndroid;
   final bool esIos;
   final int sdkAndroid;
+
+  /// Se llama con cada aviso que llega con la app abierta (Android e iOS),
+  /// para refrescar datos aunque el aviso solo se muestre en Android.
+  final void Function(MensajePush mensaje)? alRecibirEnPrimerPlano;
 
   final List<StreamSubscription<dynamic>> _suscripciones = [];
 
@@ -97,6 +102,12 @@ class SesionAvisosPush {
   }
 
   Future<void> _mostrarEnPrimerPlano(MensajePush mensaje) async {
+    try {
+      alRecibirEnPrimerPlano?.call(mensaje);
+    } catch (error, traza) {
+      debugPrint('Capsoul: no se procesó el aviso en primer plano: $error');
+      debugPrintStack(stackTrace: traza);
+    }
     if (!esAndroid) return;
     try {
       await presentador.mostrar(mensaje);

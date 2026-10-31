@@ -45,10 +45,12 @@ export function armarContenido(datos: DatosPlantilla): ContenidoAviso {
       };
     }
     case "solicitud_amistad":
+      // El trigger de la 000021 guarda el cuerpo con el nombre del solicitante.
       return {
-        titulo: "Nueva solicitud de amistad",
-        cuerpo: "Alguien quiere ser tu amigo en Capsoul.",
-        data: { ...base, ruta: ruta("amigos") },
+        titulo: datos.tituloGuardado.trim() || "Nueva solicitud de amistad",
+        cuerpo: datos.cuerpoGuardado.trim() ||
+          "Alguien quiere ser tu amigo en Capsoul.",
+        data: { ...base, amistad_id: id, ruta: ruta("amigos") },
       };
     case "herencia_liberada":
       return {
