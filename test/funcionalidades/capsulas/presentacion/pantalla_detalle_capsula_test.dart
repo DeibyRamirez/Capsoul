@@ -153,6 +153,26 @@ void main() {
     expect(find.text('Abrir cápsula'), findsNothing);
   });
 
+  testWidgets(
+      'programada: Gestionar usa filas en tarjeta, sin botones ancho completo',
+      (tester) async {
+    await _montar(
+      tester,
+      capsula: _capsula(estado: EstadoCapsula.programada),
+    );
+
+    await tester.scrollUntilVisible(
+      find.text('Gestionar'),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Compartir enlace'), findsOneWidget);
+    expect(find.text('Editar'), findsOneWidget);
+    expect(find.text('Cancelar programación'), findsOneWidget);
+    expect(find.text('Eliminar cápsula'), findsNothing);
+    expect(find.byType(OutlinedButton), findsNothing);
+  });
+
   testWidgets('bloqueada para quien no es el autor: sin contenido',
       (tester) async {
     await _montar(tester, capsula: _capsula(), uid: 'otra-persona');
