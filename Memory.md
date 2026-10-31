@@ -221,8 +221,9 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] Música/Deezer: los términos de la API son de uso **no comercial** y piden avisar de que el streaming es de uso
       personal (la app muestra «Vistas previas de 30 s, solo para uso personal»). Si Capsoul se monetiza hace falta un
       acuerdo con Deezer. El crédito usa el icono de Deezer de Font Awesome; valorar el logo oficial del brand kit.
-- [ ] La Edge Function `buscar-musica` (Spotify + respaldo Deezer) ya no la usa la app: decidir si se retira y se
-      borran los secretos `SPOTIFY_*` (requiere aprobación del PO).
+- [x] La Edge Function `buscar-musica` se mantiene y busca en la API pública de Deezer, sin secretos de
+      catálogo. La app sigue buscando directo en Deezer y no la invoca. Se conservan el botón «buscar en Spotify»
+      y las canciones antiguas de Spotify.
 - [ ] Probar en dispositivo el preview de Deezer (Android e iOS) y «Abrir en Deezer» con y sin la app instalada.
 
 ## 7. Decisiones (ADR corto)
@@ -426,3 +427,7 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   música), que ya se elige en cápsulas y momentos. Migración nueva `20261030000023` (sin aplicar): `musica_proveedor`
   admite `deezer`, Deezer con id numérico y `musica_preview_url` null. Sin paquetes nuevos. `flutter analyze` 0 issues,
   `flutter test` 388 en verde. Los registrantes de plugins aparecen modificados por finales de línea (no se restauran).
+- **2026-10-31** `buscar-musica` deja Spotify y el respaldo de preview: busca en la API pública de Deezer
+  (`proveedor: deezer`, máximo 10, `verify_jwt` sigue en true) y no usa secretos de catálogo. La app no cambia:
+  sigue en `api.deezer.com`, con el botón «buscar en Spotify» y las canciones antiguas. Rama
+  `tarea/buscar-musica-deezer`. Sin despliegue.

@@ -28,7 +28,7 @@
 | Ver recuerdo (visor publicación) | Usuario | `visor_publicacion_recuerdo.dart` | `RepositorioUrlsMedio` + `firmar-medio` |
 | Editar recuerdo / nota | Propietario | `pantalla_editar_recuerdo.dart` | `actualizarMetadatos` / `actualizarContenidoTexto` |
 | Importar foto/video desde galería | Usuario | `hoja_origen_medio.dart` | `importador_medios_dispositivo` + Cloudinary |
-| Buscar y guardar música | Usuario | `pantalla_buscar_musica.dart` | `buscar-musica` + `RepositorioRecuerdosSupabase` |
+| Buscar y guardar música | Usuario | `pantalla_buscar_musica.dart` | `RepositorioMusicaDeezer` + `RepositorioRecuerdosSupabase` |
 | Añadir música a una foto | Usuario | `pantalla_guardar_recuerdo.dart` | Mismos metadatos `musica_*` en `elementos` |
 | Escuchar preview (URL caducada) | Usuario | `escena_preview_musica.dart` | `refrescarPreview` + `actualizarMusicaPreview` |
 | Escuchar preview / abrir plataformas | Usuario | visor / búsqueda música | `just_audio` + `abrir_plataformas_musica` |
