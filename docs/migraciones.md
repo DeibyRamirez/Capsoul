@@ -27,6 +27,7 @@ Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). 
 | `20261030000019` | Seguridad: revokes en herencia, `anon` fuera de `mis_amigos` y `mis_solicitudes_amistad_pendientes`, `search_path` vacío en 11 funciones y 5 índices de FK (aplicada en remoto el 2026-10-30) |
 | `20261030000020` | `capsulas.imagen_clave` (imagen local) + `capsulas_recibidas()` la devuelve |
 | `20261030000021` | Aviso push de solicitud de amistad (trigger `amistades_encolar_aviso`) y `amistades` en `supabase_realtime` (no aplicada en remoto) |
+| `20261030000022` | RPC `registrar_dispositivo_push` (upsert por token, reasigna cuenta) y reactivación de avisos push «Sin tokens FCM» de las últimas 24 h (no aplicada en remoto) |
 
 El estado **aplicado en remoto** puede ir por detrás del repo; usar `supabase migration list` antes de cada release.
 

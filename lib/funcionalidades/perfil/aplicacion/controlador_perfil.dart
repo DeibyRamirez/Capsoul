@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/firebase/escucha_tokens_push.dart';
+import '../../../nucleo/firebase/token_push_actual.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../autenticacion/dominio/fallo_autenticacion.dart';
 import '../../elementos/aplicacion/proveedores_elementos.dart';
@@ -68,9 +69,14 @@ class ControladorPerfil extends Notifier<AsyncValue<void>> {
   Future<bool> cerrarSesion() {
     final autenticacion = ref.read(proveedorRepositorioAutenticacion);
     final dispositivos = ref.read(proveedorRepositorioDispositivosPush);
+    final tokenEsteDispositivo = ref.read(proveedorTokenPushActual);
     return _ejecutar(() async {
+      // Solo el token de este teléfono: los otros dispositivos siguen
+      // recibiendo avisos. Se borra antes de cerrar sesión (RLS).
       try {
-        await dispositivos.eliminarTodosLosTokensDelUsuario();
+        if (tokenEsteDispositivo != null) {
+          await dispositivos.eliminarToken(tokenEsteDispositivo);
+        }
       } catch (_) {
         // Si falla la red, igual cerramos la sesión local.
       }

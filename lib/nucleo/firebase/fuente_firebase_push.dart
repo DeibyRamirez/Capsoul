@@ -1,8 +1,12 @@
+import 'dart:io' show Platform;
+
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 
 import 'aviso_push.dart';
 import 'coordinador_avisos_push.dart';
 import 'manejador_push_segundo_plano.dart';
+import 'reintento_token_apns.dart';
 
 /// FCM en Android e iOS. El permiso de Android 13 lo pide el presentador nativo.
 class FuenteFirebasePush implements FuenteMensajesPush {
@@ -20,8 +24,21 @@ class FuenteFirebasePush implements FuenteMensajesPush {
     );
   }
 
+  /// En iOS, `getToken` falla si el token APNs aún no existe (primer
+  /// arranque, permiso recién concedido). Se espera con reintentos; si no
+  /// llega, el token entra después por [renovacionesToken].
   @override
-  Future<String?> tokenActual() => FirebaseMessaging.instance.getToken();
+  Future<String?> tokenActual() async {
+    final mensajeria = FirebaseMessaging.instance;
+    if (!kIsWeb && Platform.isIOS) {
+      final apns = await esperarConReintentos(mensajeria.getAPNSToken);
+      if (apns == null) {
+        debugPrint('Capsoul: token APNs no disponible; se espera onTokenRefresh');
+        return null;
+      }
+    }
+    return mensajeria.getToken();
+  }
 
   @override
   Stream<String> get renovacionesToken => FirebaseMessaging.instance.onTokenRefresh;
