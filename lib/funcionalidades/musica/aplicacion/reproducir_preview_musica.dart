@@ -1,9 +1,4 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../dominio/referencia_musica.dart';
 
@@ -27,7 +22,7 @@ Map<String, String> cabecerasPreview(ReferenciaMusica referencia) {
   return headers;
 }
 
-/// [AudioSource] para el clip de ~30 s.
+/// [AudioSource] en streaming para el clip de ~30 s (no se guarda a disco).
 AudioSource fuenteAudioPreview(ReferenciaMusica referencia) {
   final url = referencia.previewUrl!.trim();
   return AudioSource.uri(
@@ -36,39 +31,11 @@ AudioSource fuenteAudioPreview(ReferenciaMusica referencia) {
   );
 }
 
-Future<void> _cargarPreviewDesdeDescargaTemporal(
-  AudioPlayer reproductor,
-  ReferenciaMusica referencia,
-) async {
-  final url = referencia.previewUrl!.trim();
-  final headers = cabecerasPreview(referencia);
-  final respuesta = await http.get(Uri.parse(url), headers: headers);
-  if (respuesta.statusCode < 200 || respuesta.statusCode >= 300) {
-    throw StateError(
-      'preview_http_${respuesta.statusCode}:${Uri.parse(url).host}',
-    );
-  }
-  final dir = await getTemporaryDirectory();
-  final archivo = File(
-    '${dir.path}/capsoul_preview_${referencia.idExterno.hashCode}.mp3',
-  );
-  await archivo.writeAsBytes(respuesta.bodyBytes, flush: true);
-  await reproductor.setFilePath(archivo.path);
-  debugPrint('Capsoul: preview vía archivo temporal (${Uri.parse(url).host})');
-}
-
-/// Carga la fuente en el reproductor (stream y, si falla, descarga temporal).
+/// Carga el clip en el reproductor por streaming desde la URL.
 Future<void> cargarPreviewEnReproductor(
   AudioPlayer reproductor,
   ReferenciaMusica referencia,
 ) async {
-  final host = Uri.tryParse(referencia.previewUrl!.trim())?.host ?? '?';
   await reproductor.stop();
-  try {
-    await reproductor.setAudioSource(fuenteAudioPreview(referencia));
-    debugPrint('Capsoul: preview vía stream ($host)');
-  } catch (error) {
-    debugPrint('Capsoul: preview stream falló ($host): $error');
-    await _cargarPreviewDesdeDescargaTemporal(reproductor, referencia);
-  }
+  await reproductor.setAudioSource(fuenteAudioPreview(referencia));
 }

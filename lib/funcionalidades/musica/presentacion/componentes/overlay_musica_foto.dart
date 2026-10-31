@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../dominio/referencia_musica.dart';
@@ -62,6 +63,15 @@ class OverlayMusicaFoto extends StatelessWidget {
                   ],
                 ),
               ),
+              if (referencia.esDeezer)
+                const Tooltip(
+                  message: 'Música de Deezer',
+                  child: FaIcon(
+                    FontAwesomeIcons.deezer,
+                    size: 14,
+                    color: ColoresApp.sobrePrimario,
+                  ),
+                ),
               ReproductorPreviewMusica(referencia: referencia, compacto: true),
             ],
           ),
