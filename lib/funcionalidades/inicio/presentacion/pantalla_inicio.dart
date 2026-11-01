@@ -16,8 +16,10 @@ import '../aplicacion/proveedores_inicio.dart';
 import '../dominio/resumen_inicio.dart';
 import 'componentes/banner_frase_inicio.dart';
 import 'componentes/encabezado_inicio.dart';
+import 'componentes/entrada_presentacion_inicio.dart';
 import 'componentes/escena_frasco_inicio.dart';
 import 'componentes/tarjeta_seccion_inicio.dart';
+import 'heroes_inicio.dart';
 import 'recursos_ilustraciones_inicio.dart';
 
 /// Pestaña "Inicio": la cápsula de vidrio, "Guardar algo hoy", las cuatro
@@ -97,7 +99,11 @@ class PantallaInicio extends ConsumerWidget {
             const SizedBox(height: 20),
             _RejillaSecciones(resumen: resumen),
             const SizedBox(height: 16),
-            const BannerFraseInicio(),
+            const EntradaPresentacionInicio(
+              direccion: DireccionEntradaInicio.abajo,
+              retraso: Duration(milliseconds: 320),
+              child: BannerFraseInicio(),
+            ),
           ],
         ),
       ),
@@ -113,65 +119,84 @@ class _RejillaSecciones extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tarjetas = [
-      TarjetaSeccionInicio(
-        icono: Icons.photo_camera_outlined,
-        titulo: 'Recuerdos',
-        descripcion: 'Tu banco de recuerdos.',
-        conteo: resumen.recuerdos,
-        etiquetaConteo: etiquetaConteo(
-          resumen.recuerdos,
-          'recuerdo guardado',
-          'recuerdos guardados',
+      EntradaPresentacionInicio(
+        direccion: DireccionEntradaInicio.izquierda,
+        child: TarjetaSeccionInicio(
+          icono: Icons.photo_camera_outlined,
+          titulo: 'Recuerdos',
+          descripcion: 'Tu banco de recuerdos.',
+          conteo: resumen.recuerdos,
+          etiquetaConteo: etiquetaConteo(
+            resumen.recuerdos,
+            'recuerdo guardado',
+            'recuerdos guardados',
+          ),
+          ilustracion: const IlustracionSeccion(
+            rutaAsset: IlustracionesInicio.recuerdos,
+          ),
+          heroTag: HeroesInicio.recuerdos,
+          alTocar: () => context.push(RutasApp.recuerdos),
         ),
-        ilustracion: const IlustracionSeccion(
-          rutaAsset: IlustracionesInicio.recuerdos,
-        ),
-        alTocar: () => context.push(RutasApp.recuerdos),
       ),
-      TarjetaSeccionInicio(
-        icono: Icons.flag_outlined,
-        titulo: 'Retos',
-        descripcion: 'Pequeños pasos, grandes cambios.',
-        conteo: resumen.retosActivos,
-        etiquetaConteo: etiquetaConteo(
-          resumen.retosActivos,
-          'reto activo',
-          'retos activos',
+      EntradaPresentacionInicio(
+        direccion: DireccionEntradaInicio.derecha,
+        retraso: const Duration(milliseconds: 80),
+        child: TarjetaSeccionInicio(
+          icono: Icons.flag_outlined,
+          titulo: 'Retos',
+          descripcion: 'Pequeños pasos, grandes cambios.',
+          conteo: resumen.retosActivos,
+          etiquetaConteo: etiquetaConteo(
+            resumen.retosActivos,
+            'reto activo',
+            'retos activos',
+          ),
+          ilustracion: const IlustracionSeccion(
+            rutaAsset: IlustracionesInicio.retos,
+          ),
+          heroTag: HeroesInicio.retos,
+          alTocar: () => context.push(RutasApp.retos),
         ),
-        ilustracion: const IlustracionSeccion(
-          rutaAsset: IlustracionesInicio.retos,
-        ),
-        alTocar: () => context.push(RutasApp.retos),
       ),
-      TarjetaSeccionInicio(
-        icono: Icons.lock_outline,
-        titulo: 'Cápsulas',
-        descripcion: 'Guarda hoy, abre en el futuro.',
-        conteo: resumen.capsulas,
-        etiquetaConteo: etiquetaConteo(
-          resumen.capsulas,
-          'cápsula        creada',
-          'cápsulas       creadas',
+      EntradaPresentacionInicio(
+        direccion: DireccionEntradaInicio.izquierda,
+        retraso: const Duration(milliseconds: 160),
+        child: TarjetaSeccionInicio(
+          icono: Icons.lock_outline,
+          titulo: 'Cápsulas',
+          descripcion: 'Guarda hoy, abre en el futuro.',
+          conteo: resumen.capsulas,
+          etiquetaConteo: etiquetaConteo(
+            resumen.capsulas,
+            'cápsula        creada',
+            'cápsulas       creadas',
+          ),
+          ilustracion: const IlustracionSeccion(
+            rutaAsset: IlustracionesInicio.capsulas,
+          ),
+          heroTag: HeroesInicio.capsulas,
+          alTocar: () => context.push(RutasApp.capsulas),
         ),
-        ilustracion: const IlustracionSeccion(
-          rutaAsset: IlustracionesInicio.capsulas,
-        ),
-        alTocar: () => context.push(RutasApp.capsulas),
       ),
-      TarjetaSeccionInicio(
-        icono: Icons.card_giftcard_outlined,
-        titulo: 'Pequeñas herencias',
-        descripcion: 'Deja algo de ti para quien más amas.',
-        conteo: resumen.herencias,
-        etiquetaConteo: etiquetaConteo(
-          resumen.herencias,
-          'herencia        creada',
-          'herencias       creadas',
+      EntradaPresentacionInicio(
+        direccion: DireccionEntradaInicio.derecha,
+        retraso: const Duration(milliseconds: 240),
+        child: TarjetaSeccionInicio(
+          icono: Icons.card_giftcard_outlined,
+          titulo: 'Pequeñas herencias',
+          descripcion: 'Deja algo de ti para quien más amas.',
+          conteo: resumen.herencias,
+          etiquetaConteo: etiquetaConteo(
+            resumen.herencias,
+            'herencia        creada',
+            'herencias       creadas',
+          ),
+          ilustracion: const IlustracionSeccion(
+            rutaAsset: IlustracionesInicio.herencias,
+          ),
+          heroTag: HeroesInicio.herencias,
+          alTocar: () => context.go(RutasApp.legado),
         ),
-        ilustracion: const IlustracionSeccion(
-          rutaAsset: IlustracionesInicio.herencias,
-        ),
-        alTocar: () => context.go(RutasApp.legado),
       ),
     ];
     // Rejilla 2×2 de alto natural: con letra grande las tarjetas crecen en

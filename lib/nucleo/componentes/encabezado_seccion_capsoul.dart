@@ -10,6 +10,7 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
     required this.subtitulo,
     required this.icono,
     this.iconoTitulo,
+    this.heroTag,
     this.mostrarMarca = true,
     this.acciones,
     this.padding = const EdgeInsets.fromLTRB(16, 16, 16, 4),
@@ -19,6 +20,7 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
   final String subtitulo;
   final IconData icono;
   final Widget? iconoTitulo;
+  final String? heroTag;
   final bool mostrarMarca;
   final Widget? acciones;
   final EdgeInsetsGeometry padding;
@@ -26,6 +28,15 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final estilos = Theme.of(context).textTheme;
+    final iconoTitulo = this.iconoTitulo;
+    final heroTag = this.heroTag;
+    Widget iconoSeccion = Icon(icono, color: ColoresApp.acento, size: 28);
+    if (heroTag != null) {
+      iconoSeccion = Hero(
+        tag: heroTag,
+        child: Material(type: MaterialType.transparency, child: iconoSeccion),
+      );
+    }
     return Padding(
       padding: padding,
       child: Column(
@@ -46,7 +57,7 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
                 child: Row(
                   children: [
                     if (iconoTitulo != null) ...[
-                      iconoTitulo!,
+                      iconoTitulo,
                       const SizedBox(width: 8),
                     ],
                     Flexible(
@@ -59,11 +70,7 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(
-                      icono,
-                      color: ColoresApp.acento,
-                      size: 28,
-                    ),
+                    iconoSeccion,
                   ],
                 ),
               ),
@@ -73,9 +80,7 @@ class EncabezadoSeccionCapsoul extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             subtitulo,
-            style: estilos.bodyMedium?.copyWith(
-              color: ColoresApp.atenuado,
-            ),
+            style: estilos.bodyMedium?.copyWith(color: ColoresApp.atenuado),
           ),
         ],
       ),
