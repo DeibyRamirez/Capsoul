@@ -15,15 +15,16 @@ import '../dominio/estado_capsula.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
-import '../../../nucleo/componentes/menu_acciones_entidad.dart';
 import '../../../nucleo/enlaces/enlace_capsoul.dart';
+import '../../../nucleo/tema/tema_app.dart';
 import 'componentes/animacion_apertura.dart';
 import 'componentes/cabecera_capsula.dart';
 import 'componentes/cuenta_regresiva.dart';
 import 'componentes/tarjeta_contenido.dart';
 
-/// Detalle de una cápsula: sellada (candado y cuenta regresiva; el autor ve
-/// su contenido), o lista para abrir con la animación del frasco.
+/// Detalle de una cápsula: sellada (candado y cuenta regresiva), lista para
+/// abrir con animación, o bloqueada sin contenido (p. ej. «para mí mismo»
+/// hasta liberar; el autor de cápsulas enviadas sí ve su contenido sellado).
 class PantallaDetalleCapsula extends ConsumerWidget {
   const PantallaDetalleCapsula({super.key, required this.idCapsula});
 
@@ -454,37 +455,97 @@ class _AccionesAutor extends StatelessWidget {
   Widget build(BuildContext context) {
     final puedeEditar = capsula.estado == EstadoCapsula.borrador ||
         capsula.estado == EstadoCapsula.programada;
+    final esquema = Theme.of(context).colorScheme;
+
+    final filas = <Widget>[
+      _FilaAccionGestion(
+        icono: Icons.share_outlined,
+        etiqueta: 'Compartir enlace',
+        alTocar: alCompartir,
+      ),
+      if (puedeEditar)
+        _FilaAccionGestion(
+          icono: Icons.edit_outlined,
+          etiqueta: 'Editar',
+          alTocar: alEditar,
+        ),
+      if (alCancelar != null)
+        _FilaAccionGestion(
+          icono: Icons.cancel_outlined,
+          etiqueta: 'Cancelar programación',
+          color: ColoresApp.atenuado,
+          alTocar: alCancelar,
+        ),
+      if (alEliminar != null)
+        _FilaAccionGestion(
+          icono: Icons.delete_outline,
+          etiqueta: 'Eliminar cápsula',
+          color: esquema.error,
+          alTocar: alEliminar,
+        ),
+    ];
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _Titulo('Gestionar'),
         const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: alCompartir,
-          icon: const Icon(Icons.share_outlined),
-          label: const Text('Compartir enlace'),
-        ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: MenuAccionesEntidad(
-            puedeEditar: puedeEditar,
-            puedeEliminar: alEliminar != null,
-            pedirConfirmacionEliminar: false,
-            etiquetaEliminar: 'Eliminar cápsula',
-            alEditar: alEditar,
-            alEliminar: alEliminar,
+        DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(TemaApp.radioMediano),
+            border: Border.all(color: ColoresApp.bordeTarjeta),
+            boxShadow: TemaApp.sombraTarjeta,
+          ),
+          child: Material(
+            color: ColoresApp.tarjeta,
+            borderRadius: BorderRadius.circular(TemaApp.radioMediano),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < filas.length; i++) ...[
+                  if (i > 0)
+                    const Divider(height: 1, indent: 56, endIndent: 16),
+                  filas[i],
+                ],
+              ],
+            ),
           ),
         ),
-        if (alCancelar != null) ...[
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: alCancelar,
-            icon: const Icon(Icons.cancel_outlined),
-            label: const Text('Cancelar programación'),
-          ),
-        ],
       ],
+    );
+  }
+}
+
+class _FilaAccionGestion extends StatelessWidget {
+  const _FilaAccionGestion({
+    required this.icono,
+    required this.etiqueta,
+    required this.alTocar,
+    this.color,
+  });
+
+  final IconData icono;
+  final String etiqueta;
+  final VoidCallback? alTocar;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final tono = color ?? ColoresApp.textoPrincipal;
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      minVerticalPadding: 0,
+      minLeadingWidth: 24,
+      leading: Icon(icono, size: 24, color: tono),
+      title: Text(
+        etiqueta,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: tono,
+              fontWeight: FontWeight.w500,
+            ),
+      ),
+      onTap: alTocar,
     );
   }
 }

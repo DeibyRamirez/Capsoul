@@ -7,10 +7,8 @@ import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
-import '../../../nucleo/tema/tema_app.dart';
 import '../../amistades/aplicacion/proveedores_amistades.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
-import '../../autenticacion/presentacion/validadores_autenticacion.dart';
 import '../../crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
 import '../../inicio/dominio/resumen_inicio.dart';
@@ -69,24 +67,6 @@ class PantallaPerfil extends ConsumerWidget {
         .subirFotoPerfil(ruta);
     if (guardado && context.mounted) {
       mostrarAvisoInformativo(context, 'Foto de perfil actualizada.');
-    }
-  }
-
-  Future<void> _editarNombre(
-    BuildContext context,
-    WidgetRef ref,
-    String nombreActual,
-  ) async {
-    final nombreNuevo = await showDialog<String>(
-      context: context,
-      builder: (_) => _DialogoEditarNombre(nombreInicial: nombreActual),
-    );
-    if (nombreNuevo == null || nombreNuevo.trim() == nombreActual) return;
-    final guardado = await ref
-        .read(proveedorControladorPerfil.notifier)
-        .actualizarNombreVisible(nombreNuevo);
-    if (guardado && context.mounted) {
-      mostrarAvisoInformativo(context, 'Nombre actualizado');
     }
   }
 
@@ -177,7 +157,6 @@ class PantallaPerfil extends ConsumerWidget {
                   resumen: resumen,
                   publicaciones: resumen.recuerdos,
                   ocupado: ocupado,
-                  alEditar: () => _editarNombre(context, ref, nombre),
                   alCerrarSesion: () => ref
                       .read(proveedorControladorPerfil.notifier)
                       .cerrarSesion(),
@@ -201,7 +180,11 @@ class PantallaPerfil extends ConsumerWidget {
                           ? 'Invita a tus primeros amigos'
                           : 'Amigos e invitaciones',
                     ),
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: _TrailingAmigos(
+                      pendientes: ref.watch(
+                        proveedorConteoSolicitudesPendientes,
+                      ),
+                    ),
                     onTap: () => context.push(RutasApp.amigos),
                   ),
                 ),
@@ -281,59 +264,29 @@ class _BarraSuperior extends StatelessWidget {
   }
 }
 
-class _DialogoEditarNombre extends StatefulWidget {
-  const _DialogoEditarNombre({required this.nombreInicial});
+/// Flecha de «Amigos» con el número de solicitudes pendientes.
+class _TrailingAmigos extends StatelessWidget {
+  const _TrailingAmigos({required this.pendientes});
 
-  final String nombreInicial;
-
-  @override
-  State<_DialogoEditarNombre> createState() => _EstadoDialogoEditarNombre();
-}
-
-class _EstadoDialogoEditarNombre extends State<_DialogoEditarNombre> {
-  final _claveFormulario = GlobalKey<FormState>();
-  late final TextEditingController _controlador =
-      TextEditingController(text: widget.nombreInicial);
-
-  @override
-  void dispose() {
-    _controlador.dispose();
-    super.dispose();
-  }
-
-  void _guardar() {
-    if (!(_claveFormulario.currentState?.validate() ?? false)) return;
-    Navigator.of(context).pop(_controlador.text.trim());
-  }
+  final int pendientes;
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(TemaApp.radioGrande),
-      ),
-      title: const Text('Editar nombre'),
-      content: Form(
-        key: _claveFormulario,
-        child: TextFormField(
-          controller: _controlador,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Nombre'),
-          validator: ValidadoresAutenticacion.nombreVisible,
-          onFieldSubmitted: (_) => _guardar(),
+    const flecha = Icon(Icons.chevron_right);
+    if (pendientes <= 0) return flecha;
+    final texto = pendientes > 9 ? '9+' : '$pendientes';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          label: '$pendientes solicitudes de amistad pendientes',
+          child: Badge(
+            key: const Key('badge-solicitudes-amistad'),
+            label: Text(texto),
+          ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: _guardar,
-          style: FilledButton.styleFrom(minimumSize: const Size(96, 48)),
-          child: const Text('Guardar'),
-        ),
+        const SizedBox(width: 8),
+        flecha,
       ],
     );
   }

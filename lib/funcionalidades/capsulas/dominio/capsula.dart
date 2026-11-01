@@ -19,6 +19,7 @@ class Capsula {
     this.destinatariosUsuarioIds = const [],
     this.tieneCorreoExterno = false,
     this.abiertaEn,
+    this.imagenClave,
   });
 
   final String id;
@@ -42,6 +43,9 @@ class Capsula {
   /// Primera vez que un destinatario la abrió (`abierta_en`), si ya ocurrió.
   final DateTime? abiertaEn;
 
+  /// Clave de la imagen local (`capsulas.imagen_clave`), ver `ImagenCapsula`.
+  final String? imagenClave;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -57,7 +61,8 @@ class Capsula {
           listEquals(other.elementos, elementos) &&
           listEquals(other.destinatariosUsuarioIds, destinatariosUsuarioIds) &&
           other.tieneCorreoExterno == tieneCorreoExterno &&
-          other.abiertaEn == abiertaEn;
+          other.abiertaEn == abiertaEn &&
+          other.imagenClave == imagenClave;
 
   @override
   int get hashCode => Object.hash(
@@ -73,6 +78,7 @@ class Capsula {
         Object.hashAll(destinatariosUsuarioIds),
         tieneCorreoExterno,
         abiertaEn,
+        imagenClave,
       );
 
   @override

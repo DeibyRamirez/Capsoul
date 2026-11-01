@@ -6,7 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   final ahora = DateTime(2026, 10, 3, 10);
 
-  Capsula capsula({DateTime? fecha, EstadoCapsula estado = EstadoCapsula.programada}) =>
+  Capsula capsula({
+    DateTime? fecha,
+    EstadoCapsula estado = EstadoCapsula.programada,
+    List<String> destinatariosUsuarioIds = const ['otro'],
+  }) =>
       Capsula(
         id: 'c1',
         autorId: 'autor',
@@ -14,6 +18,7 @@ void main() {
         estado: estado,
         creadoEn: DateTime(2026, 8, 13),
         fechaApertura: fecha ?? DateTime(2046, 8, 13, 8),
+        destinatariosUsuarioIds: destinatariosUsuarioIds,
       );
 
   group('calcularModoApertura', () {
@@ -29,6 +34,22 @@ void main() {
       expect(
         calcularModoApertura(capsula(), uidActual: null, ahora: ahora),
         ModoApertura.bloqueada,
+      );
+    });
+
+    test('para mí mismo: el autor ve bloqueada hasta liberar', () {
+      final paraMiMismo = capsula(destinatariosUsuarioIds: ['autor']);
+      expect(
+        calcularModoApertura(paraMiMismo, uidActual: 'autor', ahora: ahora),
+        ModoApertura.bloqueada,
+      );
+      expect(
+        calcularModoApertura(
+          capsula(estado: EstadoCapsula.liberada, destinatariosUsuarioIds: ['autor']),
+          uidActual: 'autor',
+          ahora: ahora,
+        ),
+        ModoApertura.lista,
       );
     });
 

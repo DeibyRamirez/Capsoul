@@ -37,6 +37,7 @@ class SesionAvisosPush {
     required this.esAndroid,
     required this.esIos,
     required this.sdkAndroid,
+    this.alRecibirEnPrimerPlano,
   });
 
   final FuenteMensajesPush fuente;
@@ -46,6 +47,10 @@ class SesionAvisosPush {
   final bool esAndroid;
   final bool esIos;
   final int sdkAndroid;
+
+  /// Se llama con cada aviso que llega con la app abierta (Android e iOS),
+  /// para refrescar datos aunque el aviso solo se muestre en Android.
+  final void Function(MensajePush mensaje)? alRecibirEnPrimerPlano;
 
   final List<StreamSubscription<dynamic>> _suscripciones = [];
 
@@ -72,14 +77,20 @@ class SesionAvisosPush {
     _suscripciones.add(fuente.enPrimerPlano.listen(_mostrarEnPrimerPlano));
     _suscripciones.add(fuente.alAbrirDesdeAviso.listen(_abrir));
 
+    // Primero el aviso que abrió la app: el token en iOS puede tardar.
     try {
-      await _publicarToken(await fuente.tokenActual());
       final inicial = await fuente.mensajeQueAbrioLaApp();
       if (inicial != null) _abrir(inicial);
       if (esAndroid) {
         final pendiente = await presentador.rutaPendiente();
         if (pendiente != null && pendiente.isNotEmpty) alAbrirRuta(pendiente);
       }
+    } catch (error, traza) {
+      debugPrint('Capsoul: no se pudo abrir el aviso inicial: $error');
+      debugPrintStack(stackTrace: traza);
+    }
+    try {
+      await _publicarToken(await fuente.tokenActual());
     } catch (error, traza) {
       debugPrint('Capsoul: no se pudo enlazar FCM: $error');
       debugPrintStack(stackTrace: traza);
@@ -97,6 +108,12 @@ class SesionAvisosPush {
   }
 
   Future<void> _mostrarEnPrimerPlano(MensajePush mensaje) async {
+    try {
+      alRecibirEnPrimerPlano?.call(mensaje);
+    } catch (error, traza) {
+      debugPrint('Capsoul: no se procesó el aviso en primer plano: $error');
+      debugPrintStack(stackTrace: traza);
+    }
     if (!esAndroid) return;
     try {
       await presentador.mostrar(mensaje);

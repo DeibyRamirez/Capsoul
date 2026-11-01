@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../nucleo/componentes/tarjeta_capsoul.dart';
 import '../../../../nucleo/tema/colores_app.dart';
-
 /// Tarjeta de la rejilla de Inicio (Recuerdos, Retos, Cápsulas, Pequeñas
 /// herencias) con conteo e ilustración.
 class TarjetaSeccionInicio extends StatelessWidget {
@@ -72,11 +71,30 @@ class TarjetaSeccionInicio extends StatelessWidget {
   }
 }
 
-/// Ilustración placeholder: ícono grande dentro de un círculo degradado.
+/// Ilustración PNG transparente en la esquina de la tarjeta.
 class IlustracionSeccion extends StatelessWidget {
-  const IlustracionSeccion({super.key, required this.icono});
+  const IlustracionSeccion({super.key, required this.rutaAsset});
 
-  final IconData icono;
+  final String rutaAsset;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: Image.asset(
+        rutaAsset,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+        errorBuilder: (_, _, _) => const _FallbackIlustracionSeccion(),
+      ),
+    );
+  }
+}
+
+/// Respaldo si falta el asset en el bundle.
+class _FallbackIlustracionSeccion extends StatelessWidget {
+  const _FallbackIlustracionSeccion();
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +109,11 @@ class IlustracionSeccion extends StatelessWidget {
           colors: [ColoresApp.fondoInicio, ColoresApp.bordeTarjeta],
         ),
       ),
-      child: Icon(icono, color: ColoresApp.primario, size: 25),
+      child: const Icon(
+        Icons.image_outlined,
+        color: ColoresApp.primario,
+        size: 25,
+      ),
     );
   }
 }

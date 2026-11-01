@@ -25,7 +25,7 @@
 - **Edge Functions:** `deno test` dentro de cada carpeta:
   - `supabase/functions/firmar-medio/firma_entrega_test.ts`
   - `firmar-subida/limites_test.ts`
-  - `buscar-musica/deezer_preview_test.ts`
+  - `buscar-musica/deezer_test.ts`
 
 ### Reglas
 

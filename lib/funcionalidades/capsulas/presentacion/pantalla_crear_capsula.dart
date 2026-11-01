@@ -21,6 +21,7 @@ import 'componentes/botones_agregar_elemento.dart';
 import 'componentes/elegir_fecha_hora_apertura.dart';
 import 'componentes/interruptor_capsula_para_mi.dart';
 import 'componentes/selector_destinatarios_amigos.dart';
+import 'componentes/selector_imagen_capsula.dart';
 import 'componentes/tarjeta_recuerdo_elegido.dart';
 
 /// Formulario "Nueva cápsula": recuerdos del banco (hasta 10), título,
@@ -166,6 +167,14 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
                 hintText: 'Cuéntale por qué guardas esto para el futuro',
                 alignLabelWithHint: true,
               ),
+            ),
+            const SizedBox(height: 16),
+            const _TituloSeccion('Imagen de la capsula'),
+            const SizedBox(height: 8),
+            SelectorImagenCapsula(
+              seleccionada: estado.imagenClave,
+              deshabilitado: estado.guardando,
+              alElegir: _controlador.elegirImagen,
             ),
             const SizedBox(height: 16),
             _CampoFecha(

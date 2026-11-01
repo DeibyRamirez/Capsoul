@@ -28,9 +28,14 @@ import 'vista_recuerdo.dart';
 
 /// Foto a tamaño completo (original, solo en el detalle), con zoom.
 class FotoCompleta extends ConsumerWidget {
-  const FotoCompleta({super.key, required this.recuerdo});
+  const FotoCompleta({
+    super.key,
+    required this.recuerdo,
+    this.pantallaCompleta = false,
+  });
 
   final Recuerdo recuerdo;
+  final bool pantallaCompleta;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,6 +47,23 @@ class FotoCompleta extends ConsumerWidget {
           MarcoMiniatura(recuerdo: recuerdo),
           if (cargando) const CircularProgressIndicator(),
         ],
+      );
+    }
+    if (pantallaCompleta) {
+      return LayoutBuilder(
+        builder: (context, restricciones) {
+          return InteractiveViewer(
+            maxScale: 4,
+            child: Image.file(
+              archivo,
+              fit: BoxFit.contain,
+              width: restricciones.maxWidth,
+              height: restricciones.maxHeight,
+              semanticLabel: recuerdo.nombre,
+              errorBuilder: (_, _, _) => MarcoMiniatura(recuerdo: recuerdo),
+            ),
+          );
+        },
       );
     }
     return AspectRatio(

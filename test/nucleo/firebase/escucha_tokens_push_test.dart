@@ -26,9 +26,6 @@ class RegistroQueRespetaSesion implements RegistroDispositivosPush {
   Future<void> eliminarToken(String tokenFcm, {String? uid}) async {
     borrados.add((token: tokenFcm, uid: uid ?? uidActual()));
   }
-
-  @override
-  Future<void> eliminarTodosLosTokensDelUsuario() async {}
 }
 
 void main() {
@@ -170,7 +167,11 @@ void main() {
       UncontrolledProviderScope(
         container: contenedor,
         child: EscuchaTokensPush(
-          iniciador: ({required alRegistrarToken, required alAbrirRuta}) async {
+          iniciador: ({
+            required alRegistrarToken,
+            required alAbrirRuta,
+            required alRecibirEnPrimerPlano,
+          }) async {
             inicios++;
             await alRegistrarToken('token-fcm');
             return null;
@@ -203,7 +204,11 @@ Widget _escucha({
       proveedorRepositorioDispositivosPush.overrideWithValue(registro),
     ],
     child: EscuchaTokensPush(
-      iniciador: ({required alRegistrarToken, required alAbrirRuta}) async {
+      iniciador: ({
+            required alRegistrarToken,
+            required alAbrirRuta,
+            required alRecibirEnPrimerPlano,
+          }) async {
         alIniciar?.call();
         await alRegistrarToken('token-fcm');
         return null;

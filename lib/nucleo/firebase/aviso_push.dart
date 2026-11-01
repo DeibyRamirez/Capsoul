@@ -11,6 +11,9 @@ class MensajePush {
   final String? cuerpo;
   final String? ruta;
   final Map<String, String> datos;
+
+  /// `data.tipo` del aviso (p. ej. `solicitud_amistad`).
+  String? get tipo => datos['tipo'];
 }
 
 /// Arma el mensaje desde el mapa `data` (valores de FCM, siempre texto).

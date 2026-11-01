@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../funcionalidades/amistades/aplicacion/proveedores_amistades.dart';
 import '../../funcionalidades/autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../funcionalidades/autenticacion/dominio/usuario_app.dart';
 import '../enlaces/enlace_capsoul.dart';
@@ -10,15 +11,18 @@ import '../enlaces/enlace_pendiente.dart';
 import '../enlaces/proveedor_enlace_pendiente.dart';
 import '../enrutador/enrutador_app.dart';
 import '../infraestructura/proveedores_infraestructura.dart';
+import 'aviso_push.dart';
 import 'destino_aviso.dart';
 import 'repositorio_dispositivos_push.dart';
 import 'servicio_notificaciones_push.dart';
+import 'token_push_actual.dart';
 import 'vinculo_token_push.dart';
 
 /// Arranque de FCM inyectable. Las pruebas lo sustituyen para no tocar Firebase.
 typedef IniciadorAvisosPush = Future<SesionAvisosPush?> Function({
   required RegistradorTokenPush alRegistrarToken,
   required void Function(String ruta) alAbrirRuta,
+  required void Function(MensajePush mensaje) alRecibirEnPrimerPlano,
 });
 
 final proveedorRepositorioDispositivosPush = Provider<RegistroDispositivosPush>(
@@ -58,6 +62,7 @@ class _EstadoEscuchaTokensPush extends ConsumerState<EscuchaTokensPush> {
     super.initState();
     _vinculo = VinculoTokenPush(
       registrar: (token) async {
+        ref.read(proveedorTokenPushActual.notifier).recordar(token);
         final uid = ref
             .read(proveedorRepositorioAutenticacion)
             .usuarioActual
@@ -90,13 +95,23 @@ class _EstadoEscuchaTokensPush extends ConsumerState<EscuchaTokensPush> {
       _sesion = await iniciador(
         alRegistrarToken: vinculo.recordarToken,
         alAbrirRuta: _abrirRuta,
+        alRecibirEnPrimerPlano: _alRecibirEnPrimerPlano,
       );
       return;
     }
     _sesion = await inicializarNotificacionesPush(
       alRegistrarToken: vinculo.recordarToken,
       alAbrirRuta: _abrirRuta,
+      alRecibirEnPrimerPlano: _alRecibirEnPrimerPlano,
     );
+  }
+
+  /// Con la app abierta, un aviso de solicitud refresca la lista y el badge.
+  void _alRecibirEnPrimerPlano(MensajePush mensaje) {
+    if (!mounted) return;
+    if (mensaje.tipo == tipoAvisoSolicitudAmistad) {
+      refrescarAmistades(ref.invalidate);
+    }
   }
 
   bool _sesionAsentada(AsyncValue<UsuarioApp?> estado) =>

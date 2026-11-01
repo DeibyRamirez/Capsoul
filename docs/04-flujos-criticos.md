@@ -149,13 +149,13 @@ sequenceDiagram
 
 Ambas leen `proveedorMomentos`; el filtro en memoria (`proveedorFiltroMomentos`) solo aplica en Perfil.
 
-## 7. Música (Spotify, elemento `musica`)
+## 7. Música (Deezer, elemento `musica`)
 
-1. La app invoca la Edge Function `buscar-musica` (JWT del usuario).
-2. El servidor obtiene un token Spotify (Client Credentials) y devuelve metadatos + `previewUrl` (fallback Deezer en servidor si falta preview).
-3. El usuario guarda un recuerdo `musica` o adjunta la pista a una `foto` (columnas `musica_*` en `elementos`, `musica_preview_proveedor` migración `000015`).
-4. Reproducción: `just_audio` con cabeceras CDN → si falla, descarga HTTP temporal → si sigue fallando, `refrescarPreview` vía `buscar-musica` y opcional `actualizarMusicaPreview` en visor propio.
-5. “Escuchar completa” abre Spotify, Deezer, YouTube Music o YouTube (`url_launcher`; `queries` en Android).
+1. La app busca en la API pública de Deezer (`RepositorioMusicaDeezer`). No invoca la Edge Function.
+2. El usuario guarda un recuerdo `musica` o adjunta la pista a una `foto` (`musica_proveedor = deezer`). Las filas antiguas de Spotify se siguen leyendo.
+3. Reproducción: `just_audio` en streaming. La URL del preview caduca; al reproducir se pide `GET /track/<id>` (o una búsqueda si la fila antigua no tiene id de Deezer).
+4. «Escuchar completa» abre Deezer, una búsqueda en Spotify o YouTube (`url_launcher`; `queries` en Android).
+5. `buscar-musica` también busca en Deezer (JWT, máximo 10, sin secretos de catálogo). La app no la usa.
 
 **Licencias y producción:** [08-musica-producto-y-licencias.md](08-musica-producto-y-licencias.md).
 

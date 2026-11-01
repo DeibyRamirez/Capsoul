@@ -90,7 +90,7 @@ lib/
     inicio/{aplicacion,datos,dominio,presentacion}         # Inicio del mockup con conteos reales (RepositorioResumenInicio)
     recuerdos/{aplicacion,datos,dominio,presentacion}      # banco de recuerdos, URLs firmadas (firmar-medio), reproductores, elegir
     momentos/{aplicacion,datos,dominio,presentacion}       # feed vertical, crear, detalle bento, filtros perfil
-    musica/{aplicacion,datos,dominio,presentacion}       # buscar-musica, preview 30s, enlaces externos
+    musica/{aplicacion,datos,dominio,presentacion}       # API pública de Deezer, preview 30 s (streaming), enlaces externos
     legado/{aplicacion,datos,dominio,presentacion}       # herencias, wizard, persona de confianza
     retos/{aplicacion,datos,dominio,presentacion}        # retos globales
     crear/                                                 # selector + hoja opciones crear
@@ -165,11 +165,15 @@ env/dev.json.example + env/README.md # plantilla de --dart-define-from-file
 | MIG | Migración a Supabase + Cloudinary (Firebase solo FCM) | 🟡 Modelo 1.3 aplicado y Auth en Supabase; pendiente 000002 (pg_cron), Edge Functions y Cloudinary firmado |
 | S4 | Ruta crítica de cápsulas + Security Rules | 🟡 En rama local `funcionalidad/capsulas` (sin push): elementos base, crear/detalle de cápsula, Inicio, banco de recuerdos, momentos (bento), reproductores; migraciones 000003 y 000004 aplicadas; `firmar-subida` y `firmar-medio` desplegadas; falta revisión del PO y push |
 | S8 | Endurecer reglas + FCM | ⏳ |
+| IMG | Icono de app + imagenes locales de capsula | En rama local `funcionalidad/imagenes-capsula` (sin commit): migracion 000020 aplicada en remoto; PR hacia `develop` pendiente de revision |
 
 ## 6. Pendientes abiertos
 
 Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 
+- [x] (2026-10-30, aplicada en remoto con aprobacion del PO y registrada en `schema_migrations`) `20261030000020_capsoul_imagen_capsula.sql` (columna `capsulas.imagen_clave` + check, grant update, recrear
+      `capsulas_recibidas()` con `imagen_clave`). Sin ella la app falla al listar/crear capsulas. Numero 000019 reservado por el PR #9.
+- [ ] PO: revisar la rama `funcionalidad/imagenes-capsula` (icono, selector en crear/editar, tarjetas) y autorizar commit.
 - [ ] PO: la 000002 está registrada en `schema_migrations`, pero en remoto solo existen los jobs `capsoul-liberar-capsulas`
       y `capsoul-activar-herencias` (verificado el 2026-10-12). Falta `capsoul-enviar-avisos` y Vault está vacío
       (`project_url`, `llave_cron`).
@@ -211,6 +215,18 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - [ ] UI para **editar momentos y recuerdos** (los repositorios ya tienen `actualizarMetadatos`; falta pantalla).
 - [ ] `infra/scripts/sincronizar_migraciones.ps1` solo copia los archivos: no añade marcadores `-- migrate:up/down` y
       sobrescribiría las copias de 000006 y 000010 que ya los tienen. Las copias de 000007–000009 siguen sin marcadores dbmate.
+- [ ] PO: aplicar `20261030000023_capsoul_musica_deezer.sql` (no aplicada). Sin ella, guardar un recuerdo de música de Deezer
+      falla con 23514 (`elementos_musica_proveedor_valido` solo admitía `spotify`). Aplicarla antes de publicar la rama.
+- [ ] PO: revisar la rama local `funcionalidad/musica-deezer` (worktree `..\capsould-musica`, sin commit) y autorizar commits.
+- [ ] Música/Deezer: los términos de la API son de uso **no comercial** y piden avisar de que el streaming es de uso
+      personal (la app muestra «Vistas previas de 30 s, solo para uso personal»). Si Capsoul se monetiza hace falta un
+      acuerdo con Deezer. El crédito usa el icono de Deezer de Font Awesome; valorar el logo oficial del brand kit.
+- [x] La Edge Function `buscar-musica` se mantiene y busca en la API pública de Deezer, sin secretos de
+      catálogo. La app sigue buscando directo en Deezer y no la invoca. Se conservan el botón «buscar en Spotify»
+      y las canciones antiguas de Spotify.
+- [ ] Probar en dispositivo el preview de Deezer (Android e iOS) y «Abrir en Deezer» con y sin la app instalada.
+- [ ] PO: aprobar (o no) la limpieza de las `musica_preview_url` de Deezer caducadas en filas antiguas (SQL en `docs/08-musica-producto-y-licencias.md`, sección «Incidencias del preview»). No es urgente: la app ya las ignora.
+- [ ] PO: revisar y hacer merge del PR de `correccion/preview-musica` hacia `develop`.
 
 ## 7. Decisiones (ADR corto)
 
@@ -269,6 +285,7 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   (CAP04 en servidor); rejilla bento de 4 columnas calculada en `distribuirBento` (función pura).
 - **2026-09-26** Riverpod como gestor de estado único; repositorios detrás de interfaces abstractas inyectadas por
   proveedores (`proveedorRepositorioAutenticacion`, `proveedorRepositorioUsuarios`) para simularlos en pruebas.
+- **2026-10-31 Preview de música (NO romper).** Reglas: `AudioSource.uri` sin headers, caché ni proxy (en Android, el proxy 127.0.0.1 de just_audio es cleartext y se bloquea); solo streaming; nunca guardar la `preview_url` de Deezer: pedir siempre `/track/<id>` y usarla en memoria; ignorar las URL `dzcdn` guardadas en filas antiguas de Spotify; el UPDATE no envía `duracion_segundos` ni `musica_preview_proveedor` (sin grant: 42501); respetar el check de la 000023; el overlay de música sobre foto no se envuelve en otro `Positioned`. Tabla de reglas y tests en `docs/08-musica-producto-y-licencias.md`, sección «Reglas del preview que no se pueden romper».
 
 ## 8. Bitácora
 
@@ -389,3 +406,32 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - **2026-10-16** Corrección del CI del PR #2 (develop → main): `deno test` de `firmar-medio` con `--allow-env` acotado a `CLOUDINARY_URL`, `CLOUDINARY_ACCOUNT_URL` y `CLOUDINARY_API_PROXY` (el SDK npm de Cloudinary que usa la prueba como referencia las lee al importarse; la lógica de firma ya estaba aislada en `firma_entrega.ts`); `api/**` excluido del análisis raíz y job `api` aparte (`dart pub get` + `dart analyze --fatal-infos`); limpieza de avisos del analizador (imports, `_`, formales de inicialización, elementos null-aware, `RadioGroup` en `pantalla_nueva_herencia`, llaves, `const`); pruebas de Inicio y del botón + actualizadas a la UI actual (hoja de opciones, píldoras, etiquetas con relleno). Deno 2.9.7 instalado en el PC del PO. `flutter analyze` 0, `flutter test` 306 OK, Deno 17 OK.
 - **2026-10-26** DEV-95 / DEV-99: el feed de cápsulas tiene tres pestañas (Mis cápsulas, Para mí mismo, Para mí) sin duplicar; la tarjeta lee `estado_capsula` y una fecha vencida sigue «Programada» hasta que el cron libere. Migración nueva `20261026000016` (el autor puede insertarse como destinatario; hay que aplicarla a mano en Supabase). `liberar_capsulas_vencidas()` no tenía bug: las aserciones locales confirman una sola liberación, cero cambios al repetir y una sola fila de aviso en dos sesiones. Job `sql` en CI. `flutter analyze` 0, `flutter test` 318, Deno 17, SQL local en verde. **PO:** aplicar 000016 antes de probar «También para mí» en el teléfono.
 - **2026-10-18** CI de compilación (`.github/workflows/build.yml`, se dispara con push a `main` y `workflow_dispatch`): job `android` (ubuntu, Java 17) genera APK y AAB release y los sube como artefactos; job `ios` (macos) compila con `flutter build ios --release --no-codesign` y empaqueta `capsoul-sin-firmar.ipa` (sin firmar: no sirve para TestFlight). `env/dev.json` se crea desde secretos con `jq`, sin imprimirlos; el job falla si la clave empieza por `sbp_`/`sb_secret_`. Secretos de GitHub: **obligatorios** `SUPABASE_URL`, `SUPABASE_ANON_KEY`; opcionales `API_BASE_URL`, `BACKEND`, `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` (sin keystore firma con debug y emite `::warning::`) e `IOS_GOOGLE_SERVICE_INFO_BASE64`. `android/app/build.gradle.kts` lee `android/key.properties` (ignorado) y si no existe usa la firma debug. iOS: `ios/Podfile` con `platform :ios, '15.0'` (mínimo de Firebase iOS SDK 12), `#include?` de Pods en `Debug/Release.xcconfig`, `Info.plist` con `UIBackgroundModes` (`remote-notification`) y `LSApplicationQueriesSchemes` (`spotify`). La primera ejecución será al fusionar el PR develop → main (antes hay que crear los secretos); después, manual con *Run workflow*. Pendiente: capability Push/APNs y firma iOS desde una Mac. `flutter analyze` sin issues; `flutter build apk --release` local OK (66,4 MB, firmado con debug).
+- **2026-10-30** Rama `funcionalidad/imagenes-capsula` desde `origin/develop` (sin commit). Icono de app con
+  `flutter_launcher_icons` (Android adaptativo, fondo `#1B316B`; iOS sin alfa). 16 imagenes de
+  `assets/capsoul_assets/01_capsulas_mejoradas` a WebP q88 en `assets/imagenes_capsula/capsula_NN.webp`
+  (4,1 MB a 228 KB). Catalogo `ImagenCapsula` (claves `capsula_01`..`capsula_16`, por defecto `capsula_01`), selector
+  en crear y editar capsula, miniatura en las tarjetas de Mis capsulas (reemplaza el frasco). Columna
+  `capsulas.imagen_clave` en la migracion 000020 (sin aplicar); el update solo envia claves del catalogo.
+  Goldens en `test/capturas/goldens/`. `flutter analyze` 0 issues, 340 tests verdes, `flutter build apk --debug` OK.
+  Los originales de `assets/capsoul_assets/` quedan fuera de git.
+- **2026-10-30** Música con la API pública de Deezer (rama local `funcionalidad/musica-deezer` desde `origin/develop`,
+  worktree `..\capsould-musica`, **sin commit**). La búsqueda deja la Edge Function `buscar-musica` (Spotify) y llama
+  directo a `https://api.deezer.com/search` con `RepositorioMusicaDeezer` (http.Client inyectable, timeout 8 s, errores
+  de Deezer `{"error":{code}}` → `FalloMusica` en español; 800 → pista inexistente, 4 → cuota). Modelo inmutable
+  `PistaDeezer.fromJson`. `ControladorBusquedaMusica` (Riverpod, debounce 400 ms, número de petición para ignorar
+  respuestas viejas, estados inicial/cargando/vacío/error con Reintentar). Preview de 30 s solo en **streaming** con
+  just_audio (se quitó la descarga a archivo temporal), `CoordinadorPreviewMusica` para que solo suene uno a la vez,
+  barra de progreso, se detiene al salir y antes de abrir otra app; estado «sin vista previa». La URL del preview caduca:
+  no se guarda; al reproducir se pide `https://api.deezer.com/track/<id>`. Crédito «Música de Deezer» (logo + nota de
+  uso personal) en búsqueda, escena y franja sobre fotos. Botones: «Abrir en Deezer» (`deezer://www.deezer.com/track/<id>`
+  y si no, el enlace web), búsqueda en Spotify (`open.spotify.com/search/<consulta>`) y YouTube (`results?search_query=`),
+  con url_launcher en app externa (`AbridorEnlacesMusica` inyectable). AndroidManifest ya tenía las queries `https` y
+  `deezer`; Info.plist ya tenía `deezer`. La música se adjunta como recuerdo (`elementos` tipo `musica` o foto con
+  música), que ya se elige en cápsulas y momentos. Migración nueva `20261030000023` (sin aplicar): `musica_proveedor`
+  admite `deezer`, Deezer con id numérico y `musica_preview_url` null. Sin paquetes nuevos. `flutter analyze` 0 issues,
+  `flutter test` 388 en verde. Los registrantes de plugins aparecen modificados por finales de línea (no se restauran).
+- **2026-10-31** `buscar-musica` deja Spotify y el respaldo de preview: busca en la API pública de Deezer
+  (`proveedor: deezer`, máximo 10, `verify_jwt` sigue en true) y no usa secretos de catálogo. La app no cambia:
+  sigue en `api.deezer.com`, con el botón «buscar en Spotify» y las canciones antiguas. Rama
+  `tarea/buscar-musica-deezer`. Sin despliegue.
+- **2026-10-31** Música (rama `correccion/preview-musica`): el preview falla en Android por el proxy local de just_audio (con headers, cleartext a 127.0.0.1); ahora se reproduce directo. En filas antiguas, la URL de Deezer caducada (403) se refrescaba y se intentaba guardar con columnas sin grant, lo que daba 42501 y `permiso_denegado`; ahora la URL de Deezer vive solo en memoria y la guardada se ignora. Visor: se quitó el doble `Positioned` del overlay de música sobre foto. Detalle en `docs/08-musica-producto-y-licencias.md`.

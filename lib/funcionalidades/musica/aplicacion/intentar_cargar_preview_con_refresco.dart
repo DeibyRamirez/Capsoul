@@ -1,42 +1,81 @@
-import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../dominio/fallo_musica.dart';
 import '../dominio/referencia_musica.dart';
 import '../dominio/repositorio_catalogo_musica.dart';
+import '../dominio/url_preview_musica.dart';
 import 'refrescar_preview_musica.dart';
 import 'reproducir_preview_musica.dart';
 
-/// Resultado de cargar preview, con posible URL actualizada desde catálogo.
+/// Resultado de cargar preview, con la referencia que se usó.
 class ResultadoCargaPreview {
   const ResultadoCargaPreview({
     required this.referencia,
     this.refrescada = false,
   });
 
+  /// Referencia con la URL que se reprodujo. Si la URL es de Deezer, vive
+  /// solo en memoria: caduca y nunca se guarda en la base de datos.
   final ReferenciaMusica referencia;
+
+  /// True solo si la URL nueva no es de Deezer y conviene persistirla.
+  /// Como el catálogo actual es Deezer, en la práctica siempre es false.
   final bool refrescada;
 }
 
-/// Carga el preview; si falla, busca de nuevo la pista y reintenta una vez.
+/// True si la URL guardada no sirve y hay que pedir `/track/<id>` a Deezer:
+/// sin URL, URL no https o local (127.0.0.1/localhost),
+/// pistas de Deezer o filas antiguas cuyo preview guardado era de Deezer
+/// (esas URL firmadas caducan y responden 403).
+bool debePedirPreviewFresco(ReferenciaMusica referencia) {
+  if (!urlPreviewConfiable(referencia.previewUrl)) return true;
+  if (referencia.idPistaDeezer == null) return false;
+  return referencia.esDeezer ||
+      referencia.previewProveedorEfectivo == ProveedorPreviewMusica.deezer;
+}
+
+/// True si la URL del preview se puede guardar: nunca si es de Deezer.
+bool convienePersistirPreview(ReferenciaMusica referencia) =>
+    !referencia.esDeezer &&
+    referencia.previewProveedorEfectivo != ProveedorPreviewMusica.deezer;
+
+/// Prepara y carga el preview en streaming.
+///
+/// Si no hay URL, o la guardada es de Deezer (caduca), la pide por id antes;
+/// si una URL guardada de otro origen falla, la vuelve a pedir y reintenta
+/// una vez. Lanza [FalloMusica] con [TipoFalloMusica.sinPreview] si no hay
+/// clip.
 Future<ResultadoCargaPreview> intentarCargarPreviewConRefresco(
   AudioPlayer reproductor,
   ReferenciaMusica referencia,
   RepositorioCatalogoMusica catalogo,
 ) async {
-  try {
-    await cargarPreviewEnReproductor(reproductor, referencia);
-    return ResultadoCargaPreview(referencia: referencia);
-  } catch (error, stack) {
-    debugPrint('Capsoul: preview falló, intentando refresh: $error');
-    final actualizada = await refrescarPreview(referencia, catalogo);
-    if (actualizada == null) {
-      Error.throwWithStackTrace(error, stack);
+  var actual = referencia;
+  var pedida = false;
+  if (debePedirPreviewFresco(actual)) {
+    final fresca = await refrescarPreview(actual, catalogo);
+    if (fresca == null || !urlPreviewConfiable(fresca.previewUrl)) {
+      throw const FalloMusica(TipoFalloMusica.sinPreview);
     }
-    debugPrint('Capsoul: preview refrescado desde catálogo');
-    await cargarPreviewEnReproductor(reproductor, actualizada);
+    actual = fresca;
+    pedida = true;
+  }
+  try {
+    await cargarPreviewEnReproductor(reproductor, actual);
     return ResultadoCargaPreview(
-      referencia: actualizada,
-      refrescada: true,
+      referencia: actual,
+      refrescada: pedida && convienePersistirPreview(actual),
+    );
+  } catch (error, pila) {
+    if (pedida) Error.throwWithStackTrace(error, pila);
+    final fresca = await refrescarPreview(actual, catalogo);
+    if (fresca == null || !urlPreviewConfiable(fresca.previewUrl)) {
+      Error.throwWithStackTrace(error, pila);
+    }
+    await cargarPreviewEnReproductor(reproductor, fresca);
+    return ResultadoCargaPreview(
+      referencia: fresca,
+      refrescada: convienePersistirPreview(fresca),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'nucleo/componentes/refresco_avisos_al_volver.dart';
 import 'nucleo/enrutador/enrutador_app.dart';
 import 'nucleo/enlaces/escucha_enlaces_app.dart';
 import 'nucleo/firebase/escucha_tokens_push.dart';
@@ -31,7 +32,9 @@ class AppCapsoul extends ConsumerWidget {
         !kIsWeb && Platform.environment['FLUTTER_TEST'] == 'true';
     if (enPrueba) return app;
     return EscuchaTokensPush(
-      child: EscuchaEnlacesApp(child: app),
+      child: RefrescoAvisosAlVolver(
+        child: EscuchaEnlacesApp(child: app),
+      ),
     );
   }
 }

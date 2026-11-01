@@ -12,6 +12,7 @@ class NuevaCapsula {
     required this.recuerdos,
     required this.destinatariosUsuarioIds,
     this.mensaje,
+    this.imagenClave,
   });
 
   final String titulo;
@@ -21,4 +22,7 @@ class NuevaCapsula {
 
   /// Amigos aceptados que recibirán la cápsula (`capsula_destinatarios.usuario_id`).
   final List<String> destinatariosUsuarioIds;
+
+  /// Clave de la imagen local elegida (`capsulas.imagen_clave`).
+  final String? imagenClave;
 }

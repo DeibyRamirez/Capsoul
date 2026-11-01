@@ -24,6 +24,11 @@ Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). 
 | `20261016000014` | Legado: vínculos cápsulas y RPC |
 | `20261016000015` | `musica_preview_proveedor` |
 | `20261026000016` | El autor puede ser destinatario de su cápsula (`capsula_destinatarios_crear`) |
+| `20261030000019` | Seguridad: revokes en herencia, `anon` fuera de `mis_amigos` y `mis_solicitudes_amistad_pendientes`, `search_path` vacío en 11 funciones y 5 índices de FK (aplicada en remoto el 2026-10-30) |
+| `20261030000020` | `capsulas.imagen_clave` (imagen local) + `capsulas_recibidas()` la devuelve |
+| `20261030000021` | Aviso push de solicitud de amistad (trigger `amistades_encolar_aviso`) y `amistades` en `supabase_realtime` (no aplicada en remoto) |
+| `20261030000022` | RPC `registrar_dispositivo_push` (upsert por token, reasigna cuenta) y reactivación de avisos push «Sin tokens FCM» de las últimas 24 h (no aplicada en remoto) |
+| `20261030000023` | Música con la API pública de Deezer: `musica_proveedor` admite `deezer`; para Deezer id numérico y `musica_preview_url` null (la URL caduca, se pide `/track/<id>` al reproducir). Sin columnas nuevas, RLS y grants sin cambios (**pendiente**, no aplicada en remoto) |
 
 El estado **aplicado en remoto** puede ir por detrás del repo; usar `supabase migration list` antes de cada release.
 
@@ -51,7 +56,7 @@ Orden recomendado (requiere aprobación del PO para el entorno remoto):
    ```
 
 4. **Música:** migración `000005` añade el enum `musica` **fuera** del `begin`/`commit` (PostgreSQL error `55P04` si se hace en la misma transacción).
-5. **Spotify:** `supabase secrets set SPOTIFY_CLIENT_ID=... SPOTIFY_CLIENT_SECRET=...` y `supabase functions deploy buscar-musica`.
+5. **Catálogo musical:** `buscar-musica` consulta la API pública de Deezer y no necesita secretos de catálogo. Desplegar funciones sigue requiriendo aprobación del PO (ver [`06-integraciones.md`](06-integraciones.md)).
 6. **Avisos (DEV-100):** migración `000018` (no aplicada en remoto hasta que el PO lo pida), secretos FCM y Vault. Pasos: [avisos-push-despliegue.md](avisos-push-despliegue.md).
 
 El archivo [`20261002000002_capsoul_programar_trabajos.sql`](../supabase/migrations/20261002000002_capsoul_programar_trabajos.sql) del repo **incluye** el job 3; no ejecutes el script entero en remoto hasta tener `enviar-avisos` desplegada.

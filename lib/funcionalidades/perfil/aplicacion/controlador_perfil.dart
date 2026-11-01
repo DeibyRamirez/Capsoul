@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/firebase/escucha_tokens_push.dart';
+import '../../../nucleo/firebase/token_push_actual.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../autenticacion/dominio/fallo_autenticacion.dart';
 import '../../elementos/aplicacion/proveedores_elementos.dart';
@@ -21,8 +22,7 @@ final proveedorPerfilUsuarioActual =
   return ref.watch(proveedorRepositorioUsuarios).observarPerfil(uid);
 });
 
-/// Acciones del perfil: editar nombre y cerrar sesión. (Todo usuario con
-/// sesión ya confirmó su correo: Supabase Auth lo exige.)
+/// Acciones del perfil: foto de avatar y cerrar sesión.
 class ControladorPerfil extends Notifier<AsyncValue<void>> {
   @override
   AsyncValue<void> build() => const AsyncData(null);
@@ -50,27 +50,17 @@ class ControladorPerfil extends Notifier<AsyncValue<void>> {
     });
   }
 
-  Future<bool> actualizarNombreVisible(String nombre) {
-    final autenticacion = ref.read(proveedorRepositorioAutenticacion);
-    final usuarios = ref.read(proveedorRepositorioUsuarios);
-    final nombreLimpio = nombre.trim();
-    return _ejecutar(() async {
-      final usuario = autenticacion.usuarioActual;
-      if (usuario == null) throw const FalloAutenticacion.desconocido();
-      await usuarios.guardarNombreVisible(
-        uid: usuario.uid,
-        nombreVisible: nombreLimpio,
-      );
-      await autenticacion.actualizarNombreVisible(nombreLimpio);
-    });
-  }
-
   Future<bool> cerrarSesion() {
     final autenticacion = ref.read(proveedorRepositorioAutenticacion);
     final dispositivos = ref.read(proveedorRepositorioDispositivosPush);
+    final tokenEsteDispositivo = ref.read(proveedorTokenPushActual);
     return _ejecutar(() async {
+      // Solo el token de este teléfono: los otros dispositivos siguen
+      // recibiendo avisos. Se borra antes de cerrar sesión (RLS).
       try {
-        await dispositivos.eliminarTodosLosTokensDelUsuario();
+        if (tokenEsteDispositivo != null) {
+          await dispositivos.eliminarToken(tokenEsteDispositivo);
+        }
       } catch (_) {
         // Si falla la red, igual cerramos la sesión local.
       }

@@ -34,7 +34,7 @@ paths:
           $ref: '#/components/responses/ErrorValidacion'
   /v1/musica/buscar:
     post:
-      summary: Busca pistas en Spotify (modo VPS)
+      summary: Busca pistas en Deezer (modo VPS, no implementado)
       operationId: buscarMusica
       security:
         - bearerAuth: []

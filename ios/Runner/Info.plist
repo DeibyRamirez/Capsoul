@@ -42,6 +42,7 @@
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>spotify</string>
+		<string>deezer</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
@@ -51,6 +52,8 @@
 	<string>Capsoul usa el micrófono para grabar notas de voz y el audio de tus videos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Capsoul accede a tu galería para que elijas fotos y videos que quieras guardar como recuerdos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Capsoul guarda en tu galería las fotos y videos que decidas descargar de tus cápsulas.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

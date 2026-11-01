@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../aplicacion/preview_musica_compartido.dart';
@@ -12,11 +13,18 @@ class OverlayMusicaFotoVis extends StatefulWidget {
     required this.referencia,
     required this.previewMusica,
     this.reproducirAutomaticamente = false,
+    this.margenLateral = 12,
+    this.margenInferior = 12,
   });
 
   final ReferenciaMusica referencia;
   final PreviewMusicaCompartido previewMusica;
   final bool reproducirAutomaticamente;
+
+  /// Margen respecto a la foto. El overlay ya es un [Positioned]: no se debe
+  /// envolver en otro (Flutter lanza Incorrect use of ParentDataWidget).
+  final double margenLateral;
+  final double margenInferior;
 
   @override
   State<OverlayMusicaFotoVis> createState() => _EstadoOverlayMusicaFotoVis();
@@ -28,7 +36,8 @@ class _EstadoOverlayMusicaFotoVis extends State<OverlayMusicaFotoVis> {
   @override
   void initState() {
     super.initState();
-    if (widget.reproducirAutomaticamente && widget.referencia.tienePreview) {
+    if (widget.reproducirAutomaticamente &&
+        widget.referencia.puedeReproducirPreview) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _claveReproductor.currentState?.reproducirSiPuede();
       });
@@ -39,9 +48,9 @@ class _EstadoOverlayMusicaFotoVis extends State<OverlayMusicaFotoVis> {
   Widget build(BuildContext context) {
     final referencia = widget.referencia;
     return Positioned(
-      left: 12,
-      right: 12,
-      bottom: 12,
+      left: widget.margenLateral,
+      right: widget.margenLateral,
+      bottom: widget.margenInferior,
       child: Material(
         color: ColoresApp.primario.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(12),
@@ -88,6 +97,15 @@ class _EstadoOverlayMusicaFotoVis extends State<OverlayMusicaFotoVis> {
                   ],
                 ),
               ),
+              if (referencia.esDeezer)
+                const Tooltip(
+                  message: 'Música de Deezer',
+                  child: FaIcon(
+                    FontAwesomeIcons.deezer,
+                    size: 14,
+                    color: ColoresApp.sobrePrimario,
+                  ),
+                ),
               ReproductorPreviewMusica(
                 key: _claveReproductor,
                 referencia: referencia,

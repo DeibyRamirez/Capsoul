@@ -11,45 +11,39 @@ abstract interface class RegistroDispositivosPush {
   /// Borra el token de este dispositivo. [uid] permite hacerlo cuando la
   /// sesión ya se cerró y [uidActual] ya no está.
   Future<void> eliminarToken(String tokenFcm, {String? uid});
-  Future<void> eliminarTodosLosTokensDelUsuario();
 }
 
-/// Implementación con PostgREST.
+String? plataformaPushActual() {
+  if (kIsWeb) return null;
+  if (Platform.isAndroid) return 'android';
+  if (Platform.isIOS) return 'ios';
+  return null;
+}
+
+/// Implementación con PostgREST. El alta pasa por la RPC
+/// `registrar_dispositivo_push` (security definer): hace upsert por
+/// `token_fcm`, reasigna el token si el teléfono cambió de cuenta y reactiva
+/// los avisos recientes que fallaron por falta de token.
 class RepositorioDispositivosPush implements RegistroDispositivosPush {
-  RepositorioDispositivosPush(this._cliente, {required this.uidActual});
+  RepositorioDispositivosPush(
+    this._cliente, {
+    required this.uidActual,
+    String? Function()? plataforma,
+  }) : _plataforma = plataforma ?? plataformaPushActual;
 
   final ClientePostgrest _cliente;
   final String? Function() uidActual;
-
-  String? _plataforma() {
-    if (kIsWeb) return null;
-    if (Platform.isAndroid) return 'android';
-    if (Platform.isIOS) return 'ios';
-    return null;
-  }
+  final String? Function() _plataforma;
 
   @override
   Future<void> registrarToken(String tokenFcm) async {
     final uid = uidActual();
     final plataforma = _plataforma();
-    if (uid == null || plataforma == null) return;
-    final ahora = DateTime.now().toUtc().toIso8601String();
-    final cambios = {
-      'usuario_id': uid,
-      'plataforma': plataforma,
-      'ultimo_uso_en': ahora,
-    };
-    final actualizadas = await _cliente
-        .from('dispositivos_push')
-        .actualizar(cambios)
-        .eq('token_fcm', tokenFcm)
-        .select('id');
-    if (actualizadas.isEmpty) {
-      await _cliente.from('dispositivos_push').insertar({
-        ...cambios,
-        'token_fcm': tokenFcm,
-      });
-    }
+    if (uid == null || plataforma == null || tokenFcm.isEmpty) return;
+    await _cliente.rpc(
+      'registrar_dispositivo_push',
+      parametros: {'p_token': tokenFcm, 'p_plataforma': plataforma},
+    );
   }
 
   @override
@@ -61,17 +55,6 @@ class RepositorioDispositivosPush implements RegistroDispositivosPush {
         .eliminar()
         .eq('usuario_id', dueno)
         .eq('token_fcm', tokenFcm)
-        .ejecutar();
-  }
-
-  @override
-  Future<void> eliminarTodosLosTokensDelUsuario() async {
-    final uid = uidActual();
-    if (uid == null) return;
-    await _cliente
-        .from('dispositivos_push')
-        .eliminar()
-        .eq('usuario_id', uid)
         .ejecutar();
   }
 }

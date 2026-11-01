@@ -66,7 +66,7 @@ flowchart TB
 | `momentos/` | listado feed, nuevo, detalle | `RepositorioMomentosSupabase` |
 | `recuerdos/` | banco, visor publicación, editar, elegir | `RepositorioRecuerdosSupabase` |
 | `elementos/` | captura, importar galería, nota serializada | `RepositorioMediosCloudinary` |
-| `musica/` | buscar, preview, enlaces externos | `RepositorioCatalogoMusica` + `buscar-musica` |
+| `musica/` | buscar, preview, enlaces externos | `RepositorioMusicaDeezer` (la app no llama a `buscar-musica`) |
 | `capsulas/` | crear, pestañas, recibidas, detalle | `RepositorioCapsulasSupabase` |
 | `crear/` | selector Crear (desde `+`) | — |
 | `legado/` | herencias, wizard, seguridad | `RepositorioLegadoSupabase` |

@@ -121,6 +121,59 @@ void main() {
     await android.cerrar();
     await ios.cerrar();
   });
+
+  test('el aviso inicial se abre aunque el token tarde', () async {
+    final fuente = _FuenteLenta();
+    final rutas = <String>[];
+    final sesion = SesionAvisosPush(
+      fuente: fuente,
+      presentador: _PresentadorFalso(),
+      alRegistrarToken: (_) async {},
+      alAbrirRuta: rutas.add,
+      esAndroid: false,
+      esIos: true,
+      sdkAndroid: 0,
+    );
+    fuente.inicial = mensajeDesdeMapa(datos: {'ruta': 'capsoul://amigos'});
+    final inicio = sesion.iniciar();
+    await Future<void>.delayed(Duration.zero);
+    expect(rutas, ['capsoul://amigos']);
+    fuente.tokenLento.complete('token-tarde');
+    await inicio;
+    sesion.cerrar();
+  });
+
+  test('el aviso en primer plano llega al callback en iOS y Android', () async {
+    for (final android in [true, false]) {
+      final fuente = _FuenteFalsa();
+      final presentador = _PresentadorFalso();
+      final recibidos = <MensajePush>[];
+      final sesion = SesionAvisosPush(
+        fuente: fuente,
+        presentador: presentador,
+        alRegistrarToken: (_) async {},
+        alAbrirRuta: (_) {},
+        esAndroid: android,
+        esIos: !android,
+        sdkAndroid: 33,
+        alRecibirEnPrimerPlano: recibidos.add,
+      );
+      await sesion.iniciar();
+      fuente.primerPlano.add(
+        mensajeDesdeMapa(
+          titulo: 'Nueva solicitud de amistad',
+          datos: {
+            'tipo': 'solicitud_amistad',
+            'ruta': 'capsoul://amigos',
+          },
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(recibidos, hasLength(1), reason: 'android=$android');
+      expect(recibidos.single.tipo, 'solicitud_amistad');
+      sesion.cerrar();
+    }
+  });
 }
 
 class _FuenteFalsa implements FuenteMensajesPush {
@@ -193,4 +246,11 @@ class _PresentadorFalso implements PresentadorAvisos {
 
   @override
   Future<String?> rutaPendiente() async => ruta;
+}
+
+class _FuenteLenta extends _FuenteFalsa {
+  final tokenLento = Completer<String?>();
+
+  @override
+  Future<String?> tokenActual() => tokenLento.future;
 }

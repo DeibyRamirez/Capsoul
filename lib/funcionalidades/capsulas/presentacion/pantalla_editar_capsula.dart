@@ -21,6 +21,7 @@ import 'componentes/botones_agregar_elemento.dart';
 import 'componentes/elegir_fecha_hora_apertura.dart';
 import 'componentes/interruptor_capsula_para_mi.dart';
 import 'componentes/selector_destinatarios_amigos.dart';
+import 'componentes/selector_imagen_capsula.dart';
 import 'componentes/tarjeta_recuerdo_elegido.dart';
 
 /// Edición de una cápsula en borrador o programada (metadatos, recuerdos y destinatarios).
@@ -127,6 +128,7 @@ class _EstadoPantallaEditarCapsula extends ConsumerState<PantallaEditarCapsula> 
                   recuerdos: datos.elementos,
                   fechaApertura: datos.fechaApertura,
                   destinatariosUsuarioIds: datos.destinatariosUsuarioIds,
+                  imagenClave: datos.imagenClave,
                 );
               }
               if (!_camposTextoCargados) {
@@ -194,6 +196,20 @@ class _EstadoPantallaEditarCapsula extends ConsumerState<PantallaEditarCapsula> 
                 minLines: 3,
                 maxLines: 6,
                 decoration: const InputDecoration(labelText: 'Mensaje'),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Imagen de la capsula',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: ColoresApp.primario,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              SelectorImagenCapsula(
+                seleccionada: estado.imagenClave,
+                deshabilitado: estado.guardando,
+                alElegir: _controlador.elegirImagen,
               ),
               const SizedBox(height: 16),
               InputDecorator(

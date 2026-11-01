@@ -17,7 +17,7 @@ Future<void> mostrarVisorPublicacionRecuerdo(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Cerrar publicación',
-    barrierColor: ColoresApp.medianoche.withValues(alpha: 0.6),
+    barrierColor: ColoresApp.medianoche.withValues(alpha: 0.88),
     transitionDuration: const Duration(milliseconds: 220),
     pageBuilder: (contexto, _, _) => VisorPublicacionRecuerdo(
       recuerdo: recuerdo,
