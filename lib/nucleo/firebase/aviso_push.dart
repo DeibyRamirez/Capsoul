@@ -1,3 +1,6 @@
+/// `data.tipo` de una solicitud de amistad.
+const String tipoAvisoSolicitudAmistad = 'solicitud_amistad';
+
 /// Aviso que llegó por FCM o por un toque en la bandeja.
 class MensajePush {
   const MensajePush({

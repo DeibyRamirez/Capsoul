@@ -30,6 +30,33 @@ class EncabezadoPerfil extends StatelessWidget {
   final String? fotoPublicId;
   final VoidCallback? alTocarAvatar;
 
+  Future<void> _confirmarCierre(BuildContext context) async {
+    final salir = await showDialog<bool>(
+      context: context,
+      builder: (contexto) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text(
+          'Vas a salir de Capsoul en este teléfono. '
+          'Tus recuerdos siguen guardados.',
+        ),
+        actionsAlignment: MainAxisAlignment.end,
+        actions: [
+          TextButton(
+            key: const Key('boton-cancelar-salir'),
+            onPressed: () => Navigator.of(contexto).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            key: const Key('boton-confirmar-salir'),
+            onPressed: () => Navigator.of(contexto).pop(true),
+            child: const Text('Salir'),
+          ),
+        ],
+      ),
+    );
+    if (salir == true) alCerrarSesion();
+  }
+
   @override
   Widget build(BuildContext context) {
     final estilos = Theme.of(context).textTheme;
@@ -38,103 +65,102 @@ class EncabezadoPerfil extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            ColoresApp.fondoInicio,
-            ColoresApp.superficie,
-          ],
+          colors: [ColoresApp.fondoInicio, ColoresApp.superficie],
           stops: [0, 1],
         ),
       ),
       child: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              AvatarPerfil(
-                inicial: inicial,
-                fotoPublicId: fotoPublicId,
-                alTocar: alTocarAvatar,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      _Stat(
-                        valor: '$publicaciones',
-                        etiqueta: 'publicaciones',
-                      ),
-                      SizedBox(width: 12),
-                      _Stat(
-                        valor: '${resumen.capsulas}',
-                        etiqueta: 'cápsulas',
-                      ),
-                      SizedBox(width: 12),
-                      _Stat(
-                        valor: '${resumen.herencias}',
-                        etiqueta: 'herencias',
-                      ),
-                    ],
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                AvatarPerfil(
+                  inicial: inicial,
+                  fotoPublicId: fotoPublicId,
+                  alTocar: alTocarAvatar,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        _Stat(
+                          valor: '$publicaciones',
+                          etiqueta: 'publicaciones',
+                        ),
+                        SizedBox(width: 12),
+                        _Stat(
+                          valor: '${resumen.capsulas}',
+                          etiqueta: 'cápsulas',
+                        ),
+                        SizedBox(width: 12),
+                        _Stat(
+                          valor: '${resumen.herencias}',
+                          etiqueta: 'herencias',
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              nombre,
+              style: estilos.titleMedium?.copyWith(
+                color: ColoresApp.primario,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (nombreUsuario != null && nombreUsuario!.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                '@$nombreUsuario',
+                style: estilos.bodyMedium?.copyWith(color: ColoresApp.atenuado),
               ),
             ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-            nombre,
-            style: estilos.titleMedium?.copyWith(
-              color: ColoresApp.primario,
-              fontWeight: FontWeight.w700,
+            const SizedBox(height: 4),
+            const Text(
+              'Guardo hoy lo que alguien amará mañana.',
+              style: TextStyle(color: ColoresApp.sobreSuperficie),
             ),
-          ),
-          if (nombreUsuario != null && nombreUsuario!.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              '@$nombreUsuario',
-              style: estilos.bodyMedium?.copyWith(color: ColoresApp.atenuado),
+            const SizedBox(height: 8),
+            const _LineaBio(
+              icono: Icons.landscape_outlined,
+              texto: 'Pequeñas herencias, grandes recuerdos',
+            ),
+            const _LineaBio(
+              icono: Icons.grid_view_outlined,
+              texto: 'Construyendo cápsoul cada día',
+            ),
+            const _LineaBio(
+              icono: Icons.favorite_outline,
+              texto: 'Para quienes más amo',
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                key: const Key('boton-cerrar-sesion'),
+                onPressed: ocupado ? null : () => _confirmarCierre(context),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: ColoresApp.primario,
+                  alignment: Alignment.center,
+                  minimumSize: const Size.fromHeight(TemaApp.altoBoton),
+                  side: const BorderSide(color: ColoresApp.primario),
+                  shape: const StadiumBorder(),
+                ),
+                icon: const Icon(Icons.logout),
+                label: const Text('Cerrar sesión'),
+              ),
             ),
           ],
-          const SizedBox(height: 4),
-          const Text(
-            'Guardo hoy lo que alguien amará mañana.',
-            style: TextStyle(color: ColoresApp.sobreSuperficie),
-          ),
-          const SizedBox(height: 8),
-          const _LineaBio(
-            icono: Icons.landscape_outlined,
-            texto: 'Pequeñas herencias, grandes recuerdos',
-          ),
-          const _LineaBio(
-            icono: Icons.grid_view_outlined,
-            texto: 'Construyendo cápsoul cada día',
-          ),
-          const _LineaBio(
-            icono: Icons.favorite_outline,
-            texto: 'Para quienes más amo',
-          ),
-          const SizedBox(height: 14),
-          Align(
-            alignment: Alignment.centerRight,
-            child: OutlinedButton(
-              key: const Key('boton-cerrar-sesion'),
-              onPressed: ocupado ? null : alCerrarSesion,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(48, 40),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
-                ),
-              ),
-              child: const Icon(Icons.logout, size: 20),
-            ),
-          ),
-        ],
-      ),
+        ),
       ),
     );
   }

@@ -44,14 +44,30 @@ export function armarContenido(datos: DatosPlantilla): ContenidoAviso {
         data: { ...base, capsula_id: id, ruta: ruta("capsula", id) },
       };
     }
-    case "solicitud_amistad":
+    case "solicitud_amistad": {
       // El trigger de la 000021 guarda el cuerpo con el nombre del solicitante.
+      // El mensaje va solo en data (sin bloque notification) para que Android
+      // pueda mostrar Aceptar y Rechazar. El título y el cuerpo viajan en data.
+      const titulo = datos.tituloGuardado.trim() || "Nueva solicitud de amistad";
+      const cuerpo = datos.cuerpoGuardado.trim() ||
+        "Alguien quiere ser tu amigo en Capsoul.";
+      const rutaAmigos = ruta("amigos");
       return {
-        titulo: datos.tituloGuardado.trim() || "Nueva solicitud de amistad",
-        cuerpo: datos.cuerpoGuardado.trim() ||
-          "Alguien quiere ser tu amigo en Capsoul.",
-        data: { ...base, amistad_id: id, ruta: ruta("amigos") },
+        titulo,
+        cuerpo,
+        data: {
+          ...base,
+          amistad_id: id,
+          ruta: rutaAmigos,
+          titulo,
+          cuerpo,
+          accion_aceptar:
+            `${rutaAmigos}?accion=aceptar&amistad_id=${encodeURIComponent(id)}`,
+          accion_rechazar:
+            `${rutaAmigos}?accion=rechazar&amistad_id=${encodeURIComponent(id)}`,
+        },
       };
+    }
     case "herencia_liberada":
       return {
         titulo: "Tienes un legado disponible",

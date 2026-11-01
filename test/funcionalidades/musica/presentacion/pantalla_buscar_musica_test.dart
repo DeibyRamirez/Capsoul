@@ -15,6 +15,7 @@ Future<void> _montar(
   WidgetTester tester,
   CatalogoMusicaFalso catalogo, {
   void Function(ReferenciaMusica?)? alVolver,
+  bool soloSeleccion = false,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -30,7 +31,8 @@ Future<void> _montar(
                 onPressed: () async {
                   final pista = await Navigator.of(context).push(
                     MaterialPageRoute<ReferenciaMusica>(
-                      builder: (_) => const PantallaBuscarMusica(),
+                      builder: (_) =>
+                          PantallaBuscarMusica(soloSeleccion: soloSeleccion),
                     ),
                   );
                   alVolver?.call(pista);
@@ -54,8 +56,12 @@ Future<void> _escribir(WidgetTester tester, String texto) async {
 }
 
 void main() {
-  testWidgets('muestra el estado inicial y el crédito de Deezer', (tester) async {
+  testWidgets('muestra el estado inicial y el crédito de Deezer', (
+    tester,
+  ) async {
     await _montar(tester, CatalogoMusicaFalso());
+    expect(find.text('Buscar música'), findsOneWidget);
+    expect(find.text('Busca por artista o canción.'), findsOneWidget);
     expect(
       find.text('Escribe el nombre de una canción o de un artista.'),
       findsOneWidget,
@@ -65,12 +71,14 @@ void main() {
   });
 
   testWidgets('busca con debounce y lista los resultados', (tester) async {
-    final catalogo = CatalogoMusicaFalso(respuestas: {
-      'daft punk': [
-        pistaDeezerPrueba(),
-        pistaDeezerPrueba(id: '2', titulo: 'Sin clip', preview: ''),
-      ],
-    });
+    final catalogo = CatalogoMusicaFalso(
+      respuestas: {
+        'daft punk': [
+          pistaDeezerPrueba(),
+          pistaDeezerPrueba(id: '2', titulo: 'Sin clip', preview: ''),
+        ],
+      },
+    );
     await _montar(tester, catalogo);
 
     await _escribir(tester, 'daft punk');
@@ -90,10 +98,11 @@ void main() {
   testWidgets('error muestra mensaje y Reintentar vuelve a buscar', (
     tester,
   ) async {
-    final catalogo = CatalogoMusicaFalso(respuestas: {
-      'daft': [pistaDeezerPrueba()],
-    })
-      ..fallo = const FalloMusica(TipoFalloMusica.sinConexion);
+    final catalogo = CatalogoMusicaFalso(
+      respuestas: {
+        'daft': [pistaDeezerPrueba()],
+      },
+    )..fallo = const FalloMusica(TipoFalloMusica.sinConexion);
     await _montar(tester, catalogo);
 
     await _escribir(tester, 'daft');
@@ -110,13 +119,44 @@ void main() {
 
   testWidgets('tocar una canción la devuelve', (tester) async {
     ReferenciaMusica? devuelta;
-    final catalogo = CatalogoMusicaFalso(respuestas: {
-      'daft': [pistaDeezerPrueba()],
-    });
+    final catalogo = CatalogoMusicaFalso(
+      respuestas: {
+        'daft': [pistaDeezerPrueba()],
+      },
+    );
     await _montar(tester, catalogo, alVolver: (p) => devuelta = p);
 
     await _escribir(tester, 'daft');
     await tester.tap(find.text('Harder, Better, Faster, Stronger'));
+    await tester.pumpAndSettle();
+
+    expect(devuelta?.idExterno, '3135556');
+    expect(find.byType(PantallaBuscarMusica), findsNothing);
+  });
+
+  testWidgets('en solo selección confirma con Usar esta canción', (
+    tester,
+  ) async {
+    ReferenciaMusica? devuelta;
+    final catalogo = CatalogoMusicaFalso(
+      respuestas: {
+        'daft': [pistaDeezerPrueba()],
+      },
+    );
+    await _montar(
+      tester,
+      catalogo,
+      soloSeleccion: true,
+      alVolver: (p) => devuelta = p,
+    );
+
+    expect(find.text('Elegir música'), findsOneWidget);
+    await _escribir(tester, 'daft');
+    await tester.tap(find.text('Harder, Better, Faster, Stronger'));
+    await tester.pump();
+    expect(find.byType(PantallaBuscarMusica), findsOneWidget);
+
+    await tester.tap(find.text('Usar esta canción'));
     await tester.pumpAndSettle();
 
     expect(devuelta?.idExterno, '3135556');

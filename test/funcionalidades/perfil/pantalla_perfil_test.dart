@@ -28,28 +28,33 @@ void main() {
   }
 
   testWidgets(
-      'muestra el nombre de la tabla usuarios sin aviso de verificación',
-      (tester) async {
-    final autenticacion =
-        RepositorioAutenticacionFalso(usuarioInicial: usuarioSinVerificar);
-    await montarAppCapsoul(
-      tester,
-      autenticacion: autenticacion,
-      usuarios: usuariosConAna(),
+    'muestra el nombre de la tabla usuarios sin aviso de verificación',
+    (tester) async {
+      final autenticacion = RepositorioAutenticacionFalso(
+        usuarioInicial: usuarioSinVerificar,
+      );
+      await montarAppCapsoul(
+        tester,
+        autenticacion: autenticacion,
+        usuarios: usuariosConAna(),
+      );
+      await abrirPerfil(tester);
+
+      expect(find.text('Ana Supabase'), findsOneWidget);
+      expect(find.text('Editar nombre'), findsNothing);
+      expect(find.text('Editar perfil'), findsNothing);
+      // Con "Confirm email" activo toda sesión tiene el correo confirmado.
+      expect(find.text('Verifica tu correo electrónico'), findsNothing);
+      expect(find.text('Reenviar correo'), findsNothing);
+    },
+  );
+
+  testWidgets('cancelar el cierre de sesión no sale de la cuenta', (
+    tester,
+  ) async {
+    final autenticacion = RepositorioAutenticacionFalso(
+      usuarioInicial: usuarioPrueba,
     );
-    await abrirPerfil(tester);
-
-    expect(find.text('Ana Supabase'), findsOneWidget);
-    expect(find.text('Editar nombre'), findsNothing);
-    expect(find.text('Editar perfil'), findsNothing);
-    // Con "Confirm email" activo toda sesión tiene el correo confirmado.
-    expect(find.text('Verifica tu correo electrónico'), findsNothing);
-    expect(find.text('Reenviar correo'), findsNothing);
-  });
-
-  testWidgets('cerrar sesión vuelve a /iniciar-sesion', (tester) async {
-    final autenticacion =
-        RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba);
     await montarAppCapsoul(
       tester,
       autenticacion: autenticacion,
@@ -58,6 +63,34 @@ void main() {
     await abrirPerfil(tester);
 
     await tester.tap(find.byKey(const Key('boton-cerrar-sesion')));
+    await tester.pumpAndSettle();
+    expect(find.text('Cerrar sesión'), findsWidgets);
+    await tester.tap(find.byKey(const Key('boton-cancelar-salir')));
+    await tester.pumpAndSettle();
+
+    expect(autenticacion.llamadasCerrarSesion, 0);
+    expect(find.text('Ana Supabase'), findsOneWidget);
+  });
+
+  testWidgets('cerrar sesión pide confirmación y vuelve a /iniciar-sesion', (
+    tester,
+  ) async {
+    final autenticacion = RepositorioAutenticacionFalso(
+      usuarioInicial: usuarioPrueba,
+    );
+    await montarAppCapsoul(
+      tester,
+      autenticacion: autenticacion,
+      usuarios: usuariosConAna(),
+    );
+    await abrirPerfil(tester);
+
+    await tester.ensureVisible(find.byKey(const Key('boton-cerrar-sesion')));
+    await tester.tap(find.byKey(const Key('boton-cerrar-sesion')));
+    await tester.pumpAndSettle();
+    expect(autenticacion.llamadasCerrarSesion, 0);
+
+    await tester.tap(find.byKey(const Key('boton-confirmar-salir')));
     await tester.pumpAndSettle();
 
     expect(autenticacion.llamadasCerrarSesion, 1);

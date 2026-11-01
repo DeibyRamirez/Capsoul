@@ -12,13 +12,15 @@ import '../datos/repositorio_amistades_supabase.dart';
 import '../dominio/amigo.dart';
 import '../dominio/repositorio_amistades.dart';
 
-/// Tipo de aviso push de una solicitud de amistad (`data.tipo`).
-const String tipoAvisoSolicitudAmistad = 'solicitud_amistad';
+export '../../../nucleo/firebase/aviso_push.dart'
+    show tipoAvisoSolicitudAmistad;
 
 final proveedorRepositorioAmistades = Provider<RepositorioAmistades>((ref) {
   final autenticacion = ref.watch(proveedorRepositorioAutenticacion);
   return RepositorioAmistadesSupabase(
-    acceso: AccesoTablasAmistadesPostgrest(ref.watch(proveedorClientePostgrest)),
+    acceso: AccesoTablasAmistadesPostgrest(
+      ref.watch(proveedorClientePostgrest),
+    ),
     uidActual: () => autenticacion.usuarioActual?.uid,
   );
 });
@@ -29,8 +31,10 @@ final proveedorMisAmigos = FutureProvider.autoDispose<List<Amigo>>(
 
 final proveedorSolicitudesAmistad =
     FutureProvider.autoDispose<List<SolicitudAmistad>>(
-  (ref) => ref.watch(proveedorRepositorioAmistades).listarSolicitudesPendientes(),
-);
+      (ref) => ref
+          .watch(proveedorRepositorioAmistades)
+          .listarSolicitudesPendientes(),
+    );
 
 /// Solicitudes pendientes que recibí. Alimenta el badge de «Amigos».
 final proveedorConteoSolicitudesPendientes = Provider.autoDispose<int>(

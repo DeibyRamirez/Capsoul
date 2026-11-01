@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../nucleo/componentes/encabezado_seccion_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
+import '../../inicio/presentacion/heroes_inicio.dart';
 import '../aplicacion/proveedores_recuerdos.dart';
 import 'componentes/barra_filtros_recuerdos.dart';
 import 'componentes/barra_uso_medios.dart';
@@ -36,6 +38,7 @@ class PantallaRecuerdos extends ConsumerWidget {
                 titulo: 'Recuerdos',
                 subtitulo: 'Tu banco de recuerdos.',
                 icono: Icons.collections_outlined,
+                heroTag: HeroesInicio.recuerdos,
               ),
             ),
             SliverToBoxAdapter(
@@ -76,17 +79,14 @@ class PantallaRecuerdos extends ConsumerWidget {
                   SinRecuerdos(
                     mensaje: filtro.esVacio
                         ? 'Aún no tienes recuerdos. Guarda una foto, un video, '
-                            'una nota de voz o una nota.'
+                              'una nota de voz o una nota.'
                         : 'Ningún recuerdo coincide con el filtro.',
                   )
                 else
                   RejillaRecuerdos(
                     recuerdos: lista,
-                    alTocar: (recuerdo) => mostrarVisorPublicacionRecuerdo(
-                      context,
-                      ref,
-                      recuerdo,
-                    ),
+                    alTocar: (recuerdo) =>
+                        mostrarVisorPublicacionRecuerdo(context, ref, recuerdo),
                   ),
               ],
             ),

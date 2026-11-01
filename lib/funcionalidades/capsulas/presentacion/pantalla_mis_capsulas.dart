@@ -10,6 +10,7 @@ import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
+import '../../inicio/presentacion/heroes_inicio.dart';
 import '../aplicacion/proveedores_capsulas.dart';
 import '../dominio/capsula.dart';
 import '../dominio/capsula_recibida.dart';
@@ -27,7 +28,8 @@ class PantallaMisCapsulas extends ConsumerStatefulWidget {
   final VistaCapsulasTab vistaInicial;
 
   @override
-  ConsumerState<PantallaMisCapsulas> createState() => _PantallaMisCapsulasState();
+  ConsumerState<PantallaMisCapsulas> createState() =>
+      _PantallaMisCapsulasState();
 }
 
 class _PantallaMisCapsulasState extends ConsumerState<PantallaMisCapsulas> {
@@ -78,22 +80,28 @@ class _PantallaMisCapsulasState extends ConsumerState<PantallaMisCapsulas> {
             ),
             ...switch (_tab) {
               VistaCapsulasTab.misCapsulas => _sliversPropias(
-                  misCapsulas,
-                  ahora,
-                  filtrar: capsulasEnviadas,
-                  vacio: 'Aún no tienes cápsulas. Guarda hoy algo para '
-                      'abrirlo en el futuro.',
-                  accion: 'Crear mi primera cápsula',
-                ),
+                misCapsulas,
+                ahora,
+                filtrar: capsulasEnviadas,
+                vacio:
+                    'Aún no tienes cápsulas. Guarda hoy algo para '
+                    'abrirlo en el futuro.',
+                accion: 'Crear mi primera cápsula',
+              ),
               VistaCapsulasTab.paraMiMismo => _sliversPropias(
-                  misCapsulas,
-                  ahora,
-                  filtrar: capsulasParaMiMismo,
-                  vacio: 'Aún no tienes cápsulas solo para ti. '
-                      'Activa «También para mí» al crear una.',
-                  accion: 'Crear una cápsula para mí',
-                ),
-              VistaCapsulasTab.paraMi => _sliversRecibidas(recibidas, ahora, uid),
+                misCapsulas,
+                ahora,
+                filtrar: capsulasParaMiMismo,
+                vacio:
+                    'Aún no tienes cápsulas solo para ti. '
+                    'Activa «También para mí» al crear una.',
+                accion: 'Crear una cápsula para mí',
+              ),
+              VistaCapsulasTab.paraMi => _sliversRecibidas(
+                recibidas,
+                ahora,
+                uid,
+              ),
             },
             const SliverPadding(padding: EdgeInsets.only(bottom: 96)),
           ],
@@ -187,7 +195,8 @@ class _PantallaMisCapsulasState extends ConsumerState<PantallaMisCapsulas> {
             const SliverFillRemaining(
               hasScrollBody: false,
               child: _Aviso(
-                mensaje: 'Aún no tienes cápsulas de otras personas. '
+                mensaje:
+                    'Aún no tienes cápsulas de otras personas. '
                     'Cuando alguien te envíe una, aparecerá aquí.',
                 etiquetaAccion: '',
                 alTocar: null,
@@ -215,29 +224,30 @@ class _PantallaMisCapsulasState extends ConsumerState<PantallaMisCapsulas> {
 }
 
 Widget _encabezado(VistaCapsulasTab tab) => switch (tab) {
-      VistaCapsulasTab.misCapsulas => EncabezadoSeccionCapsoul(
-          titulo: 'Mis cápsulas',
-          subtitulo: 'Hoy las guardas, mañana alguien las abrirá.',
-          icono: Icons.inventory_2_outlined,
-          iconoTitulo: FrascoLuminoso(tamano: 32, brillo: 0.7),
-        ),
-      VistaCapsulasTab.paraMiMismo => const EncabezadoSeccionCapsoul(
-          titulo: 'Para mí mismo',
-          subtitulo: 'Cápsulas que guardaste solo para ti.',
-          icono: Icons.person_outline,
-        ),
-      VistaCapsulasTab.paraMi => const EncabezadoSeccionCapsoul(
-          titulo: 'Para mí',
-          subtitulo: 'Cápsulas que otros prepararon para ti.',
-          icono: Icons.inbox_outlined,
-        ),
-    };
+  VistaCapsulasTab.misCapsulas => EncabezadoSeccionCapsoul(
+    titulo: 'Mis cápsulas',
+    subtitulo: 'Hoy las guardas, mañana alguien las abrirá.',
+    icono: Icons.inventory_2_outlined,
+    iconoTitulo: FrascoLuminoso(tamano: 32, brillo: 0.7),
+    heroTag: HeroesInicio.capsulas,
+  ),
+  VistaCapsulasTab.paraMiMismo => const EncabezadoSeccionCapsoul(
+    titulo: 'Para mí mismo',
+    subtitulo: 'Cápsulas que guardaste solo para ti.',
+    icono: Icons.person_outline,
+  ),
+  VistaCapsulasTab.paraMi => const EncabezadoSeccionCapsoul(
+    titulo: 'Para mí',
+    subtitulo: 'Cápsulas que otros prepararon para ti.',
+    icono: Icons.inbox_outlined,
+  ),
+};
 
 String _etiqueta(VistaCapsulasTab tab) => switch (tab) {
-      VistaCapsulasTab.misCapsulas => 'Mis cápsulas',
-      VistaCapsulasTab.paraMiMismo => 'Para mí mismo',
-      VistaCapsulasTab.paraMi => 'Para mí',
-    };
+  VistaCapsulasTab.misCapsulas => 'Mis cápsulas',
+  VistaCapsulasTab.paraMiMismo => 'Para mí mismo',
+  VistaCapsulasTab.paraMi => 'Para mí',
+};
 
 class _Aviso extends StatelessWidget {
   const _Aviso({
@@ -267,10 +277,7 @@ class _Aviso extends StatelessWidget {
             ),
             if (etiquetaAccion.isNotEmpty && alTocar != null) ...[
               const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: alTocar,
-                child: Text(etiquetaAccion),
-              ),
+              OutlinedButton(onPressed: alTocar, child: Text(etiquetaAccion)),
             ],
           ],
         ),

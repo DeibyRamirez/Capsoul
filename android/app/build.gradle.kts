@@ -77,3 +77,12 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // firebase_messaging 16.7.0 (firebase_core 4.15.0, FirebaseSDKVersion 34.19.0)
+    // declara firebase-messaging como implementation: el módulo :app no ve
+    // FirebaseMessagingService ni RemoteMessage. El BOM es el mismo del plugin
+    // para no mezclar versiones. Sin artefacto -ktx: el BOM 34 ya no lo trae.
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation("com.google.firebase:firebase-messaging")
+}

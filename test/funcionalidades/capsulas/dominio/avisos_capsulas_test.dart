@@ -64,4 +64,21 @@ void main() {
     expect(textoBadgeAvisos(9), '9');
     expect(textoBadgeAvisos(10), '9+');
   });
+
+  test('el badge de avisos suma cápsulas sin leer y solicitudes', () {
+    expect(
+      conteoPendientesAvisos(capsulasSinLeer: 2, solicitudesPendientes: 1),
+      3,
+    );
+    expect(
+      conteoPendientesAvisos(capsulasSinLeer: 0, solicitudesPendientes: 0),
+      0,
+    );
+    expect(
+      textoBadgeAvisos(
+        conteoPendientesAvisos(capsulasSinLeer: 1, solicitudesPendientes: 0),
+      ),
+      '1',
+    );
+  });
 }

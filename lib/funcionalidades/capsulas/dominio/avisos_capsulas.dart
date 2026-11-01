@@ -21,6 +21,16 @@ List<CapsulaRecibida> avisosCapsulasCompartidas(
   return avisos;
 }
 
+/// Cápsulas sin leer más solicitudes de amistad que aún no respondí.
+int conteoPendientesAvisos({
+  required int capsulasSinLeer,
+  required int solicitudesPendientes,
+}) {
+  final capsulas = capsulasSinLeer < 0 ? 0 : capsulasSinLeer;
+  final solicitudes = solicitudesPendientes < 0 ? 0 : solicitudesPendientes;
+  return capsulas + solicitudes;
+}
+
 /// Avisos que todavía no vi.
 int conteoAvisosSinLeer(List<CapsulaRecibida> avisos) {
   var n = 0;

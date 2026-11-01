@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
-import '../../../nucleo/componentes/fondo_capsoul.dart';
+import '../../../nucleo/componentes/cabecera_detalle_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/formato/fechas.dart';
 import '../../../nucleo/tema/colores_app.dart';
@@ -54,10 +53,13 @@ class _EstadoPantallaGuardarRecuerdo
   }
 
   Future<void> _anadirMusica() async {
-    final refMusica =
-        await context.push<ReferenciaMusica>(RutasApp.elegirMusica);
+    final refMusica = await context.push<ReferenciaMusica>(
+      RutasApp.elegirMusica,
+    );
     if (refMusica == null || !mounted) return;
-    setState(() => _elemento = _elemento.copiarCon(referenciaMusica: refMusica));
+    setState(
+      () => _elemento = _elemento.copiarCon(referenciaMusica: refMusica),
+    );
   }
 
   void _quitarMusica() {
@@ -88,7 +90,9 @@ class _EstadoPantallaGuardarRecuerdo
     FocusScope.of(context).unfocus();
     await _claveEscenaMusica.currentState?.pausarPreview();
     if (!mounted) return;
-    final recuerdo = await ref.read(proveedorControladorRecuerdos.notifier).guardar(
+    final recuerdo = await ref
+        .read(proveedorControladorRecuerdos.notifier)
+        .guardar(
           NuevoRecuerdo(
             elemento: _elemento,
             fechaRecuerdo: _fecha,
@@ -117,71 +121,83 @@ class _EstadoPantallaGuardarRecuerdo
     final esMusicaPura =
         _elemento.tipo == TipoElemento.musica && musica != null;
     return PantallaCapsoul(
-      tipoFondo: FondoCapsoulTipo.plano,
-      appBar: AppBarCapsoul(titulo: const Text('Guardar recuerdo')),
-      cuerpo: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-          children: [
-            if (esMusicaPura)
-              EscenaPreviewMusica(
-                key: _claveEscenaMusica,
-                referencia: musica,
-                reproducirAutomaticamente: true,
-              )
-            else
-              VistaPreviaBorrador(
-                elemento: _elemento,
-                alQuitarMusica: ocupado ? null : _quitarMusica,
-              ),
-            if (_elemento.tipo == TipoElemento.foto &&
-                _elemento.referenciaMusica == null) ...[
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: ocupado ? null : _anadirMusica,
-                icon: const Icon(Icons.music_note_outlined),
-                label: const Text('Añadir música'),
-              ),
-            ],
-            const SizedBox(height: 20),
-            TextField(
-              key: const Key('campo-titulo-recuerdo'),
-              controller: _titulo,
-              enabled: !ocupado,
-              maxLength: ValidadorRecuerdo.caracteresMaxTitulo,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Título (opcional)',
-                hintText: 'Ej.: Cumpleaños de la abuela',
-              ),
-            ),
-            const SizedBox(height: 8),
-            InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Fecha del recuerdo',
-                contentPadding: EdgeInsets.zero,
-              ),
-              child: Material(
-                type: MaterialType.transparency,
-                child: ListTile(
-                  key: const Key('campo-fecha-recuerdo'),
-                  leading: const Icon(
-                    Icons.event_outlined,
-                    color: ColoresApp.acento,
+      usarAreaSegura: false,
+      cuerpo: Column(
+        children: [
+          const CabeceraDetalleCapsoul(
+            titulo: 'Guardar recuerdo',
+            subtitulo: 'Ponle un título y una fecha.',
+          ),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                children: [
+                  if (esMusicaPura)
+                    EscenaPreviewMusica(
+                      key: _claveEscenaMusica,
+                      referencia: musica,
+                      reproducirAutomaticamente: true,
+                    )
+                  else
+                    VistaPreviaBorrador(
+                      elemento: _elemento,
+                      alQuitarMusica: ocupado ? null : _quitarMusica,
+                    ),
+                  if (_elemento.tipo == TipoElemento.foto &&
+                      _elemento.referenciaMusica == null) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: ocupado ? null : _anadirMusica,
+                      icon: const Icon(Icons.music_note_outlined),
+                      label: const Text('Añadir música'),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  TextField(
+                    key: const Key('campo-titulo-recuerdo'),
+                    controller: _titulo,
+                    enabled: !ocupado,
+                    maxLength: ValidadorRecuerdo.caracteresMaxTitulo,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Título (opcional)',
+                      hintText: 'Ej.: Cumpleaños de la abuela',
+                    ),
                   ),
-                  title: Text(formatearFechaCorta(_fecha)),
-                  trailing: const Icon(Icons.calendar_month_outlined),
-                  onTap: ocupado ? null : _elegirFecha,
-                ),
+                  const SizedBox(height: 8),
+                  InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha del recuerdo',
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: ListTile(
+                        key: const Key('campo-fecha-recuerdo'),
+                        leading: const Icon(
+                          Icons.event_outlined,
+                          color: ColoresApp.acento,
+                        ),
+                        title: Text(formatearFechaCorta(_fecha)),
+                        trailing: const Icon(Icons.calendar_month_outlined),
+                        onTap: ocupado ? null : _elegirFecha,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  BotonPrincipal(
+                    etiqueta: 'Guardar recuerdo',
+                    cargando: ocupado,
+                    alPresionar: _guardar,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 28),
-            BotonPrincipal(
-              etiqueta: 'Guardar recuerdo',
-              cargando: ocupado,
-              alPresionar: _guardar,
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 }
