@@ -55,6 +55,30 @@ export function cuerpoMensajeFcm(args: {
   for (const [clave, valor] of Object.entries(args.data)) {
     data[clave] = String(valor);
   }
+  // Solicitud: sin bloque notification. Si va, Android pinta el aviso del
+  // sistema y no se pueden añadir Aceptar y Rechazar. El servicio nativo
+  // arma la bandeja con titulo/cuerpo/acciones que viajan en data.
+  if (data.tipo === "solicitud_amistad") {
+    if (!data.titulo) data.titulo = args.titulo;
+    if (!data.cuerpo) data.cuerpo = args.cuerpo;
+    if (!data.ruta) data.ruta = "capsoul://amigos";
+    return {
+      message: {
+        token: args.token,
+        data,
+        android: { priority: "HIGH" },
+        apns: {
+          headers: { "apns-priority": "10" },
+          payload: {
+            aps: {
+              alert: { title: args.titulo, body: args.cuerpo },
+              sound: "default",
+            },
+          },
+        },
+      },
+    };
+  }
   return {
     message: {
       token: args.token,

@@ -145,6 +145,32 @@ Deno.test("el mensaje v1 nombra la cápsula y el canal de alta importancia", () 
   assertEquals((mensaje.notification as { body: string }).body.includes("Viaje al río"), true);
 });
 
+Deno.test("la solicitud de amistad viaja en data, con acciones y sin notification", () => {
+  const cuerpo = cuerpoMensajeFcm({
+    token: "token-android",
+    titulo: "Nueva solicitud de amistad",
+    cuerpo: "Ana quiere ser tu amigo en Capsoul.",
+    data: {
+      tipo: "solicitud_amistad",
+      amistad_id: "11111111-2222-3333-4444-555555555555",
+      ruta: "capsoul://amigos",
+      accion_aceptar: "capsoul://amigos?accion=aceptar&amistad_id=11111111-2222-3333-4444-555555555555",
+      accion_rechazar: "capsoul://amigos?accion=rechazar&amistad_id=11111111-2222-3333-4444-555555555555",
+    },
+  });
+  const mensaje = cuerpo.message;
+  assertEquals(mensaje.notification, undefined);
+  const android = mensaje.android as { priority: string; notification?: unknown };
+  assertEquals(android.priority, "HIGH");
+  assertEquals(android.notification, undefined);
+  const data = mensaje.data as Record<string, string>;
+  assertEquals(data.titulo, "Nueva solicitud de amistad");
+  assertEquals(data.cuerpo, "Ana quiere ser tu amigo en Capsoul.");
+  assertEquals(data.accion_aceptar?.includes("accion=aceptar"), true);
+  const apns = mensaje.apns as { payload: { aps: { alert: { title: string } } } };
+  assertEquals(apns.payload.aps.alert.title, "Nueva solicitud de amistad");
+});
+
 Deno.test("UNREGISTERED se lee del detalle de FCM", () => {
   const codigo = codigoErrorFcm({
     error: {

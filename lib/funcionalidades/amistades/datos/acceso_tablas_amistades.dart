@@ -24,19 +24,13 @@ class AccesoTablasAmistadesPostgrest implements AccesoTablasAmistades {
   @override
   Future<List<Map<String, dynamic>>> leerAmigosRpc() async {
     final filas = await _cliente.rpc('mis_amigos');
-    return [
-      for (final fila in filas)
-        if (fila is Map<String, dynamic>) fila,
-    ];
+    return mapasDeRpc(filas);
   }
 
   @override
   Future<List<Map<String, dynamic>>> leerSolicitudesRpc() async {
     final filas = await _cliente.rpc('mis_solicitudes_amistad_pendientes');
-    return [
-      for (final fila in filas)
-        if (fila is Map<String, dynamic>) fila,
-    ];
+    return mapasDeRpc(filas);
   }
 
   @override
@@ -65,7 +59,10 @@ class AccesoTablasAmistadesPostgrest implements AccesoTablasAmistades {
 
   @override
   Future<void> aceptarInvitacionRpc(String token) async {
-    await _cliente.rpc('aceptar_invitacion_amistad', parametros: {'p_token': token});
+    await _cliente.rpc(
+      'aceptar_invitacion_amistad',
+      parametros: {'p_token': token},
+    );
   }
 
   @override
@@ -76,10 +73,7 @@ class AccesoTablasAmistadesPostgrest implements AccesoTablasAmistades {
       'resolver_usuario_por_arroba',
       parametros: {'p_arroba': arroba},
     );
-    return [
-      for (final fila in filas)
-        if (fila is Map<String, dynamic>) fila,
-    ];
+    return mapasDeRpc(filas);
   }
 
   @override
@@ -89,4 +83,15 @@ class AccesoTablasAmistadesPostgrest implements AccesoTablasAmistades {
       parametros: {'p_receptor_id': receptorId},
     );
   }
+}
+
+/// PostgREST a veces entrega `Map<dynamic, dynamic>`. Sin esto la fila se pierde.
+List<Map<String, dynamic>> mapasDeRpc(List<dynamic> filas) {
+  return [
+    for (final fila in filas)
+      if (fila is Map<String, dynamic>)
+        fila
+      else if (fila is Map)
+        Map<String, dynamic>.from(fila),
+  ];
 }

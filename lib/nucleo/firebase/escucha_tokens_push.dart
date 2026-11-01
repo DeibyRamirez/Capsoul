@@ -11,6 +11,7 @@ import '../enlaces/enlace_pendiente.dart';
 import '../enlaces/proveedor_enlace_pendiente.dart';
 import '../enrutador/enrutador_app.dart';
 import '../infraestructura/proveedores_infraestructura.dart';
+import 'accion_solicitud_push.dart';
 import 'aviso_push.dart';
 import 'destino_aviso.dart';
 import 'repositorio_dispositivos_push.dart';
@@ -56,6 +57,9 @@ class _EstadoEscuchaTokensPush extends ConsumerState<EscuchaTokensPush> {
 
   /// Sesión con la que ya se intentó guardar el token actual.
   String? _uidYaRegistrado;
+
+  /// Ruta de un aviso tocado antes de que la sesión estuviera lista.
+  String? _rutaEsperandoSesion;
 
   @override
   void initState() {
@@ -142,10 +146,37 @@ class _EstadoEscuchaTokensPush extends ConsumerState<EscuchaTokensPush> {
         ref
             .read(proveedorEnlacePendiente.notifier)
             .guardar(EnlacePendienteCapsula(id));
+        return;
       }
+      _rutaEsperandoSesion = ruta;
       return;
     }
+    final uri = Uri.tryParse(ruta);
+    if (uri != null && EnlaceCapsoul.esAmigos(uri)) {
+      refrescarAmistades(ref.invalidate);
+    }
     ref.read(proveedorEnrutadorApp).push(destino);
+    final accion = accionSolicitudDesdeRuta(ruta);
+    if (accion == null) return;
+    unawaited(_aplicarAccionSolicitud(accion));
+  }
+
+  Future<void> _aplicarAccionSolicitud(AccionSolicitudPush accion) async {
+    try {
+      final repositorio = ref.read(proveedorRepositorioAmistades);
+      if (accion.aceptar) {
+        await repositorio.aceptarSolicitud(accion.amistadId);
+      } else {
+        await repositorio.rechazarSolicitud(accion.amistadId);
+      }
+      if (!mounted) return;
+      refrescarAmistades(ref.invalidate);
+    } catch (error, traza) {
+      debugPrint(
+        'Capsoul: no se pudo responder la solicitud desde el aviso: $error',
+      );
+      debugPrintStack(stackTrace: traza);
+    }
   }
 
   @override
@@ -157,6 +188,13 @@ class _EstadoEscuchaTokensPush extends ConsumerState<EscuchaTokensPush> {
       final uidAnterior = _uidVinculado;
       _uidVinculado = uidNuevo;
       if (uidNuevo == null) _uidYaRegistrado = null;
+      if (uidNuevo != null) {
+        final ruta = _rutaEsperandoSesion;
+        if (ruta != null) {
+          _rutaEsperandoSesion = null;
+          _abrirRuta(ruta);
+        }
+      }
       if (uidNuevo != null && uidNuevo == _uidYaRegistrado) return;
       unawaited(_aplicarCambio(uidAnterior, uidNuevo));
     });

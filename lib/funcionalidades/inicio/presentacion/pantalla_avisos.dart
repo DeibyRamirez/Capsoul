@@ -10,63 +10,108 @@ import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/formato/fechas.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
+import '../../amistades/aplicacion/proveedores_amistades.dart';
+import '../../amistades/presentacion/componentes/tarjeta_solicitud_amistad.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../capsulas/dominio/avisos_capsulas.dart';
 import '../../capsulas/dominio/capsula_recibida.dart';
 
-/// Lista de cápsulas compartidas que ya se liberaron, de la más nueva a la más vieja.
+/// Solicitudes de amistad pendientes y cápsulas compartidas ya abiertas.
 class PantallaAvisos extends ConsumerWidget {
   const PantallaAvisos({super.key});
+
+  Future<void> _refrescar(WidgetRef ref) async {
+    ref.invalidate(proveedorCapsulasRecibidas);
+    refrescarAmistades(ref.invalidate);
+    await Future.wait([
+      ref.read(proveedorCapsulasRecibidas.future),
+      ref.read(proveedorSolicitudesAmistad.future),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final uid = ref.watch(proveedorEstadoAutenticacion).value?.uid;
     final recibidas = ref.watch(proveedorCapsulasRecibidas);
+    final solicitudes = ref.watch(proveedorSolicitudesAmistad);
+    final cargandoCapsulas = recibidas.isLoading && !recibidas.hasValue;
+    final cargandoSolicitudes = solicitudes.isLoading && !solicitudes.hasValue;
 
     return Scaffold(
       backgroundColor: ColoresApp.superficie,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CabeceraDetalleCapsoul(
+          const CabeceraDetalleCapsoul(
             titulo: 'Avisos',
-            subtitulo: 'Cápsulas compartidas que ya se abrieron',
+            subtitulo: 'Solicitudes de amistad y cápsulas abiertas',
             trailing: null,
           ),
           Expanded(
-            child: recibidas.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => _EstadoAvisos(
-                mensaje: mensajeParaUsuario(error),
-                alReintentar: () => ref.invalidate(proveedorCapsulasRecibidas),
-              ),
-              data: (lista) {
-                final avisos = avisosCapsulasCompartidas(lista, uid);
-                if (avisos.isEmpty) {
-                  return const _EstadoAvisos(
-                    mensaje:
-                        'Cuando alguien te envíe una cápsula y se abra, '
-                        'aparecerá aquí.',
-                  );
-                }
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    ref.invalidate(proveedorCapsulasRecibidas);
-                    await ref.read(proveedorCapsulasRecibidas.future);
-                  },
-                  child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                    itemCount: avisos.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (context, indice) =>
-                        _TarjetaAviso(aviso: avisos[indice]),
+            child: cargandoCapsulas || cargandoSolicitudes
+                ? const Center(child: CircularProgressIndicator())
+                : _ListaAvisos(
+                    uid: uid,
+                    alReintentar: () => _refrescar(ref),
+                    alRefrescar: () => _refrescar(ref),
                   ),
-                );
-              },
-            ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ListaAvisos extends ConsumerWidget {
+  const _ListaAvisos({
+    required this.uid,
+    required this.alReintentar,
+    required this.alRefrescar,
+  });
+
+  final String? uid;
+  final Future<void> Function() alReintentar;
+  final Future<void> Function() alRefrescar;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recibidas = ref.watch(proveedorCapsulasRecibidas);
+    final solicitudes = ref.watch(proveedorSolicitudesAmistad);
+    final avisos = avisosCapsulasCompartidas(recibidas.value ?? const [], uid);
+    final pendientes = solicitudes.value ?? const [];
+    final sinDatos = !recibidas.hasValue && !solicitudes.hasValue;
+    if (sinDatos && (recibidas.hasError || solicitudes.hasError)) {
+      return _EstadoAvisos(
+        mensaje: mensajeParaUsuario(recibidas.error ?? solicitudes.error),
+        alReintentar: () => alReintentar(),
+      );
+    }
+    if (avisos.isEmpty && pendientes.isEmpty) {
+      if (recibidas.hasError || solicitudes.hasError) {
+        return _EstadoAvisos(
+          mensaje: mensajeParaUsuario(recibidas.error ?? solicitudes.error),
+          alReintentar: () => alReintentar(),
+        );
+      }
+      return const _EstadoAvisos(
+        mensaje:
+            'Cuando te llegue una solicitud de amistad o se abra una cápsula '
+            'compartida, aparecerá aquí.',
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: alRefrescar,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          for (final solicitud in pendientes)
+            TarjetaSolicitudAmistad(solicitud: solicitud),
+          for (var indice = 0; indice < avisos.length; indice++) ...[
+            if (pendientes.isNotEmpty || indice > 0) const SizedBox(height: 12),
+            _TarjetaAviso(aviso: avisos[indice]),
+          ],
         ],
       ),
     );
@@ -106,8 +151,10 @@ class _TarjetaAviso extends ConsumerWidget {
               if (sinLeer) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: ColoresApp.acento.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
@@ -182,9 +229,8 @@ class _EstadoAvisos extends StatelessWidget {
             Text(
               mensaje,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: ColoresApp.textoSecundario,
-                  ),
+              style: Theme.of(context).textTheme.bodyLarge
+                  ?.copyWith(color: ColoresApp.textoSecundario),
             ),
             if (alReintentar != null) ...[
               const SizedBox(height: 20),

@@ -14,12 +14,11 @@ import '../../../ayudantes/falsos_amistades.dart';
 class _RepositorioQueCuenta extends RepositorioAmistadesFalso {
   var lecturasSolicitudes = 0;
   var lecturasAmigos = 0;
-  List<SolicitudAmistad> solicitudes = [];
 
   @override
   Future<List<SolicitudAmistad>> listarSolicitudesPendientes() async {
     lecturasSolicitudes++;
-    return solicitudes;
+    return List<SolicitudAmistad>.of(solicitudes);
   }
 
   @override

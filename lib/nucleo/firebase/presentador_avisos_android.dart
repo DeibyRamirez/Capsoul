@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'accion_solicitud_push.dart';
 import 'aviso_push.dart';
 import 'canal_avisos.dart';
 import 'coordinador_avisos_push.dart';
@@ -10,7 +11,7 @@ import 'coordinador_avisos_push.dart';
 /// Canal nativo `capsoul/avisos`: permiso, canal de alta importancia y bandeja.
 class PresentadorAvisosAndroid implements PresentadorAvisos {
   PresentadorAvisosAndroid({MethodChannel? canal})
-      : _canal = canal ?? const MethodChannel(CanalAvisos.metodo);
+    : _canal = canal ?? const MethodChannel(CanalAvisos.metodo);
 
   final MethodChannel _canal;
 
@@ -31,11 +32,7 @@ class PresentadorAvisosAndroid implements PresentadorAvisos {
   @override
   Future<void> mostrar(MensajePush mensaje) async {
     if (!_enAndroid) return;
-    await _canal.invokeMethod<void>('mostrar', {
-      'titulo': mensaje.titulo ?? 'Capsoul',
-      'cuerpo': mensaje.cuerpo ?? '',
-      'ruta': mensaje.ruta,
-    });
+    await _canal.invokeMethod<void>('mostrar', argumentosMostrarAviso(mensaje));
   }
 
   @override
