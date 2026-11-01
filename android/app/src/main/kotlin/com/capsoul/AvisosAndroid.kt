@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import io.flutter.plugins.firebase.messaging.FlutterFirebaseTokenLiveData
 import java.util.concurrent.atomic.AtomicInteger
 
 /** La actividad visible muestra el aviso desde Flutter; en segundo plano lo arma FCM. */
@@ -117,11 +118,22 @@ object AvisoBandeja {
 }
 
 /**
- * Con la app en segundo plano, FCM no llama a Dart si el mensaje trae
- * `notification`. Las solicitudes van solo en `data` para poder poner
- * Aceptar y Rechazar. El resto de avisos lo muestra el sistema.
+ * Único servicio FCM de la app. En segundo plano, un mensaje con bloque
+ * `notification` lo muestra el sistema y este método no corre. La solicitud
+ * de amistad viaja solo en `data` para poder poner Aceptar y Rechazar.
+ *
+ * No reenvía el mensaje a Flutter: [FlutterFirebaseMessagingReceiver] ya lo
+ * entrega a onMessage y al manejador en segundo plano. Hacerlo aquí lo
+ * procesaría dos veces. En primer plano no pinta nada: lo hace Dart.
+ * onNewToken sí se reenvía, porque al retirar el servicio del plugin ese
+ * era su único trabajo.
  */
 class ServicioAvisosFcm : FirebaseMessagingService() {
+    override fun onNewToken(token: String) {
+        super.onNewToken(token)
+        FlutterFirebaseTokenLiveData.getInstance().postToken(token)
+    }
+
     override fun onMessageReceived(mensaje: RemoteMessage) {
         if (EstadoPrimerPlano.activo) return
         val datos = mensaje.data

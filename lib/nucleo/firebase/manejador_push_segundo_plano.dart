@@ -10,7 +10,7 @@ bool _segundoPlanoRegistrado = false;
 /// Cápsulas, legado y retos traen bloque `notification`: el sistema los
 /// muestra en el canal `capsoul_avisos` y este manejador no duplica.
 /// La solicitud de amistad va solo en `data`; la pinta `ServicioAvisosFcm`
-/// con Aceptar y Rechazar.
+/// con Aceptar y Rechazar. Aquí no se vuelve a mostrar: sería un segundo aviso.
 @pragma('vm:entry-point')
 Future<void> manejadorPushEnSegundoPlano(RemoteMessage mensaje) async {
   final tieneAviso = mensaje.notification != null || mensaje.data['ruta'] != null;
