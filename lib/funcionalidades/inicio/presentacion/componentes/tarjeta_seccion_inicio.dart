@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../nucleo/componentes/tarjeta_capsoul.dart';
 import '../../../../nucleo/tema/colores_app.dart';
+
 /// Tarjeta de la rejilla de Inicio (Recuerdos, Retos, Cápsulas, Pequeñas
 /// herencias) con conteo e ilustración.
 class TarjetaSeccionInicio extends StatelessWidget {
@@ -37,33 +38,39 @@ class TarjetaSeccionInicio extends StatelessWidget {
       altoMinimo: altoMinimo,
       child: Stack(
         children: [
-          Positioned(right: 0, bottom: 0, child: ilustracion),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 44),
-                child: Text(
+          Padding(
+            padding: const EdgeInsets.only(right: 68),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   descripcion,
                   style: estilos.bodySmall?.copyWith(
                     color: ColoresApp.atenuado,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                '$conteo',
-                style: estilos.titleLarge?.copyWith(
-                  color: ColoresApp.primario,
-                  fontWeight: FontWeight.w700,
+                const SizedBox(height: 16),
+                Text(
+                  '$conteo',
+                  style: estilos.titleLarge?.copyWith(
+                    color: ColoresApp.primario,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              Text(
-                etiquetaConteo,
-                style: estilos.labelSmall?.copyWith(color: ColoresApp.atenuado),
-              ),
-            ],
+                Text(
+                  etiquetaConteo,
+                  style: estilos.labelSmall?.copyWith(
+                    color: ColoresApp.atenuado,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: IgnorePointer(child: ilustracion),
           ),
         ],
       ),
@@ -86,6 +93,7 @@ class IlustracionSeccion extends StatelessWidget {
         rutaAsset,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium,
+        cacheWidth: 216,
         errorBuilder: (_, _, _) => const _FallbackIlustracionSeccion(),
       ),
     );
