@@ -1,4 +1,5 @@
 import 'package:capsoul/funcionalidades/inicio/dominio/resumen_inicio.dart';
+import 'package:capsoul/funcionalidades/inicio/presentacion/componentes/tarjeta_seccion_inicio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../ayudantes/app_prueba.dart';
@@ -29,6 +30,7 @@ void main() {
     // Las etiquetas de cápsulas y herencias llevan espacios de relleno para el salto de línea.
     expect(find.textContaining(RegExp(r'^cápsula\s+creada$')), findsOneWidget);
     expect(find.textContaining(RegExp(r'^herencias\s+creadas$')), findsOneWidget);
+    expect(find.byType(IlustracionSeccion), findsNWidgets(4));
     await tester.scrollUntilVisible(
       find.text('No se trata de tener más tiempo, sino de dejar lo que importa.'),
       200,
