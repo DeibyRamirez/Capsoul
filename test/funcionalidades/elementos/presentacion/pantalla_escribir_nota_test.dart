@@ -22,8 +22,7 @@ Future<_Resultado> _abrirNota(WidgetTester tester) async {
         builder: (context, state) => Scaffold(
           body: TextButton(
             onPressed: () async {
-              resultado.nota =
-                  await context.push<ElementoBorrador>('/nota');
+              resultado.nota = await context.push<ElementoBorrador>('/nota');
               resultado.terminado = true;
             },
             child: const Text('abrir'),
@@ -39,10 +38,7 @@ Future<_Resultado> _abrirNota(WidgetTester tester) async {
     ],
   );
   await tester.pumpWidget(
-    MaterialApp.router(
-      theme: TemaApp.claro,
-      routerConfig: enrutador,
-    ),
+    MaterialApp.router(theme: TemaApp.claro, routerConfig: enrutador),
   );
   await tester.tap(find.text('abrir'));
   await tester.pumpAndSettle();
@@ -54,7 +50,10 @@ void main() {
     final resultado = await _abrirNota(tester);
 
     expect(find.text('0 / 5000'), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('campo-nota')), '  Te quiero  ');
+    await tester.enterText(
+      find.byKey(const Key('campo-nota')),
+      '  Te quiero  ',
+    );
     await tester.pump();
     expect(find.text('13 / 5000'), findsOneWidget);
 
@@ -85,5 +84,39 @@ void main() {
     await tester.pump();
 
     expect(find.text('5000 / 5000'), findsOneWidget);
+  });
+
+  testWidgets('negrita envuelve lo seleccionado y normal lo deja plano', (
+    tester,
+  ) async {
+    await _abrirNota(tester);
+
+    expect(find.text('Nota'), findsOneWidget);
+    expect(
+      find.text(
+        'Normal deja el texto plano. Negrita, cursiva y subrayado envuelven lo seleccionado.',
+      ),
+      findsOneWidget,
+    );
+
+    final campo = tester.widget<TextField>(find.byKey(const Key('campo-nota')));
+    campo.controller!.text = 'Hola mundo';
+    campo.controller!.selection = const TextSelection(
+      baseOffset: 0,
+      extentOffset: 4,
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('formato-negrita')));
+    await tester.pump();
+    expect(campo.controller!.text, '**Hola** mundo');
+
+    campo.controller!.selection = const TextSelection(
+      baseOffset: 2,
+      extentOffset: 6,
+    );
+    await tester.tap(find.byKey(const Key('formato-normal')));
+    await tester.pump();
+    expect(campo.controller!.text, 'Hola mundo');
   });
 }
