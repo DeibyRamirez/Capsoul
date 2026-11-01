@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Internet en release (Supabase, Cloudinary y reproduccion de medios); en debug ya lo agrega el manifiesto de depuracion. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Android 13+: el aviso push pide este permiso en tiempo de ejecución. -->
@@ -81,10 +82,23 @@
                 <data android:scheme="capsoul" android:host="amigos" />
             </intent-filter>
         </activity>
+        <!--
+            FCM solo entrega MESSAGING_EVENT a un servicio (resolveService).
+            firebase_messaging registra FlutterFirebaseMessagingService para
+            onNewToken; su onMessageReceived está vacío y el mensaje a Dart
+            entra por FlutterFirebaseMessagingReceiver. Si conviven los dos,
+            uno se queda sin intent: o no hay Aceptar/Rechazar, o Dart no
+            recibe la rotación del token. Se retira el del plugin y
+            ServicioAvisosFcm reenvía onNewToken. Prioridad 1 por si el
+            retiro no aplica en una versión futura del plugin.
+        -->
+        <service
+            android:name="io.flutter.plugins.firebase.messaging.FlutterFirebaseMessagingService"
+            tools:node="remove" />
         <service
             android:name=".ServicioAvisosFcm"
             android:exported="false">
-            <intent-filter>
+            <intent-filter android:priority="1">
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
