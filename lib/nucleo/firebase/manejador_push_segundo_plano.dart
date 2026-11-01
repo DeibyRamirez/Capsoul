@@ -5,8 +5,12 @@ import 'package:flutter/foundation.dart';
 
 bool _segundoPlanoRegistrado = false;
 
-/// Segundo plano y app cerrada: el sistema muestra el aviso porque el
-/// mensaje trae `notification` y el canal `capsoul_avisos`. No se duplica.
+/// Segundo plano y app cerrada.
+///
+/// Cápsulas, legado y retos traen bloque `notification`: el sistema los
+/// muestra en el canal `capsoul_avisos` y este manejador no duplica.
+/// La solicitud de amistad va solo en `data`; la pinta `ServicioAvisosFcm`
+/// con Aceptar y Rechazar.
 @pragma('vm:entry-point')
 Future<void> manejadorPushEnSegundoPlano(RemoteMessage mensaje) async {
   final tieneAviso = mensaje.notification != null || mensaje.data['ruta'] != null;

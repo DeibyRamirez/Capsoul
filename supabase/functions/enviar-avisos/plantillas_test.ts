@@ -18,6 +18,10 @@ Deno.test("solicitud_amistad usa el cuerpo guardado y añade amistad_id", () => 
     referencia_id: AMISTAD,
     amistad_id: AMISTAD,
     ruta: "capsoul://amigos",
+    titulo: "Nueva solicitud de amistad",
+    cuerpo: "Ana quiere ser tu amigo en Capsoul.",
+    accion_aceptar: `capsoul://amigos?accion=aceptar&amistad_id=${AMISTAD}`,
+    accion_rechazar: `capsoul://amigos?accion=rechazar&amistad_id=${AMISTAD}`,
   });
 });
 

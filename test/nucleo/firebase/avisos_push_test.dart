@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:capsoul/nucleo/enlaces/enlace_capsoul.dart';
+import 'package:capsoul/nucleo/firebase/accion_solicitud_push.dart';
 import 'package:capsoul/nucleo/firebase/aviso_push.dart';
 import 'package:capsoul/nucleo/firebase/canal_avisos.dart';
 import 'package:capsoul/nucleo/firebase/coordinador_avisos_push.dart';
@@ -15,11 +16,40 @@ void main() {
     expect(destino, RutasApp.detalleCapsulaDe(id));
     expect(destinoInternoDeAviso(EnlaceCapsoul.amigos()), RutasApp.amigos);
     expect(
+      destinoInternoDeAviso('capsoul://amigos?accion=aceptar&amistad_id=$id'),
+      RutasApp.amigos,
+    );
+    expect(
       destinoInternoDeAviso(EnlaceCapsoul.herencia(id)),
       RutasApp.detalleHerenciaDe(id),
     );
     expect(destinoInternoDeAviso(EnlaceCapsoul.reto(id)), RutasApp.retos);
     expect(destinoInternoDeAviso('https://capsoul.app/otra'), isNull);
+  });
+
+  test('el aviso de solicitud lleva Aceptar y Rechazar', () {
+    const id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+    final mensaje = mensajeDesdeMapa(
+      titulo: 'Nueva solicitud de amistad',
+      cuerpo: 'Ana quiere ser tu amigo en Capsoul.',
+      datos: {
+        'tipo': 'solicitud_amistad',
+        'amistad_id': id,
+        'ruta': 'capsoul://amigos',
+      },
+    );
+    final acciones = accionesBandejaDe(mensaje);
+    expect(acciones.map((accion) => accion.etiqueta), ['Rechazar', 'Aceptar']);
+    expect(accionSolicitudDesdeRuta(acciones.first.ruta)?.aceptar, isFalse);
+    expect(accionSolicitudDesdeRuta(acciones.last.ruta)?.amistadId, id);
+    final argumentos = argumentosMostrarAviso(mensaje);
+    final crudas = argumentos['acciones']! as List<Map<String, String>>;
+    expect(crudas, hasLength(2));
+    expect(
+      accionesBandejaDe(const MensajePush(ruta: 'capsoul://capsula/1')),
+      isEmpty,
+    );
+    expect(accionSolicitudDesdeRuta('capsoul://amigos'), isNull);
   });
 
   test('Android 13 pide POST_NOTIFICATIONS', () {
@@ -47,10 +77,7 @@ void main() {
       ..inicial = mensajeDesdeMapa(
         titulo: 'Tienes una cápsula nueva',
         cuerpo: '«Viaje al río» ya se puede abrir.',
-        datos: {
-          'ruta': 'capsoul://capsula/cap-1',
-          'capsula_id': 'cap-1',
-        },
+        datos: {'ruta': 'capsoul://capsula/cap-1', 'capsula_id': 'cap-1'},
       );
     presentador.ruta = null;
 
@@ -71,9 +98,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(presentador.mostrados.single.ruta, 'capsoul://capsula/cap-2');
 
-    fuente.abiertos.add(
-      const MensajePush(ruta: 'capsoul://capsula/cap-3'),
-    );
+    fuente.abiertos.add(const MensajePush(ruta: 'capsoul://capsula/cap-3'));
     await Future<void>.delayed(Duration.zero);
     expect(rutas.last, 'capsoul://capsula/cap-3');
 
@@ -85,42 +110,45 @@ void main() {
     await fuente.cerrar();
   });
 
-  test('Android 12 no pide el permiso de runtime y iOS no crea el canal', () async {
-    final android = _FuenteFalsa();
-    final bandeja = _PresentadorFalso();
-    final sesionAndroid = SesionAvisosPush(
-      fuente: android,
-      presentador: bandeja,
-      alRegistrarToken: (_) async {},
-      alAbrirRuta: (_) {},
-      esAndroid: true,
-      esIos: false,
-      sdkAndroid: 32,
-    );
-    await sesionAndroid.iniciar();
-    expect(bandeja.canal, CanalAvisos.id);
-    expect(bandeja.permisoPedido, isFalse);
-    sesionAndroid.cerrar();
+  test(
+    'Android 12 no pide el permiso de runtime y iOS no crea el canal',
+    () async {
+      final android = _FuenteFalsa();
+      final bandeja = _PresentadorFalso();
+      final sesionAndroid = SesionAvisosPush(
+        fuente: android,
+        presentador: bandeja,
+        alRegistrarToken: (_) async {},
+        alAbrirRuta: (_) {},
+        esAndroid: true,
+        esIos: false,
+        sdkAndroid: 32,
+      );
+      await sesionAndroid.iniciar();
+      expect(bandeja.canal, CanalAvisos.id);
+      expect(bandeja.permisoPedido, isFalse);
+      sesionAndroid.cerrar();
 
-    final ios = _FuenteFalsa();
-    final presentadorIos = _PresentadorFalso();
-    final sesionIos = SesionAvisosPush(
-      fuente: ios,
-      presentador: presentadorIos,
-      alRegistrarToken: (_) async {},
-      alAbrirRuta: (_) {},
-      esAndroid: false,
-      esIos: true,
-      sdkAndroid: 0,
-    );
-    await sesionIos.iniciar();
-    expect(ios.permisoIos, isTrue);
-    expect(ios.presentacionIos, isTrue);
-    expect(presentadorIos.canal, isNull);
-    sesionIos.cerrar();
-    await android.cerrar();
-    await ios.cerrar();
-  });
+      final ios = _FuenteFalsa();
+      final presentadorIos = _PresentadorFalso();
+      final sesionIos = SesionAvisosPush(
+        fuente: ios,
+        presentador: presentadorIos,
+        alRegistrarToken: (_) async {},
+        alAbrirRuta: (_) {},
+        esAndroid: false,
+        esIos: true,
+        sdkAndroid: 0,
+      );
+      await sesionIos.iniciar();
+      expect(ios.permisoIos, isTrue);
+      expect(ios.presentacionIos, isTrue);
+      expect(presentadorIos.canal, isNull);
+      sesionIos.cerrar();
+      await android.cerrar();
+      await ios.cerrar();
+    },
+  );
 
   test('el aviso inicial se abre aunque el token tarde', () async {
     final fuente = _FuenteLenta();
@@ -162,10 +190,7 @@ void main() {
       fuente.primerPlano.add(
         mensajeDesdeMapa(
           titulo: 'Nueva solicitud de amistad',
-          datos: {
-            'tipo': 'solicitud_amistad',
-            'ruta': 'capsoul://amigos',
-          },
+          datos: {'tipo': 'solicitud_amistad', 'ruta': 'capsoul://amigos'},
         ),
       );
       await Future<void>.delayed(Duration.zero);

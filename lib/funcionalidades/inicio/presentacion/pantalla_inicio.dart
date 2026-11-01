@@ -7,6 +7,7 @@ import '../../../nucleo/componentes/fondo_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
+import '../../amistades/aplicacion/proveedores_amistades.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../capsulas/dominio/avisos_capsulas.dart';
@@ -45,51 +46,61 @@ class PantallaInicio extends ConsumerWidget {
     final uid = ref.watch(proveedorEstadoAutenticacion).value?.uid;
     final recibidas = ref.watch(proveedorCapsulasRecibidas).value ?? const [];
     final avisos = avisosCapsulasCompartidas(recibidas, uid);
-    final textoBadge = textoBadgeAvisos(conteoAvisosSinLeer(avisos));
+    final solicitudesPendientes = ref.watch(
+      proveedorConteoSolicitudesPendientes,
+    );
+    final textoBadge = textoBadgeAvisos(
+      conteoPendientesAvisos(
+        capsulasSinLeer: conteoAvisosSinLeer(avisos),
+        solicitudesPendientes: solicitudesPendientes,
+      ),
+    );
 
     return PantallaCapsoul(
-        tipoFondo: FondoCapsoulTipo.suave,
-        cuerpo: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(proveedorResumenInicio);
-            ref.invalidate(proveedorCapsulasRecibidas);
-            await ref.read(proveedorResumenInicio.future);
-            await ref.read(proveedorCapsulasRecibidas.future);
-          },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            children: [
-              EncabezadoInicio(
-                textoBadge: textoBadge,
-                alTocarCampana: () => context.push(RutasApp.avisos),
-              ),
-              const SizedBox(height: 12),
-              const EscenaFrascoInicio(),
-              const SizedBox(height: 20),
-              Center(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(220, 48),
-                    shape: const StadiumBorder(),
-                  ),
-                  onPressed: () => HojaOpcionesCrear.mostrar(context),
-                  icon: const Icon(Icons.add),
-                  label: const Text('Guardar algo hoy'),
+      tipoFondo: FondoCapsoulTipo.suave,
+      cuerpo: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(proveedorResumenInicio);
+          ref.invalidate(proveedorCapsulasRecibidas);
+          refrescarAmistades(ref.invalidate);
+          await ref.read(proveedorResumenInicio.future);
+          await ref.read(proveedorCapsulasRecibidas.future);
+          await ref.read(proveedorSolicitudesAmistad.future);
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          children: [
+            EncabezadoInicio(
+              textoBadge: textoBadge,
+              alTocarCampana: () => context.push(RutasApp.avisos),
+            ),
+            const SizedBox(height: 12),
+            const EscenaFrascoInicio(),
+            const SizedBox(height: 20),
+            Center(
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(220, 48),
+                  shape: const StadiumBorder(),
                 ),
+                onPressed: () => HojaOpcionesCrear.mostrar(context),
+                icon: const Icon(Icons.add),
+                label: const Text('Guardar algo hoy'),
               ),
-              const SizedBox(height: 8),
-              Text(
-                '¿Qué quieres dejar para el futuro?',
-                textAlign: TextAlign.center,
-                style: estilos.bodySmall?.copyWith(color: ColoresApp.atenuado),
-              ),
-              const SizedBox(height: 20),
-              _RejillaSecciones(resumen: resumen),
-              const SizedBox(height: 16),
-              const BannerFraseInicio(),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '¿Qué quieres dejar para el futuro?',
+              textAlign: TextAlign.center,
+              style: estilos.bodySmall?.copyWith(color: ColoresApp.atenuado),
+            ),
+            const SizedBox(height: 20),
+            _RejillaSecciones(resumen: resumen),
+            const SizedBox(height: 16),
+            const BannerFraseInicio(),
+          ],
         ),
+      ),
     );
   }
 }

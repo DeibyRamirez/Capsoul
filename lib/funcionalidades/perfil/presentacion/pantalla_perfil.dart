@@ -8,6 +8,8 @@ import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../amistades/aplicacion/proveedores_amistades.dart';
+import '../../amistades/dominio/amigo.dart';
+import '../../capsulas/dominio/avisos_capsulas.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
@@ -49,8 +51,7 @@ class PantallaPerfil extends ConsumerWidget {
     if (origen == null || !context.mounted) return;
     String? ruta;
     if (origen == ImageSource.camera) {
-      final borrador =
-          await context.push<ElementoBorrador>(RutasApp.crearFoto);
+      final borrador = await context.push<ElementoBorrador>(RutasApp.crearFoto);
       ruta = borrador?.rutaArchivo;
     } else {
       final picker = ImagePicker();
@@ -81,7 +82,10 @@ class PantallaPerfil extends ConsumerWidget {
     final perfil = perfilAsincrono.value;
     final fotoPublicId = perfil?.fotoPublicId?.trim();
     if (fotoPublicId != null && fotoPublicId.isNotEmpty) {
-      ref.listen(proveedorUrlsAvatarPerfil(fotoPublicId), (anterior, siguiente) {
+      ref.listen(proveedorUrlsAvatarPerfil(fotoPublicId), (
+        anterior,
+        siguiente,
+      ) {
         if (!siguiente.hasError || !context.mounted) return;
         if (anterior?.hasError == true) return;
         mostrarAvisoError(
@@ -105,123 +109,125 @@ class PantallaPerfil extends ConsumerWidget {
       loading: () => resumenAsincrono.value ?? ResumenInicio.vacio,
       error: (_, _) => resumenAsincrono.value ?? ResumenInicio.vacio,
     );
-    final recuerdosAsincrono =
-        ref.watch(proveedorRecuerdos(FiltroRecuerdos.todos));
+    final recuerdosAsincrono = ref.watch(
+      proveedorRecuerdos(FiltroRecuerdos.todos),
+    );
     final amigos = ref.watch(proveedorMisAmigos).value ?? const [];
 
     final nombre =
         perfil?.nombreVisible ?? usuarioSesion?.nombreVisible ?? 'Sin nombre';
     final nombreLimpio = nombre.trim();
-    final inicial =
-        nombreLimpio.isEmpty ? '?' : nombreLimpio[0].toUpperCase();
+    final inicial = nombreLimpio.isEmpty ? '?' : nombreLimpio[0].toUpperCase();
 
     return PantallaCapsoul(
       cuerpo: RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(proveedorPerfilUsuarioActual);
-            ref.invalidate(proveedorRecuerdos(FiltroRecuerdos.todos));
-            ref.invalidate(proveedorResumenInicio);
-            if (fotoPublicId != null && fotoPublicId.isNotEmpty) {
-              ref.invalidate(proveedorUrlsAvatarPerfil(fotoPublicId));
-              ref.invalidate(proveedorUrlAvatarPerfil(fotoPublicId));
-            }
-            final esperas = <Future<void>>[
-              ref.read(proveedorPerfilUsuarioActual.future),
-              ref.read(proveedorRecuerdos(FiltroRecuerdos.todos).future),
-              ref.read(proveedorResumenInicio.future),
-            ];
-            if (fotoPublicId != null && fotoPublicId.isNotEmpty) {
-              esperas.add(ref.read(proveedorUrlsAvatarPerfil(fotoPublicId).future));
-            }
-            await Future.wait(esperas);
-          },
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: _BarraSuperior(
-                  alCrear: () => HojaOpcionesCrear.mostrar(context),
+        onRefresh: () async {
+          ref.invalidate(proveedorPerfilUsuarioActual);
+          ref.invalidate(proveedorRecuerdos(FiltroRecuerdos.todos));
+          ref.invalidate(proveedorResumenInicio);
+          if (fotoPublicId != null && fotoPublicId.isNotEmpty) {
+            ref.invalidate(proveedorUrlsAvatarPerfil(fotoPublicId));
+            ref.invalidate(proveedorUrlAvatarPerfil(fotoPublicId));
+          }
+          final esperas = <Future<void>>[
+            ref.read(proveedorPerfilUsuarioActual.future),
+            ref.read(proveedorRecuerdos(FiltroRecuerdos.todos).future),
+            ref.read(proveedorResumenInicio.future),
+          ];
+          if (fotoPublicId != null && fotoPublicId.isNotEmpty) {
+            esperas.add(
+              ref.read(proveedorUrlsAvatarPerfil(fotoPublicId).future),
+            );
+          }
+          await Future.wait(esperas);
+        },
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: _BarraSuperior(
+                alCrear: () => HojaOpcionesCrear.mostrar(context),
+              ),
+            ),
+            if (perfilAsincrono.isLoading && perfil == null)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: LinearProgressIndicator(),
                 ),
               ),
-              if (perfilAsincrono.isLoading && perfil == null)
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: LinearProgressIndicator(),
+            SliverToBoxAdapter(
+              child: EncabezadoPerfil(
+                nombre: nombre,
+                nombreUsuario: perfil?.nombreUsuario,
+                inicial: inicial,
+                resumen: resumen,
+                publicaciones: resumen.recuerdos,
+                ocupado: ocupado,
+                alCerrarSesion: () => ref
+                    .read(proveedorControladorPerfil.notifier)
+                    .cerrarSesion(),
+                fotoPublicId: perfil?.fotoPublicId,
+                alTocarAvatar: ocupado
+                    ? null
+                    : () => _cambiarFoto(context, ref),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            SliverToBoxAdapter(
+              child: Material(
+                type: MaterialType.transparency,
+                child: ListTile(
+                  leading: _IconoAmigos(
+                    amigos: amigos,
+                    vacio: amigos.isEmpty,
+                    pendientes: ref.watch(proveedorConteoSolicitudesPendientes),
                   ),
-                ),
-              SliverToBoxAdapter(
-                child: EncabezadoPerfil(
-                  nombre: nombre,
-                  nombreUsuario: perfil?.nombreUsuario,
-                  inicial: inicial,
-                  resumen: resumen,
-                  publicaciones: resumen.recuerdos,
-                  ocupado: ocupado,
-                  alCerrarSesion: () => ref
-                      .read(proveedorControladorPerfil.notifier)
-                      .cerrarSesion(),
-                  fotoPublicId: perfil?.fotoPublicId,
-                  alTocarAvatar: ocupado
-                      ? null
-                      : () => _cambiarFoto(context, ref),
+                  title: Text(
+                    amigos.isEmpty
+                        ? 'Invita a tus primeros amigos'
+                        : 'Amigos e invitaciones',
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: ColoresApp.primario,
+                  ),
+                  onTap: () => context.push(RutasApp.amigos),
                 ),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              SliverToBoxAdapter(
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: ListTile(
-                    leading: FilaAvataresAmigos(
-                      amigos: amigos,
-                      vacio: amigos.isEmpty,
-                    ),
-                    title: Text(
-                      amigos.isEmpty
-                          ? 'Invita a tus primeros amigos'
-                          : 'Amigos e invitaciones',
-                    ),
-                    trailing: _TrailingAmigos(
-                      pendientes: ref.watch(
-                        proveedorConteoSolicitudesPendientes,
-                      ),
-                    ),
-                    onTap: () => context.push(RutasApp.amigos),
+            ),
+            // SliverToBoxAdapter(
+            //   child: FilaDestacadosPerfil(
+            //     alTocar: (etiqueta) => mostrarAvisoInformativo(
+            //       context,
+            //       '$etiqueta: próximamente',
+            //     ),
+            //   ),
+            // ),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            recuerdosAsincrono.when(
+              loading: () => const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(48),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
+              error: (_, _) => const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Text(
+                    'No pudimos cargar tus recuerdos.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: ColoresApp.atenuado),
                   ),
                 ),
               ),
-              // SliverToBoxAdapter(
-              //   child: FilaDestacadosPerfil(
-              //     alTocar: (etiqueta) => mostrarAvisoInformativo(
-              //       context,
-              //       '$etiqueta: próximamente',
-              //     ),
-              //   ),
-              // ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              recuerdosAsincrono.when(
-                loading: () => const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.all(48),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                ),
-                error: (_, _) => const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Text(
-                      'No pudimos cargar tus recuerdos.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: ColoresApp.atenuado),
-                    ),
-                  ),
-                ),
-                data: (lista) => SliverToBoxAdapter(
-                  child: RejillaElementosPerfil(recuerdos: lista),
-                ),
+              data: (lista) => SliverToBoxAdapter(
+                child: RejillaElementosPerfil(recuerdos: lista),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 }
@@ -264,30 +270,32 @@ class _BarraSuperior extends StatelessWidget {
   }
 }
 
-/// Flecha de «Amigos» con el número de solicitudes pendientes.
-class _TrailingAmigos extends StatelessWidget {
-  const _TrailingAmigos({required this.pendientes});
+/// Avatares de amigos con el contador de solicitudes pendientes.
+class _IconoAmigos extends StatelessWidget {
+  const _IconoAmigos({
+    required this.amigos,
+    required this.vacio,
+    required this.pendientes,
+  });
 
+  final List<Amigo> amigos;
+  final bool vacio;
   final int pendientes;
 
   @override
   Widget build(BuildContext context) {
-    const flecha = Icon(Icons.chevron_right);
-    if (pendientes <= 0) return flecha;
-    final texto = pendientes > 9 ? '9+' : '$pendientes';
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Semantics(
-          label: '$pendientes solicitudes de amistad pendientes',
-          child: Badge(
-            key: const Key('badge-solicitudes-amistad'),
-            label: Text(texto),
-          ),
-        ),
-        const SizedBox(width: 8),
-        flecha,
-      ],
+    final texto = textoBadgeAvisos(pendientes);
+    final fila = FilaAvataresAmigos(amigos: amigos, vacio: vacio);
+    if (texto == null) return fila;
+    return Semantics(
+      label: '$pendientes solicitudes de amistad pendientes',
+      child: Badge(
+        key: const Key('badge-solicitudes-amistad'),
+        backgroundColor: ColoresApp.acento,
+        textColor: ColoresApp.sobrePrimario,
+        label: Text(texto, key: const Key('texto-badge-solicitudes')),
+        child: fila,
+      ),
     );
   }
 }

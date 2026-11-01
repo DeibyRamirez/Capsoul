@@ -81,6 +81,13 @@
                 <data android:scheme="capsoul" android:host="amigos" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".ServicioAvisosFcm"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
         <!-- Mismo id que el canal de alta importancia y que FCM HTTP v1. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
