@@ -9,6 +9,7 @@ import '../aplicacion/proveedores_retos.dart';
 import '../dominio/reto.dart';
 import 'clasificacion_retos_ui.dart';
 import '../../../nucleo/componentes/encabezado_seccion_capsoul.dart';
+import '../../inicio/presentacion/heroes_inicio.dart';
 import 'componentes/estado_vacio_retos.dart';
 import 'componentes/filtros_retos.dart';
 import 'componentes/item_reto_completado.dart';
@@ -176,6 +177,7 @@ class _ContenidoRetos extends StatelessWidget {
                 subtitulo:
                     'Pequeños pasos que hoy construyen grandes recuerdos.',
                 icono: Icons.auto_awesome_outlined,
+                heroTag: HeroesInicio.retos,
               ),
               const SizedBox(height: 16),
               FiltrosRetos(seleccionado: tab, alCambiar: alCambiarTab),
@@ -187,12 +189,12 @@ class _ContenidoRetos extends StatelessWidget {
           FiltroRetosTab.activos => _sliversActivos(clasificacion),
           FiltroRetosTab.completados => _sliversCompletados(clasificacion),
           FiltroRetosTab.favoritos => const SliverFillRemaining(
-              hasScrollBody: false,
-              child: EstadoVacioRetos(
-                icono: Icons.favorite_border,
-                mensaje: 'Próximamente podrás marcar retos favoritos.',
-              ),
+            hasScrollBody: false,
+            child: EstadoVacioRetos(
+              icono: Icons.favorite_border,
+              mensaje: 'Próximamente podrás marcar retos favoritos.',
             ),
+          ),
         },
         const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
       ],
@@ -201,7 +203,10 @@ class _ContenidoRetos extends StatelessWidget {
 
   Widget _sliversActivos(ClasificacionRetosUi c) {
     final activosVacios =
-        c.diario == null && c.semanales.isEmpty && c.restoActivos.isEmpty && c.especial == null;
+        c.diario == null &&
+        c.semanales.isEmpty &&
+        c.restoActivos.isEmpty &&
+        c.especial == null;
 
     if (activosVacios) {
       return const SliverFillRemaining(
@@ -278,9 +283,7 @@ class _ContenidoRetos extends StatelessWidget {
     if (c.completados.isEmpty) {
       return const SliverFillRemaining(
         hasScrollBody: false,
-        child: EstadoVacioRetos(
-          mensaje: 'Aún no has completado ningún reto.',
-        ),
+        child: EstadoVacioRetos(mensaje: 'Aún no has completado ningún reto.'),
       );
     }
 
@@ -291,10 +294,7 @@ class _ContenidoRetos extends StatelessWidget {
           ...c.completados.map(
             (r) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: ItemRetoCompletado(
-                reto: r,
-                alTocar: () => alTocarReto(r),
-              ),
+              child: ItemRetoCompletado(reto: r, alTocar: () => alTocarReto(r)),
             ),
           ),
         ]),
@@ -304,11 +304,7 @@ class _ContenidoRetos extends StatelessWidget {
 }
 
 class _EncabezadoSeccion extends StatelessWidget {
-  const _EncabezadoSeccion({
-    required this.titulo,
-    this.accion,
-    this.alAccion,
-  });
+  const _EncabezadoSeccion({required this.titulo, this.accion, this.alAccion});
 
   final String titulo;
   final String? accion;
@@ -329,10 +325,7 @@ class _EncabezadoSeccion extends StatelessWidget {
           ),
         ),
         if (accion != null && alAccion != null)
-          TextButton(
-            onPressed: alAccion,
-            child: Text(accion!),
-          ),
+          TextButton(onPressed: alAccion, child: Text(accion!)),
       ],
     );
   }

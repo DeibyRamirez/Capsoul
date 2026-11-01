@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../nucleo/componentes/tarjeta_capsoul.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 
 /// Tarjeta de la rejilla de Inicio (Recuerdos, Retos, Cápsulas, Pequeñas
 /// herencias) con conteo e ilustración.
-class TarjetaSeccionInicio extends StatelessWidget {
+class TarjetaSeccionInicio extends StatefulWidget {
   const TarjetaSeccionInicio({
     super.key,
     required this.icono,
@@ -15,6 +16,7 @@ class TarjetaSeccionInicio extends StatelessWidget {
     required this.etiquetaConteo,
     required this.ilustracion,
     required this.alTocar,
+    this.heroTag,
   });
 
   final IconData icono;
@@ -24,56 +26,90 @@ class TarjetaSeccionInicio extends StatelessWidget {
   final String etiquetaConteo;
   final Widget ilustracion;
   final VoidCallback alTocar;
+  final String? heroTag;
 
   /// Alto mínimo de la tarjeta; crece si el texto lo necesita.
   static const double altoMinimo = 168;
 
   @override
+  State<TarjetaSeccionInicio> createState() => _EstadoTarjetaSeccionInicio();
+}
+
+class _EstadoTarjetaSeccionInicio extends State<TarjetaSeccionInicio> {
+  bool _pulsado = false;
+
+  void _marcar(bool valor) {
+    if (_pulsado == valor) return;
+    setState(() => _pulsado = valor);
+  }
+
+  void _alTocar() {
+    HapticFeedback.lightImpact();
+    widget.alTocar();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final estilos = Theme.of(context).textTheme;
-    return TarjetaCapsoul(
-      icono: icono,
-      titulo: titulo,
-      alTocar: alTocar,
-      altoMinimo: altoMinimo,
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 68),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  descripcion,
-                  style: estilos.bodySmall?.copyWith(
-                    color: ColoresApp.atenuado,
-                  ),
+    final heroTag = widget.heroTag;
+    Widget tarjeta = Listener(
+      onPointerDown: (_) => _marcar(true),
+      onPointerUp: (_) => _marcar(false),
+      onPointerCancel: (_) => _marcar(false),
+      child: AnimatedScale(
+        scale: _pulsado ? 0.96 : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: TarjetaCapsoul(
+          icono: widget.icono,
+          titulo: widget.titulo,
+          alTocar: _alTocar,
+          altoMinimo: TarjetaSeccionInicio.altoMinimo,
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 68),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.descripcion,
+                      style: estilos.bodySmall?.copyWith(
+                        color: ColoresApp.atenuado,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '${widget.conteo}',
+                      style: estilos.titleLarge?.copyWith(
+                        color: ColoresApp.primario,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      widget.etiquetaConteo,
+                      style: estilos.labelSmall?.copyWith(
+                        color: ColoresApp.atenuado,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  '$conteo',
-                  style: estilos.titleLarge?.copyWith(
-                    color: ColoresApp.primario,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(
-                  etiquetaConteo,
-                  style: estilos.labelSmall?.copyWith(
-                    color: ColoresApp.atenuado,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: IgnorePointer(child: widget.ilustracion),
+              ),
+            ],
           ),
-          Positioned(
-            right: 0,
-            bottom: 0,
-            child: IgnorePointer(child: ilustracion),
-          ),
-        ],
+        ),
       ),
+    );
+    if (heroTag == null) return tarjeta;
+    return Hero(
+      tag: heroTag,
+      child: Material(type: MaterialType.transparency, child: tarjeta),
     );
   }
 }
