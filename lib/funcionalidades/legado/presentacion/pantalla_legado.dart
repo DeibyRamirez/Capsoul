@@ -14,6 +14,7 @@ import '../aplicacion/proveedores_legado.dart';
 import '../dominio/grupo_legado_beneficiario.dart';
 import '../dominio/herencia.dart';
 import 'componentes/tarjeta_seguridad_legado.dart';
+import 'heroes_legado.dart';
 
 class PantallaLegado extends ConsumerWidget {
   const PantallaLegado({super.key});
@@ -21,7 +22,10 @@ class PantallaLegado extends ConsumerWidget {
   Future<void> _elegirConfianza(BuildContext context, WidgetRef ref) async {
     final amigos = ref.read(proveedorMisAmigos).value ?? const <Amigo>[];
     if (amigos.isEmpty) {
-      mostrarAvisoInformativo(context, 'Primero agrega amigos para elegir persona de confianza.');
+      mostrarAvisoInformativo(
+        context,
+        'Primero agrega amigos para elegir persona de confianza.',
+      );
       return;
     }
     final elegido = await showModalBottomSheet<Amigo>(
@@ -42,7 +46,9 @@ class PantallaLegado extends ConsumerWidget {
                   fotoPublicId: a.fotoPublicId,
                 ),
                 title: Text(a.nombreVisible),
-                subtitle: a.nombreUsuario != null ? Text('@${a.nombreUsuario}') : null,
+                subtitle: a.nombreUsuario != null
+                    ? Text('@${a.nombreUsuario}')
+                    : null,
                 onTap: () => Navigator.pop(ctx, a),
               ),
           ],
@@ -100,21 +106,24 @@ class PantallaLegado extends ConsumerWidget {
                       children: [
                         Text(
                           'Mi legado',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: ColoresApp.primario,
                               ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.favorite_border, color: ColoresApp.primario),
+                        const Icon(
+                          Icons.favorite_border,
+                          color: ColoresApp.primario,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Lo que quieres dejar, organizado y protegido.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: ColoresApp.atenuado,
-                          ),
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(color: ColoresApp.atenuado),
                     ),
                   ],
                 ),
@@ -129,15 +138,11 @@ class PantallaLegado extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         'Para las personas que amo',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () => context.push(RutasApp.legadoNuevaHerencia),
-                      child: const Text('Nueva'),
-                    ),
+                    const _BotonNuevaHerencia(),
                   ],
                 ),
               ),
@@ -178,7 +183,10 @@ class PantallaLegado extends ConsumerWidget {
             SliverToBoxAdapter(
               child: _TarjetaFilaLegado(
                 child: ListTile(
-                  leading: const Icon(Icons.description_outlined, color: ColoresApp.primario),
+                  leading: const Icon(
+                    Icons.description_outlined,
+                    color: ColoresApp.primario,
+                  ),
                   title: const Text('Mis instrucciones'),
                   subtitle: const Text('Lo que quiero que sepan'),
                   trailing: const Icon(Icons.chevron_right),
@@ -191,9 +199,8 @@ class PantallaLegado extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Text(
                   'Mi persona de confianza',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(context).textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -234,7 +241,9 @@ class _FilaBeneficiario extends ConsumerWidget {
   Future<void> _abrir(BuildContext context, WidgetRef ref) async {
     final uid = grupo.beneficiarioUsuarioId;
     if (uid == null) return;
-    final lista = await ref.read(proveedorRepositorioLegado).listarPorBeneficiario(uid);
+    final lista = await ref
+        .read(proveedorRepositorioLegado)
+        .listarPorBeneficiario(uid);
     if (!context.mounted) return;
     if (lista.isEmpty) {
       context.push(RutasApp.legadoNuevaHerencia);
@@ -288,11 +297,54 @@ class _FilaBeneficiario extends ConsumerWidget {
   }
 }
 
+class _BotonNuevaHerencia extends StatefulWidget {
+  const _BotonNuevaHerencia();
+
+  @override
+  State<_BotonNuevaHerencia> createState() => _EstadoBotonNuevaHerencia();
+}
+
+class _EstadoBotonNuevaHerencia extends State<_BotonNuevaHerencia> {
+  bool _pulsado = false;
+
+  void _marcar(bool valor) {
+    if (_pulsado == valor) return;
+    setState(() => _pulsado = valor);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => _marcar(true),
+      onPointerUp: (_) => _marcar(false),
+      onPointerCancel: (_) => _marcar(false),
+      child: AnimatedScale(
+        scale: _pulsado ? 0.94 : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: Hero(
+          tag: HeroesLegado.nuevaHerencia,
+          child: Material(
+            type: MaterialType.transparency,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                shape: const StadiumBorder(),
+              ),
+              onPressed: () => context.push(RutasApp.legadoNuevaHerencia),
+              icon: const Icon(Icons.add),
+              label: const Text('Nueva'),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TarjetaFilaLegado extends StatelessWidget {
-  const _TarjetaFilaLegado({
-    required this.child,
-    this.margenInferior = 10,
-  });
+  const _TarjetaFilaLegado({required this.child, this.margenInferior = 10});
 
   final Widget child;
   final double margenInferior;

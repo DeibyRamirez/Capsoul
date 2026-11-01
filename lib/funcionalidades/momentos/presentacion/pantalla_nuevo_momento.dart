@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../nucleo/componentes/app_bar_capsoul.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/componentes/cabecera_detalle_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
+import '../../../nucleo/componentes/tarjeta_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
@@ -50,7 +51,9 @@ class _EstadoPantallaNuevoMomento extends ConsumerState<PantallaNuevoMomento> {
 
   void _filtroRapido(FiltroRecuerdos Function(DateTime hoy) crear) {
     final nuevo = crear(_hoy).conTipos(_filtro.tipos);
-    setState(() => _filtro = nuevo == _filtro ? _filtro.conFechas(null, null) : nuevo);
+    setState(
+      () => _filtro = nuevo == _filtro ? _filtro.conFechas(null, null) : nuevo,
+    );
   }
 
   Future<void> _agregarTodosDelFiltro() async {
@@ -64,8 +67,8 @@ class _EstadoPantallaNuevoMomento extends ConsumerState<PantallaNuevoMomento> {
         agregados == 0
             ? 'No hay recuerdos nuevos en este filtro.'
             : agregados == 1
-                ? 'Se agregó 1 recuerdo.'
-                : 'Se agregaron $agregados recuerdos.',
+            ? 'Se agregó 1 recuerdo.'
+            : 'Se agregaron $agregados recuerdos.',
       );
     } catch (error) {
       if (mounted) mostrarAvisoError(context, error);
@@ -116,181 +119,214 @@ class _EstadoPantallaNuevoMomento extends ConsumerState<PantallaNuevoMomento> {
     final anio = FiltroRecuerdos.esteAnio(hoy).conTipos(_filtro.tipos);
 
     return PantallaCapsoul(
-      appBar: AppBarCapsoul(titulo: const Text('Nuevo momento')),
-      cuerpo: ListView(
-          key: const Key('formulario-momento'),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-          children: [
-            TextField(
-              key: const Key('campo-nombre-momento'),
-              controller: _titulo,
-              enabled: !ocupado,
-              maxLength: ValidadorMomento.caracteresMaxTitulo,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Nombre',
-                hintText: 'Ej.: Vacaciones en Cartagena',
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              key: const Key('campo-descripcion-momento'),
-              controller: _descripcion,
-              enabled: !ocupado,
-              minLines: 2,
-              maxLines: 5,
-              maxLength: ValidadorMomento.caracteresMaxDescripcion,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Descripción (opcional)',
-                alignLabelWithHint: true,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const _Titulo('Agregar recuerdos'),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ChoiceChip(
-                  label: const Text('Últimos 7 días'),
-                  selected: _filtro == semana,
-                  onSelected: (_) =>
-                      _filtroRapido((h) => FiltroRecuerdos.ultimosDias(7, h)),
-                ),
-                ChoiceChip(
-                  label: const Text('Últimos 30 días'),
-                  selected: _filtro == mes,
-                  onSelected: (_) =>
-                      _filtroRapido((h) => FiltroRecuerdos.ultimosDias(30, h)),
-                ),
-                ChoiceChip(
-                  label: const Text('Este año'),
-                  selected: _filtro == anio,
-                  onSelected: (_) => _filtroRapido(FiltroRecuerdos.esteAnio),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            BarraFiltrosRecuerdos(
-              filtro: _filtro,
-              hoy: hoy,
-              alCambiar: (filtro) => setState(() => _filtro = filtro),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    key: const Key('boton-agregar-filtro'),
-                    onPressed:
-                        ocupado || _agregandoFiltro ? null : _agregarTodosDelFiltro,
-                    icon: const Icon(Icons.playlist_add),
-                    label: const Text('Agregar todos'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    key: const Key('boton-elegir-a-mano'),
-                    onPressed: ocupado ? null : _elegirAMano,
-                    icon: const Icon(Icons.touch_app_outlined),
-                    label: const Text('Elegir a mano'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _Titulo(
-              'Recuerdos (${estado.recuerdos.length}/'
-              '${ValidadorMomento.recuerdosMax})',
-            ),
-            const SizedBox(height: 8),
-            if (estado.recuerdos.isEmpty)
-              const Text(
-                'Aún no agregaste recuerdos.',
-                style: TextStyle(color: ColoresApp.atenuado),
-              ),
-            for (final recuerdo in estado.recuerdos)
-              TarjetaRecuerdoElegido(
-                key: ValueKey(recuerdo.id),
-                recuerdo: recuerdo,
-                alQuitar: ocupado ? null : () => _controlador.quitar(recuerdo.id),
-              ),
-            if (estado.visuales.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              const _Titulo('Portada'),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 84,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: estado.visuales.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (context, indice) {
-                    final recuerdo = estado.visuales[indice];
-                    final elegida = recuerdo.id == estado.portadaId;
-                    return Semantics(
-                      selected: elegida,
-                      button: true,
-                      label: 'Portada: ${recuerdo.nombre}',
-                      child: GestureDetector(
-                        key: ValueKey('portada-${recuerdo.id}'),
-                        onTap: ocupado
-                            ? null
-                            : () => _controlador.elegirPortada(recuerdo.id),
-                        child: Container(
-                          width: 84,
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            borderRadius:
-                                BorderRadius.circular(TemaApp.radioPequeno + 3),
-                            border: Border.all(
-                              color: elegida
-                                  ? ColoresApp.acento
-                                  : Colors.transparent,
-                              width: 3,
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius:
-                                BorderRadius.circular(TemaApp.radioPequeno),
-                            child: MiniaturaRecuerdoFirmada(
-                              recuerdo: recuerdo,
-                              tamanoIcono: 22,
-                            ),
+      usarAreaSegura: false,
+      cuerpo: Column(
+        children: [
+          const CabeceraDetalleCapsoul(
+            titulo: 'Nuevo momento',
+            subtitulo: 'Agrupa recuerdos en una historia.',
+          ),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: ListView(
+                key: const Key('formulario-momento'),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                children: [
+                  TarjetaCapsoul(
+                    icono: Icons.auto_stories_outlined,
+                    titulo: 'Nombre y descripción',
+                    child: Column(
+                      children: [
+                        TextField(
+                          key: const Key('campo-nombre-momento'),
+                          controller: _titulo,
+                          enabled: !ocupado,
+                          maxLength: ValidadorMomento.caracteresMaxTitulo,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: const InputDecoration(
+                            labelText: 'Nombre',
+                            hintText: 'Ej.: Vacaciones en Cartagena',
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          key: const Key('campo-descripcion-momento'),
+                          controller: _descripcion,
+                          enabled: !ocupado,
+                          minLines: 2,
+                          maxLines: 5,
+                          maxLength: ValidadorMomento.caracteresMaxDescripcion,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: const InputDecoration(
+                            labelText: 'Descripción (opcional)',
+                            alignLabelWithHint: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TarjetaCapsoul(
+                    icono: Icons.filter_list,
+                    titulo: 'Agregar recuerdos',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            ChoiceChip(
+                              label: const Text('Últimos 7 días'),
+                              selected: _filtro == semana,
+                              onSelected: (_) => _filtroRapido(
+                                (h) => FiltroRecuerdos.ultimosDias(7, h),
+                              ),
+                            ),
+                            ChoiceChip(
+                              label: const Text('Últimos 30 días'),
+                              selected: _filtro == mes,
+                              onSelected: (_) => _filtroRapido(
+                                (h) => FiltroRecuerdos.ultimosDias(30, h),
+                              ),
+                            ),
+                            ChoiceChip(
+                              label: const Text('Este año'),
+                              selected: _filtro == anio,
+                              onSelected: (_) =>
+                                  _filtroRapido(FiltroRecuerdos.esteAnio),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        BarraFiltrosRecuerdos(
+                          filtro: _filtro,
+                          hoy: hoy,
+                          alCambiar: (filtro) =>
+                              setState(() => _filtro = filtro),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                key: const Key('boton-agregar-filtro'),
+                                onPressed: ocupado || _agregandoFiltro
+                                    ? null
+                                    : _agregarTodosDelFiltro,
+                                icon: const Icon(Icons.playlist_add),
+                                label: const Text('Agregar todos'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                key: const Key('boton-elegir-a-mano'),
+                                onPressed: ocupado ? null : _elegirAMano,
+                                icon: const Icon(Icons.touch_app_outlined),
+                                label: const Text('Elegir a mano'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TarjetaCapsoul(
+                    icono: Icons.collections_outlined,
+                    titulo:
+                        'Recuerdos (${estado.recuerdos.length}/'
+                        '${ValidadorMomento.recuerdosMax})',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (estado.recuerdos.isEmpty)
+                          Text(
+                            'Aún no agregaste recuerdos.',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: ColoresApp.atenuado),
+                          ),
+                        for (final recuerdo in estado.recuerdos)
+                          TarjetaRecuerdoElegido(
+                            key: ValueKey(recuerdo.id),
+                            recuerdo: recuerdo,
+                            alQuitar: ocupado
+                                ? null
+                                : () => _controlador.quitar(recuerdo.id),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (estado.visuales.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    TarjetaCapsoul(
+                      icono: Icons.image_outlined,
+                      titulo: 'Portada',
+                      child: SizedBox(
+                        height: 84,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: estado.visuales.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, indice) {
+                            final recuerdo = estado.visuales[indice];
+                            final elegida = recuerdo.id == estado.portadaId;
+                            return Semantics(
+                              selected: elegida,
+                              button: true,
+                              label: 'Portada: ${recuerdo.nombre}',
+                              child: GestureDetector(
+                                key: ValueKey('portada-${recuerdo.id}'),
+                                onTap: ocupado
+                                    ? null
+                                    : () => _controlador.elegirPortada(
+                                        recuerdo.id,
+                                      ),
+                                child: Container(
+                                  width: 84,
+                                  padding: const EdgeInsets.all(3),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(
+                                      TemaApp.radioPequeno + 3,
+                                    ),
+                                    border: Border.all(
+                                      color: elegida
+                                          ? ColoresApp.acento
+                                          : Colors.transparent,
+                                      width: 3,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                      TemaApp.radioPequeno,
+                                    ),
+                                    child: MiniaturaRecuerdoFirmada(
+                                      recuerdo: recuerdo,
+                                      tamanoIcono: 22,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ],
+                  const SizedBox(height: 28),
+                  BotonPrincipal(
+                    etiqueta: 'Guardar momento',
+                    cargando: ocupado,
+                    alPresionar: _guardar,
+                  ),
+                ],
               ),
-            ],
-            const SizedBox(height: 28),
-            BotonPrincipal(
-              etiqueta: 'Guardar momento',
-              cargando: ocupado,
-              alPresionar: _guardar,
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
-}
-
-class _Titulo extends StatelessWidget {
-  const _Titulo(this.texto);
-
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) => Text(
-        texto,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: ColoresApp.primario,
-              fontWeight: FontWeight.w700,
-            ),
-      );
 }

@@ -11,12 +11,14 @@ import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../capsulas/dominio/capsula.dart';
 import '../aplicacion/controlador_nueva_herencia.dart';
 import '../dominio/condicion_herencia.dart';
+import 'heroes_legado.dart';
 
 class PantallaNuevaHerencia extends ConsumerStatefulWidget {
   const PantallaNuevaHerencia({super.key});
 
   @override
-  ConsumerState<PantallaNuevaHerencia> createState() => _PantallaNuevaHerenciaState();
+  ConsumerState<PantallaNuevaHerencia> createState() =>
+      _PantallaNuevaHerenciaState();
 }
 
 class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
@@ -148,7 +150,9 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
       final b = ref.read(proveedorControladorNuevaHerencia);
       _persistirPasoActual(b);
       _cerrarTeclado();
-      final id = await ref.read(proveedorControladorNuevaHerencia.notifier).guardarYActivar();
+      final id = await ref
+          .read(proveedorControladorNuevaHerencia.notifier)
+          .guardarYActivar();
       if (!mounted) return;
       if (id != null) {
         mostrarAvisoInformativo(context, 'Herencia creada y activada.');
@@ -175,7 +179,19 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(title: const Text('Nueva pequeña herencia')),
+      appBar: AppBar(
+        title: Hero(
+          tag: HeroesLegado.nuevaHerencia,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Text(
+              'Nueva pequeña herencia',
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -184,32 +200,33 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
             children: [
               Text('Paso $paso de ${BorradorNuevaHerencia.totalPasos}'),
               const SizedBox(height: 8),
-              LinearProgressIndicator(value: progreso, color: ColoresApp.primario),
-              const SizedBox(height: 24),
-              Expanded(
-                child: _contenidoPaso(borrador, amigos, capsulas),
+              LinearProgressIndicator(
+                value: progreso,
+                color: ColoresApp.primario,
               ),
+              const SizedBox(height: 24),
+              Expanded(child: _contenidoPaso(borrador, amigos, capsulas)),
               const SizedBox(height: 16),
               if (borrador.paso > 0)
                 OutlinedButton(onPressed: _atras, child: const Text('Atrás')),
               if (borrador.paso > 0) const SizedBox(height: 8),
               FilledButton(
-                      onPressed: _guardando
-                          ? null
-                          : (borrador.paso == BorradorNuevaHerencia.totalPasos - 1
-                              ? _finalizar
-                              : _siguiente),
-                      child: _guardando
-                          ? const SizedBox(
-                              height: 22,
-                              width: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(
-                              borrador.paso == BorradorNuevaHerencia.totalPasos - 1
-                                  ? 'Activar legado'
-                                  : 'Continuar',
-                            ),
+                onPressed: _guardando
+                    ? null
+                    : (borrador.paso == BorradorNuevaHerencia.totalPasos - 1
+                          ? _finalizar
+                          : _siguiente),
+                child: _guardando
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        borrador.paso == BorradorNuevaHerencia.totalPasos - 1
+                            ? 'Activar legado'
+                            : 'Continuar',
+                      ),
               ),
             ],
           ),
@@ -243,9 +260,14 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
         return _pasoDesplazable(
           pasoKey: const ValueKey('paso_descripcion'),
           children: [
-            Text('¿Qué quieres dejar?', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              '¿Qué quieres dejar?',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
-            const Text('Describe objetos, cuentas o recuerdos (máx. 300 caracteres).'),
+            const Text(
+              'Describe objetos, cuentas o recuerdos (máx. 300 caracteres).',
+            ),
             const SizedBox(height: 16),
             TextField(
               key: const ValueKey('campo_descripcion'),
@@ -269,14 +291,17 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
             Expanded(
               child: RadioGroup<String>(
                 groupValue: b.beneficiarioUsuarioId,
-                onChanged: (v) => ctrl.actualizar(b.copiar(beneficiarioUsuarioId: v)),
+                onChanged: (v) =>
+                    ctrl.actualizar(b.copiar(beneficiarioUsuarioId: v)),
                 child: ListView(
                   children: [
                     for (final a in amigos)
                       RadioListTile<String>(
                         value: a.usuarioId,
                         title: Text(a.nombreVisible),
-                        subtitle: a.nombreUsuario != null ? Text('@${a.nombreUsuario}') : null,
+                        subtitle: a.nombreUsuario != null
+                            ? Text('@${a.nombreUsuario}')
+                            : null,
                       ),
                   ],
                 ),
@@ -288,7 +313,10 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
         return _pasoDesplazable(
           pasoKey: const ValueKey('paso_mensaje_personal'),
           children: [
-            Text('Mensaje personal', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Mensaje personal',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             const Text('Unas palabras para quien reciba esta herencia.'),
             const SizedBox(height: 16),
@@ -308,14 +336,19 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
         return _pasoDesplazable(
           pasoKey: const ValueKey('paso_metadatos_activo'),
           children: [
-            Text('Datos del activo', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Datos del activo',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             const Text('Detalles del CDT, cuenta u objeto (opcional).'),
             const SizedBox(height: 16),
             TextField(
               key: const ValueKey('campo_tipo_activo'),
               controller: _tipoActivoCtrl,
-              decoration: const InputDecoration(labelText: 'Tipo (CDT, objeto…)'),
+              decoration: const InputDecoration(
+                labelText: 'Tipo (CDT, objeto…)',
+              ),
             ),
             TextField(
               key: const ValueKey('campo_titular'),
@@ -332,7 +365,9 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
               controller: _instruccionesCtrl,
               minLines: 3,
               maxLines: 6,
-              decoration: const InputDecoration(labelText: 'Instrucciones del activo'),
+              decoration: const InputDecoration(
+                labelText: 'Instrucciones del activo',
+              ),
             ),
           ],
         );
