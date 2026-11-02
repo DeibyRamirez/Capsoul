@@ -215,20 +215,21 @@ class PantallaLegado extends ConsumerWidget {
                 );
               },
             ),
-            SliverToBoxAdapter(
-              child: _TarjetaFilaLegado(
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.description_outlined,
-                    color: ColoresApp.primario,
-                  ),
-                  title: const Text('Mis instrucciones'),
-                  subtitle: const Text('Lo que quiero que sepan'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push(RutasApp.legadoInstrucciones),
-                ),
-              ),
-            ),
+            // Internamente en la herencia esta las instrucciones
+            // SliverToBoxAdapter(
+            //   child: _TarjetaFilaLegado(
+            //     child: ListTile(
+            //       leading: const Icon(
+            //         Icons.description_outlined,
+            //         color: ColoresApp.primario,
+            //       ),
+            //       title: const Text('Mis instrucciones'),
+            //       subtitle: const Text('Lo que quiero que sepan'),
+            //       trailing: const Icon(Icons.chevron_right),
+            //       onTap: () => context.push(RutasApp.legadoInstrucciones),
+            //     ),
+            //   ),
+            // ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -367,7 +368,7 @@ class _EstadoBotonNuevaHerencia extends State<_BotonNuevaHerencia> {
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
                 minimumSize: const Size(0, 48),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: const StadiumBorder(),
               ),
               onPressed: () => context.push(RutasApp.legadoNuevaHerencia),

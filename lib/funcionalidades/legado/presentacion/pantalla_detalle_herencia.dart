@@ -34,30 +34,33 @@ class PantallaDetalleHerencia extends ConsumerWidget {
           Expanded(
             child: detalle.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => const Center(
-                child: Text('No pudimos cargar la herencia.'),
-              ),
+              error: (_, _) =>
+                  const Center(child: Text('No pudimos cargar la herencia.')),
               data: (d) {
                 final h = d.herencia;
                 final meta = h.metadatos;
                 final esDueno = uid != null && uid == h.propietarioId;
-                final verContenido = meta.tipoActivo != null ||
+                final verContenido =
+                    meta.tipoActivo != null ||
                     meta.titular != null ||
                     meta.valorAproximado != null;
-                final editable =
-                    esDueno && h.sePuedeEditar(ahora: ahora);
+                final editable = esDueno && h.sePuedeEditar(ahora: ahora);
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                   children: [
+                    const SizedBox(height: 16),
+
+                    Expanded(
+                      child: Text(
+                        h.titulo,
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
                     Row(
                       children: [
-                        Expanded(
-                          child: Text(
-                            h.titulo,
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                        ),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -88,7 +91,8 @@ class PantallaDetalleHerencia extends ConsumerWidget {
                           : '${meta.valorFormateado} ${meta.moneda}',
                     ),
                     _fila('Instrucciones', meta.instrucciones),
-                    if (h.descripcion != null) _fila('Descripción', h.descripcion),
+                    if (h.descripcion != null)
+                      _fila('Descripción', h.descripcion),
                     const SizedBox(height: 16),
                     Text('Cápsulas vinculadas (${d.capsulas.length})'),
                     for (final c in d.capsulas)
@@ -116,9 +120,8 @@ class PantallaDetalleHerencia extends ConsumerWidget {
                     const SizedBox(height: 24),
                     if (editable)
                       FilledButton(
-                        onPressed: () => context.push(
-                          RutasApp.editarHerenciaDe(herenciaId),
-                        ),
+                        onPressed: () =>
+                            context.push(RutasApp.editarHerenciaDe(herenciaId)),
                         child: const Text('Editar información'),
                       )
                     else if (esDueno)

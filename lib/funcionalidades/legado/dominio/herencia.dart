@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import 'condicion_herencia.dart';
 import 'estado_herencia.dart';

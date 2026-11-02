@@ -232,9 +232,10 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
                       : null,
                 ),
               ],
-              const _Titulo('Persona de confianza'),
-              const SizedBox(height: 6),
-              const _PersonaConfianza(),
+              // Se debe aclarar
+              // const _Titulo('Persona de confianza'),
+              // const SizedBox(height: 6),
+              // const _PersonaConfianza(),
             ],
           ),
         ),
