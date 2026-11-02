@@ -526,7 +526,14 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------
--- 10. Permisos
+-- 10. Destinatarios de herencias ya existentes (el trigger no cubre el pasado)
+-- ---------------------------------------------------------------------
+select privado.sincronizar_destinatarios_herencia(id)
+  from public.herencias
+ where beneficiario_usuario_id is not null;
+
+-- ---------------------------------------------------------------------
+-- 11. Permisos
 -- ---------------------------------------------------------------------
 revoke all on function privado.sincronizar_destinatarios_herencia(uuid),
   privado.trg_herencia_capsulas_destinatarios(),
