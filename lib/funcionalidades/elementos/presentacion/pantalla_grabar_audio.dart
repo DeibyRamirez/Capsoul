@@ -42,7 +42,7 @@ class PantallaGrabarAudio extends ConsumerWidget {
       cuerpo: _CuerpoGrabadora(estado: estado),
       controles: resultado != null
           ? BarraConfirmarCaptura(
-              etiquetaUsar: 'Usar nota de voz',
+              etiquetaUsar: 'Usar esta nota',
               alRepetir: controlador.descartar,
               alUsar: () => context.pop(resultado),
             )

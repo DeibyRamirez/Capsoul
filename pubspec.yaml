@@ -98,6 +98,7 @@ flutter:
   assets:
     - assets/imagenes_capsula/
     - assets/ilustraciones_inicio/
+    - assets/
 
   # Fuentes del sistema de diseño (Google Fonts, licencia OFL).
   fonts:

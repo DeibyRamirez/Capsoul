@@ -229,7 +229,7 @@ class BarraConfirmarCaptura extends StatelessWidget {
               label: const Text('Repetir'),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
@@ -242,7 +242,7 @@ class BarraConfirmarCaptura extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check),
-              label: Text(etiquetaUsar),
+              label: Text(etiquetaUsar, style: TextStyle(fontSize: 13),),
             ),
           ),
         ],
