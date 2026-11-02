@@ -76,7 +76,7 @@ Contrato HTTP/RPC: [`contrato-api-legado.md`](contrato-api-legado.md) · SQL: `2
 
 | Tabla | Rol |
 |-------|-----|
-| `retos` | Catálogo (diario, semanal, especial); puede ser global (`propietario_id` null) |
+| `retos` | Catálogo (diario, semanal, especial); puede ser global (`creador_id` null) |
 | `reto_participantes` | Progreso por usuario; enum `completado` |
 
 Migraciones: `20261011000011` (enum), `20261011000012` (semillas y RLS).

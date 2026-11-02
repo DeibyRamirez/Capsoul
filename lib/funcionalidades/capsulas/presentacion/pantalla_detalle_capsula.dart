@@ -165,6 +165,8 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
       slivers: [
         SliverToBoxAdapter(
           child: CabeceraCapsula(
+            capsulaId: capsula.id,
+            imagenClave: capsula.imagenClave,
             titulo: capsula.titulo,
             horizonte: fecha == null
                 ? null

@@ -32,6 +32,7 @@ Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). 
 | `20261101120000` | Solicitudes de amistad visibles |
 | `20261102000024` | Enum `tipo_notificacion`: `herencia_asignada`, `herencia_por_confirmar`, `capsula_compartida` |
 | `20261102000025` | Permisos de herencias: destinatarios por `origen_herencia_id`, no forzar cápsulas `liberada`, RLS de contenido, RPC recibidas/por confirmar/editar sellada, avisos FCM, backfill de destinatarios existentes |
+| `20261103000026` | `herencia_detalle` incluye `imagen_clave` de cada cápsula vinculada (catálogo local) |
 
 El estado **aplicado en remoto** puede ir por detrás del repo; usar `supabase migration list` antes de cada release.
 

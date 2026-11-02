@@ -9,6 +9,8 @@ import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
+import '../../capsulas/presentacion/componentes/miniatura_imagen_capsula.dart';
+import '../../capsulas/presentacion/heroes_capsula.dart';
 import '../aplicacion/proveedores_legado.dart';
 import '../dominio/estado_herencia.dart';
 
@@ -93,10 +95,12 @@ class PantallaDetalleHerencia extends ConsumerWidget {
                       ListTile(
                         key: ValueKey(c.capsulaId),
                         contentPadding: EdgeInsets.zero,
-                        leading: Icon(
-                          c.estado == 'liberada'
-                              ? Icons.lock_open_outlined
-                              : Icons.lock_outline,
+                        isThreeLine: true,
+                        leading: MiniaturaImagenCapsula(
+                          imagenClave: c.imagenClave,
+                          ancho: 48,
+                          conCandado: c.estado != 'liberada',
+                          heroTag: HeroesCapsula.imagen(c.capsulaId),
                         ),
                         title: Text(c.titulo),
                         subtitle: Text(

@@ -105,6 +105,7 @@ class CapsulaVinculadaHerencia {
     required this.titulo,
     required this.estado,
     this.orden = 0,
+    this.imagenClave,
   });
 
   final String capsulaId;
@@ -112,12 +113,17 @@ class CapsulaVinculadaHerencia {
   final String estado;
   final int orden;
 
+  /// Clave de catálogo (`capsulas.imagen_clave`); el asset vive en la app.
+  final String? imagenClave;
+
   factory CapsulaVinculadaHerencia.desdeJson(Map<String, dynamic> json) {
+    final imagen = json['imagen_clave'];
     return CapsulaVinculadaHerencia(
       capsulaId: json['capsula_id'] as String,
       titulo: json['titulo'] as String? ?? 'Cápsula',
       estado: json['estado'] as String? ?? 'programada',
       orden: json['orden'] as int? ?? 0,
+      imagenClave: imagen is String ? imagen : null,
     );
   }
 }

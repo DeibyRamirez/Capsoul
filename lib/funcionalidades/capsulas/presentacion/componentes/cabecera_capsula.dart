@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
 
-import '../../../../nucleo/componentes/frasco_luminoso.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/degradados_capsoul.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../../../nucleo/componentes/cielo_nocturno.dart';
+import '../heroes_capsula.dart';
+import 'miniatura_imagen_capsula.dart';
 
 /// Cabecera del detalle sobre fondo claro: boton atras y una tarjeta
-/// medianoche con el cielo de luciernagas, frasco, título, horizonte y
-/// candado con la fecha de apertura.
+/// medianoche con el cielo de luciernagas, imagen de la cápsula, título,
+/// horizonte y candado con la fecha de apertura.
 class CabeceraCapsula extends StatelessWidget {
   const CabeceraCapsula({
     super.key,
+    required this.capsulaId,
     required this.titulo,
     required this.horizonte,
     required this.fechaApertura,
     required this.cuentaRegresiva,
     required this.sellada,
+    this.imagenClave,
   });
 
+  final String capsulaId;
   final String titulo;
   final String? horizonte;
 
@@ -26,6 +30,7 @@ class CabeceraCapsula extends StatelessWidget {
   final String? fechaApertura;
   final Widget? cuentaRegresiva;
   final bool sellada;
+  final String? imagenClave;
 
   @override
   Widget build(BuildContext context) {
@@ -93,10 +98,11 @@ class CabeceraCapsula extends StatelessWidget {
                               ],
                             ),
                           ),
-                          FrascoLuminoso(
-                            tamano: 116,
-                            brillo: sellada ? 0.55 : 0.95,
+                          MiniaturaImagenCapsula(
+                            imagenClave: imagenClave,
+                            ancho: 96,
                             conCandado: sellada,
+                            heroTag: HeroesCapsula.imagen(capsulaId),
                           ),
                         ],
                       ),

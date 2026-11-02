@@ -1,7 +1,43 @@
 {
   "version": "1",
-  "descripcion": "Contrato para importar retos globales en public.retos (creador_id null). Uso futuro: panel admin web con service_role.",
+  "descripcion": "Contrato para importar retos globales en public.retos (creador_id null). Uso futuro: panel admin web con service_role. Hoy el catálogo se carga con la migración 20261011000012; actualizar el sistema requiere aprobación del PO.",
   "retos": [
+    {
+      "slug": "primer_capsula",
+      "titulo": "Crea tu primera cápsula",
+      "descripcion": "Programa un mensaje para el futuro.",
+      "pasos": ["Ve a Cápsulas", "Toca crear", "Elige recuerdos y fecha"],
+      "orden": 1,
+      "activo": true,
+      "criterio": {
+        "clave": "primer_capsula",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "nombre_usuario",
+      "titulo": "Comparte tu mejora",
+      "descripcion": "Elige un nombre @ para que tus amigos te encuentren.",
+      "pasos": ["Abre Perfil", "Configura tu @"],
+      "orden": 2,
+      "activo": true,
+      "criterio": {
+        "clave": "nombre_usuario",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "primer_amigo",
+      "titulo": "Haz un amigo",
+      "descripcion": "Conecta con alguien de confianza en Capsoul.",
+      "pasos": ["Abre Amigos", "Acepta o envía una solicitud"],
+      "orden": 3,
+      "activo": true,
+      "criterio": {
+        "clave": "primer_amigo",
+        "parametros": {}
+      }
+    },
     {
       "slug": "foto_con_musica",
       "titulo": "Crea un recuerdo con música",
@@ -12,6 +48,138 @@
       "criterio": {
         "clave": "recuerdo_foto_con_musica",
         "parametros": {}
+      }
+    },
+    {
+      "slug": "primer_momento",
+      "titulo": "¿Cómo te sientes hoy?",
+      "descripcion": "Captura un momento en un Momento.",
+      "pasos": ["Abre Momentos", "Crea uno nuevo"],
+      "orden": 5,
+      "activo": true,
+      "criterio": {
+        "clave": "primer_momento",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "recuerdo_nota",
+      "titulo": "Escribe una nota",
+      "descripcion": "Deja tus palabras en el banco de recuerdos.",
+      "pasos": ["Toca +", "Elige Escribir"],
+      "orden": 6,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdo_nota",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "recuerdo_audio",
+      "titulo": "Graba un audio",
+      "descripcion": "Tu voz también es un recuerdo.",
+      "pasos": ["Toca +", "Graba audio"],
+      "orden": 7,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdo_audio",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "recuerdo_video",
+      "titulo": "Graba un video",
+      "descripcion": "Guarda un clip de tus mejores momentos.",
+      "pasos": ["Toca +", "Graba video"],
+      "orden": 8,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdo_video",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "recuerdo_foto",
+      "titulo": "Toma una foto",
+      "descripcion": "Un recuerdo fotogénico en tu banco.",
+      "pasos": ["Toca +", "Toma una foto"],
+      "orden": 9,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdo_foto",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "recuerdo_musica",
+      "titulo": "Guarda una canción",
+      "descripcion": "Añade música al banco de recuerdos.",
+      "pasos": ["Toca +", "Busca música"],
+      "orden": 10,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdo_musica",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "capsula_programada",
+      "titulo": "Programa una cápsula",
+      "descripcion": "Sella contenido para una fecha futura.",
+      "pasos": ["Crea una cápsula", "Pon fecha de apertura"],
+      "orden": 11,
+      "activo": true,
+      "criterio": {
+        "clave": "capsula_programada",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "herencia_borrador",
+      "titulo": "Piensa en tu legado",
+      "descripcion": "Empieza una herencia digital.",
+      "pasos": ["Abre Legado", "Crea una herencia"],
+      "orden": 12,
+      "activo": true,
+      "criterio": {
+        "clave": "herencia_borrador",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "recuerdos_cinco",
+      "titulo": "Cinco recuerdos",
+      "descripcion": "Llena tu banco con al menos cinco piezas.",
+      "pasos": ["Guarda fotos, notas o audios"],
+      "orden": 13,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdos_cantidad",
+        "parametros": { "minimo": 5 }
+      }
+    },
+    {
+      "slug": "recuerdos_diez",
+      "titulo": "Diez recuerdos",
+      "descripcion": "Sigue construyendo tu historia.",
+      "pasos": ["Sigue guardando recuerdos"],
+      "orden": 14,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdos_cantidad",
+        "parametros": { "minimo": 10 }
+      }
+    },
+    {
+      "slug": "recuerdos_tres",
+      "titulo": "Tres tipos distintos",
+      "descripcion": "Prueba foto, nota y audio (mín. 3 recuerdos).",
+      "pasos": ["Varía los formatos"],
+      "orden": 15,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdos_cantidad",
+        "parametros": { "minimo": 3 }
       }
     }
   ],

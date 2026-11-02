@@ -8,6 +8,8 @@ import 'package:capsoul/funcionalidades/legado/dominio/herencia.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/herencia_recibida.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/metadatos_herencia.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/repositorio_legado.dart';
+import 'package:capsoul/funcionalidades/capsulas/presentacion/componentes/miniatura_imagen_capsula.dart';
+import 'package:capsoul/funcionalidades/capsulas/presentacion/heroes_capsula.dart';
 import 'package:capsoul/funcionalidades/legado/presentacion/pantalla_detalle_herencia.dart';
 import 'package:capsoul/nucleo/enrutador/rutas_app.dart';
 import 'package:capsoul/nucleo/tema/tema_app.dart';
@@ -152,6 +154,7 @@ void main() {
           capsulaId: 'c1',
           titulo: 'Carta a Tres',
           estado: 'programada',
+          imagenClave: 'capsula_05',
         ),
       ],
     );
@@ -190,6 +193,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Carta a Tres'), findsOneWidget);
     expect(find.text('Respeta su fecha de apertura'), findsOneWidget);
+    expect(find.byType(MiniaturaImagenCapsula), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Hero && w.tag == HeroesCapsula.imagen('c1'),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Carta a Tres'));
     await tester.pumpAndSettle();
