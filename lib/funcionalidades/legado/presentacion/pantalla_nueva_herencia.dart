@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/formato/fechas.dart';
+import '../../../nucleo/formato/valor_monetario.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../amistades/aplicacion/proveedores_amistades.dart';
 import '../../amistades/dominio/amigo.dart';
@@ -96,13 +97,11 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
     final b = ref.read(proveedorControladorNuevaHerencia);
     _persistirPasoActual(b);
     _cerrarTeclado();
-    if (b.paso == 4) {
-      try {
-        await ctrl.validarCondicionActivacion();
-      } catch (e) {
-        if (mounted) mostrarAvisoError(context, e);
-        return;
-      }
+    try {
+      await ctrl.validarPasoActual();
+    } catch (e) {
+      if (mounted) mostrarAvisoError(context, e);
+      return;
     }
     if (b.paso < BorradorNuevaHerencia.totalPasos - 1) {
       _pasoSincronizado = null;
@@ -266,7 +265,7 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Describe objetos, cuentas o recuerdos (máx. 300 caracteres).',
+              'Describe objetos, cuentas o recuerdos (obligatorio, máx. 300).',
             ),
             const SizedBox(height: 16),
             TextField(
@@ -318,7 +317,9 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            const Text('Unas palabras para quien reciba esta herencia.'),
+            const Text(
+              'Unas palabras para quien reciba esta herencia (obligatorio).',
+            ),
             const SizedBox(height: 16),
             TextField(
               key: const ValueKey('campo_mensaje_personal'),
@@ -341,24 +342,32 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
-            const Text('Detalles del CDT, cuenta u objeto (opcional).'),
+            const Text(
+              'Todos los datos del activo son obligatorios. El valor es numérico.',
+            ),
             const SizedBox(height: 16),
             TextField(
               key: const ValueKey('campo_tipo_activo'),
               controller: _tipoActivoCtrl,
               decoration: const InputDecoration(
-                labelText: 'Tipo (CDT, objeto…)',
+                labelText: 'Tipo (CDT, objeto…) *',
               ),
             ),
             TextField(
               key: const ValueKey('campo_titular'),
               controller: _titularCtrl,
-              decoration: const InputDecoration(labelText: 'Titular'),
+              decoration: const InputDecoration(labelText: 'Titular *'),
             ),
             TextField(
               key: const ValueKey('campo_valor_aproximado'),
               controller: _valorAproximadoCtrl,
-              decoration: const InputDecoration(labelText: 'Valor aproximado'),
+              keyboardType: TextInputType.number,
+              inputFormatters: const [FormateadorMilesInput()],
+              decoration: const InputDecoration(
+                labelText: 'Valor aproximado *',
+                hintText: '1.250.000',
+                prefixText: '\$ ',
+              ),
             ),
             TextField(
               key: const ValueKey('campo_instrucciones_activo'),
@@ -366,7 +375,7 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
               minLines: 3,
               maxLines: 6,
               decoration: const InputDecoration(
-                labelText: 'Instrucciones del activo',
+                labelText: 'Instrucciones del activo *',
               ),
             ),
           ],
@@ -379,17 +388,23 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
             pasoKey: const ValueKey('paso_condicion'),
             children: [
               const Text('Condición de activación'),
-              const RadioListTile<CondicionHerencia>(
-                value: CondicionHerencia.confirmacionConfianza,
-                title: Text('Confirmación de persona de confianza'),
-              ),
+              const SizedBox(height: 8),
               const RadioListTile<CondicionHerencia>(
                 value: CondicionHerencia.fecha,
                 title: Text('Fecha programada'),
+                subtitle: Text(
+                  'El beneficiario verá que le llegó, pero el contenido '
+                  'solo se abre el día que elijas.',
+                ),
               ),
               const RadioListTile<CondicionHerencia>(
-                value: CondicionHerencia.inactividad,
-                title: Text('Tras inactividad'),
+                value: CondicionHerencia.confirmacionConfianza,
+                title: Text('Confirmación de persona de confianza'),
+                subtitle: Text(
+                  'Un amigo distinto del beneficiario (el de Seguridad) '
+                  'pulsa Confirmar cuando llegue el momento. No ve el '
+                  'contenido sellado. No es un certificado legal: es tu llave humana.',
+                ),
               ),
               if (b.condicion == CondicionHerencia.fecha) ...[
                 const SizedBox(height: 12),

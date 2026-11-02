@@ -12,6 +12,7 @@ class Herencia {
     required this.estado,
     required this.condicionActivacion,
     this.descripcion,
+    this.propietarioId,
     this.beneficiarioUsuarioId,
     this.beneficiarioCorreo,
     this.personaConfianzaId,
@@ -24,6 +25,7 @@ class Herencia {
   final String id;
   final String titulo;
   final String? descripcion;
+  final String? propietarioId;
   final String? beneficiarioUsuarioId;
   final String? beneficiarioCorreo;
   final String? personaConfianzaId;
@@ -40,6 +42,7 @@ class Herencia {
       id: fila['id'] as String,
       titulo: fila['titulo'] as String,
       descripcion: fila['descripcion'] as String?,
+      propietarioId: fila['propietario_id'] as String?,
       beneficiarioUsuarioId: fila['beneficiario_usuario_id'] as String?,
       beneficiarioCorreo: fila['beneficiario_correo'] as String?,
       personaConfianzaId: fila['persona_confianza_id'] as String?,
@@ -64,6 +67,35 @@ class Herencia {
 
   static DateTime? _fecha(Object? v) =>
       v is String ? DateTime.tryParse(v) : null;
+
+  /// Chip para el propietario: si llegó / en qué espera.
+  String etiquetaEstado({required DateTime ahora}) {
+    if (estado == EstadoHerencia.liberada) return 'Liberada';
+    if (estado == EstadoHerencia.revocada) return 'Revocada';
+    if (estado == EstadoHerencia.enVerificacion) {
+      return 'En verificación';
+    }
+    if (condicionActivacion == CondicionHerencia.fecha) {
+      final fecha = fechaActivacion;
+      if (fecha != null && !fecha.isAfter(ahora)) {
+        return 'Pendiente de activación';
+      }
+      return 'Asignada · espera la fecha';
+    }
+    if (condicionActivacion == CondicionHerencia.confirmacionConfianza) {
+      return 'Asignada · espera confirmación';
+    }
+    return 'Asignada';
+  }
+
+  bool sePuedeEditar({required DateTime ahora}) {
+    if (!estado.estaSellada) return false;
+    if (condicionActivacion == CondicionHerencia.fecha) {
+      final fecha = fechaActivacion;
+      if (fecha != null && !fecha.isAfter(ahora)) return false;
+    }
+    return true;
+  }
 }
 
 @immutable

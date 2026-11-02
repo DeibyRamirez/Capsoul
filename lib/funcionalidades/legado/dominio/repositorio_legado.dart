@@ -1,6 +1,7 @@
 import 'condicion_herencia.dart';
 import 'grupo_legado_beneficiario.dart';
 import 'herencia.dart';
+import 'herencia_recibida.dart';
 import 'metadatos_herencia.dart';
 
 /// Operaciones de Mi legado (ver `docs/contrato-api-legado.md`).
@@ -47,4 +48,18 @@ abstract interface class RepositorioLegado {
   Future<String?> leerPersonaConfianzaId();
 
   Future<void> solicitarRespaldoLegal(String herenciaId);
+
+  Future<List<HerenciaRecibida>> listarRecibidas();
+
+  Future<List<HerenciaPorConfirmar>> listarPorConfirmar();
+
+  Future<void> confirmarHerencia(String herenciaId);
+
+  Future<void> actualizarHerenciaSellada({
+    required String herenciaId,
+    required String titulo,
+    String? descripcion,
+    required MetadatosHerencia metadatos,
+    DateTime? fechaActivacion,
+  });
 }

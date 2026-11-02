@@ -4,8 +4,8 @@
 
 - Creación en wizard → `herencias` + `herencia_elementos` + `herencia_capsulas` (opcional).
 - Persona de confianza global: `usuarios.persona_confianza_legado_id` vía `establecer_persona_confianza_legado(@)` (debe ser amigo).
-- Liberación: servidor (`activar_herencias`, `confirmar_herencia`, `liberar_herencia`); cápsulas vinculadas pasan a `liberada` con la herencia.
-- Contratos: `docs/contrato-api-legado.md`, migración `20261016000014_capsoul_legado_vinculos.sql`.
+- Liberación: servidor (`activar_herencias` por fecha, o `confirmar_herencia` por persona de confianza). Las cápsulas vinculadas **no** se abren: se respeta `fecha_apertura` y el beneficiario entra en `capsula_destinatarios`.
+- Contratos: `docs/contrato-api-legado.md`, migraciones `20261016000014` y `20261102000025`.
 
 ## 1. Arranque de la app
 

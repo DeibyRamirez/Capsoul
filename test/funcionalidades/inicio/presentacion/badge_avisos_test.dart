@@ -51,6 +51,7 @@ void main() {
         titulo: 'Aún no',
         liberadaEn: DateTime.utc(2026, 11, 1),
         estado: EstadoCapsula.programada,
+        leidaEn: DateTime.utc(2026, 10, 2),
       ),
     ]);
 

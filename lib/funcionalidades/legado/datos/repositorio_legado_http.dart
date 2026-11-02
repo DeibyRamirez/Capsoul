@@ -2,6 +2,7 @@ import '../dominio/condicion_herencia.dart';
 import '../dominio/fallo_legado.dart';
 import '../dominio/grupo_legado_beneficiario.dart';
 import '../dominio/herencia.dart';
+import '../dominio/herencia_recibida.dart';
 import '../dominio/metadatos_herencia.dart';
 import '../dominio/repositorio_legado.dart';
 
@@ -76,4 +77,24 @@ class RepositorioLegadoHttp implements RepositorioLegado {
 
   @override
   Future<void> solicitarRespaldoLegal(String herenciaId) async => _noDisponible();
+
+  @override
+  Future<List<HerenciaRecibida>> listarRecibidas() async => _noDisponible();
+
+  @override
+  Future<List<HerenciaPorConfirmar>> listarPorConfirmar() async =>
+      _noDisponible();
+
+  @override
+  Future<void> confirmarHerencia(String herenciaId) async => _noDisponible();
+
+  @override
+  Future<void> actualizarHerenciaSellada({
+    required String herenciaId,
+    required String titulo,
+    String? descripcion,
+    required MetadatosHerencia metadatos,
+    DateTime? fechaActivacion,
+  }) async =>
+      _noDisponible();
 }
