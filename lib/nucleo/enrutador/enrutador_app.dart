@@ -23,6 +23,7 @@ import '../../funcionalidades/elementos/presentacion/pantalla_grabar_audio.dart'
 import '../../funcionalidades/inicio/presentacion/pantalla_avisos.dart';
 import '../../funcionalidades/inicio/presentacion/pantalla_inicio.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_detalle_herencia.dart';
+import '../../funcionalidades/legado/presentacion/pantalla_editar_herencia.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_instrucciones_legado.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_legado.dart';
 import '../../funcionalidades/legado/presentacion/pantalla_nueva_herencia.dart';
@@ -238,6 +239,16 @@ GoRouter crearEnrutadorApp({
                     builder: (context, state) => PantallaDetalleHerencia(
                       herenciaId: state.pathParameters['id'] ?? '',
                     ),
+                    routes: [
+                      GoRoute(
+                        path: 'editar',
+                        name: 'legado-herencia-editar',
+                        parentNavigatorKey: claveNavegadorRaiz,
+                        builder: (context, state) => PantallaEditarHerencia(
+                          herenciaId: state.pathParameters['id'] ?? '',
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

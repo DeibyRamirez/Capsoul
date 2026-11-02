@@ -13,6 +13,7 @@ class MiniaturaImagenCapsula extends StatelessWidget {
     this.ancho = 60,
     this.conCandado = false,
     this.atenuada = false,
+    this.heroTag,
   });
 
   final String? imagenClave;
@@ -20,11 +21,14 @@ class MiniaturaImagenCapsula extends StatelessWidget {
   final bool conCandado;
   final bool atenuada;
 
+  /// Tag de [Hero] hacia el detalle. Si es nulo no anima.
+  final Object? heroTag;
+
   @override
   Widget build(BuildContext context) {
     final imagen = ImagenCapsula.desdeClave(imagenClave);
     final alto = ancho * 4 / 3;
-    return Semantics(
+    Widget miniatura = Semantics(
       label: 'Imagen de la capsula: ${imagen.nombre}',
       image: true,
       child: ClipRRect(
@@ -66,6 +70,12 @@ class MiniaturaImagenCapsula extends StatelessWidget {
           ),
         ),
       ),
+    );
+    final tag = heroTag;
+    if (tag == null) return miniatura;
+    return Hero(
+      tag: tag,
+      child: Material(type: MaterialType.transparency, child: miniatura),
     );
   }
 }

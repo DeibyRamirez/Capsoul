@@ -2,6 +2,7 @@ import 'package:capsoul/funcionalidades/capsulas/dominio/capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/capsula_recibida.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/estado_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/presentacion/componentes/tarjeta_capsula_lista.dart';
+import 'package:capsoul/funcionalidades/capsulas/presentacion/heroes_capsula.dart';
 import 'package:capsoul/nucleo/tema/tema_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -55,6 +56,12 @@ void main() {
     expect(find.text('14 sep 2046 · 08:05'), findsOneWidget);
     expect(find.text('Lista para abrir'), findsNothing);
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Hero && w.tag == HeroesCapsula.imagen('c1'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('programada vencida sigue sellada hasta que el cron la libere',

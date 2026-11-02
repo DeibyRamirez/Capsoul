@@ -68,6 +68,31 @@ export function armarContenido(datos: DatosPlantilla): ContenidoAviso {
         },
       };
     }
+    case "herencia_asignada":
+      return {
+        titulo: "Te dejaron un legado",
+        cuerpo: nombre
+          ? `«${nombre}» te asignó una pequeña herencia.`
+          : datos.cuerpoGuardado.trim() ||
+            "Alguien te asignó una pequeña herencia en Capsoul.",
+        data: { ...base, herencia_id: id, ruta: ruta("herencia", id) },
+      };
+    case "herencia_por_confirmar":
+      return {
+        titulo: "Te piden confirmar un legado",
+        cuerpo: datos.cuerpoGuardado.trim() ||
+          "Te eligieron como persona de confianza de un legado.",
+        data: { ...base, herencia_id: id, ruta: ruta("legado") },
+      };
+    case "capsula_compartida":
+      return {
+        titulo: "Te compartieron una cápsula",
+        cuerpo: nombre
+          ? `«${nombre}» te dejó una cápsula del tiempo.`
+          : datos.cuerpoGuardado.trim() ||
+            "Alguien te dejó una cápsula del tiempo.",
+        data: { ...base, capsula_id: id, ruta: ruta("capsula", id) },
+      };
     case "herencia_liberada":
       return {
         titulo: "Tienes un legado disponible",

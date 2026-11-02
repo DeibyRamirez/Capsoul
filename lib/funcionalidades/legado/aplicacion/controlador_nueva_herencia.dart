@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../nucleo/formato/valor_monetario.dart';
 import '../dominio/condicion_herencia.dart';
 import '../dominio/fallo_legado.dart';
 import '../dominio/metadatos_herencia.dart';
@@ -17,9 +18,8 @@ class BorradorNuevaHerencia {
     this.titular = '',
     this.valorAproximado = '',
     this.instrucciones = '',
-    this.condicion = CondicionHerencia.confirmacionConfianza,
+    this.condicion = CondicionHerencia.fecha,
     this.fechaActivacion,
-    this.diasInactividad = 180,
   });
 
   final int paso;
@@ -34,7 +34,6 @@ class BorradorNuevaHerencia {
   final String instrucciones;
   final CondicionHerencia condicion;
   final DateTime? fechaActivacion;
-  final int diasInactividad;
 
   static const int totalPasos = 6;
 
@@ -51,7 +50,6 @@ class BorradorNuevaHerencia {
     String? instrucciones,
     CondicionHerencia? condicion,
     DateTime? fechaActivacion,
-    int? diasInactividad,
   }) {
     return BorradorNuevaHerencia(
       paso: paso ?? this.paso,
@@ -66,7 +64,6 @@ class BorradorNuevaHerencia {
       instrucciones: instrucciones ?? this.instrucciones,
       condicion: condicion ?? this.condicion,
       fechaActivacion: fechaActivacion ?? this.fechaActivacion,
-      diasInactividad: diasInactividad ?? this.diasInactividad,
     );
   }
 }
@@ -76,6 +73,29 @@ class ControladorNuevaHerencia extends Notifier<BorradorNuevaHerencia> {
   BorradorNuevaHerencia build() => const BorradorNuevaHerencia();
 
   void actualizar(BorradorNuevaHerencia borrador) => state = borrador;
+
+  Future<void> validarPasoActual() async {
+    final b = state;
+    switch (b.paso) {
+      case 0:
+        if (b.descripcion.trim().isEmpty) throw FalloLegado.campoObligatorio;
+      case 1:
+        final id = b.beneficiarioUsuarioId?.trim();
+        if (id == null || id.isEmpty) throw FalloLegado.beneficiarioRequerido;
+      case 2:
+        if (b.mensajePersonal.trim().isEmpty) throw FalloLegado.campoObligatorio;
+      case 3:
+        if (b.tipoActivo.trim().isEmpty ||
+            b.titular.trim().isEmpty ||
+            b.instrucciones.trim().isEmpty) {
+          throw FalloLegado.campoObligatorio;
+        }
+        final valor = parsearEnteroMiles(b.valorAproximado);
+        if (valor == null || valor <= 0) throw FalloLegado.valorInvalido;
+      case 4:
+        await validarCondicionActivacion();
+    }
+  }
 
   /// Valida la condición de activación antes de guardar o avanzar del paso 4.
   Future<void> validarCondicionActivacion() async {
@@ -91,41 +111,54 @@ class ControladorNuevaHerencia extends Notifier<BorradorNuevaHerencia> {
           throw FalloLegado.fechaDebeSerFutura;
         }
       case CondicionHerencia.inactividad:
-        if (b.diasInactividad <= 0) throw FalloLegado.inactividadRequerida;
+        throw FalloLegado.condicionCoherente;
       case CondicionHerencia.confirmacionConfianza:
         final confianzaId =
             await ref.read(proveedorRepositorioLegado).leerPersonaConfianzaId();
         if (confianzaId == null || confianzaId.trim().isEmpty) {
           throw FalloLegado.personaConfianzaRequerida;
         }
+        final benef = b.beneficiarioUsuarioId?.trim();
+        if (benef != null && benef == confianzaId) {
+          throw const FalloLegado(
+            FalloLegado.codigoCondicionCoherente,
+            'La persona de confianza no puede ser quien recibe la herencia.',
+          );
+        }
     }
   }
 
   Future<String?> guardarYActivar() async {
     final b = state;
+    if (b.descripcion.trim().isEmpty ||
+        b.mensajePersonal.trim().isEmpty ||
+        b.tipoActivo.trim().isEmpty ||
+        b.titular.trim().isEmpty ||
+        b.instrucciones.trim().isEmpty) {
+      throw FalloLegado.campoObligatorio;
+    }
     final beneficiario = b.beneficiarioUsuarioId?.trim();
-    if (beneficiario == null || beneficiario.isEmpty) return null;
+    if (beneficiario == null || beneficiario.isEmpty) {
+      throw FalloLegado.beneficiarioRequerido;
+    }
     await validarCondicionActivacion();
-    final titulo = b.tipoActivo.trim().isNotEmpty
-        ? b.tipoActivo.trim()
-        : (b.descripcion.trim().isNotEmpty
-            ? b.descripcion.trim().split('\n').first
-            : 'Pequeña herencia');
+    final valor = parsearEnteroMiles(b.valorAproximado);
+    if (valor == null || valor <= 0) throw FalloLegado.valorInvalido;
+    final titulo = b.tipoActivo.trim();
     final repo = ref.read(proveedorRepositorioLegado);
     final id = await repo.crearHerencia(
       titulo: titulo.length > 120 ? titulo.substring(0, 120) : titulo,
-      descripcion: b.descripcion.trim().isEmpty ? b.mensajePersonal : b.descripcion,
+      descripcion: b.descripcion.trim(),
       beneficiarioUsuarioId: beneficiario,
       condicion: b.condicion,
-      fechaActivacion: b.condicion == CondicionHerencia.fecha ? b.fechaActivacion : null,
-      diasInactividad:
-          b.condicion == CondicionHerencia.inactividad ? b.diasInactividad : null,
+      fechaActivacion:
+          b.condicion == CondicionHerencia.fecha ? b.fechaActivacion : null,
       metadatos: MetadatosHerencia(
-        tipoActivo: b.tipoActivo,
-        titular: b.titular,
-        valorAproximado: b.valorAproximado,
-        instrucciones: b.instrucciones,
-        mensajePersonal: b.mensajePersonal,
+        tipoActivo: b.tipoActivo.trim(),
+        titular: b.titular.trim(),
+        valorAproximado: valor,
+        instrucciones: b.instrucciones.trim(),
+        mensajePersonal: b.mensajePersonal.trim(),
       ),
       activar: true,
     );
@@ -137,6 +170,7 @@ class ControladorNuevaHerencia extends Notifier<BorradorNuevaHerencia> {
     }
     ref.invalidate(proveedorResumenLegado);
     ref.invalidate(proveedorGruposLegadoBeneficiario);
+    ref.invalidate(proveedorHerenciasRecibidas);
     return id;
   }
 }

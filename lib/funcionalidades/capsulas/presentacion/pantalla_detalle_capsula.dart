@@ -165,6 +165,8 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
       slivers: [
         SliverToBoxAdapter(
           child: CabeceraCapsula(
+            capsulaId: capsula.id,
+            imagenClave: capsula.imagenClave,
             titulo: capsula.titulo,
             horizonte: fecha == null
                 ? null
@@ -230,9 +232,10 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
                       : null,
                 ),
               ],
-              const _Titulo('Persona de confianza'),
-              const SizedBox(height: 6),
-              const _PersonaConfianza(),
+              // Se debe aclarar
+              // const _Titulo('Persona de confianza'),
+              // const SizedBox(height: 6),
+              // const _PersonaConfianza(),
             ],
           ),
         ),

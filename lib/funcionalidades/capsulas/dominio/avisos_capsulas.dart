@@ -1,6 +1,6 @@
 import 'capsula_recibida.dart';
 
-/// Cápsulas liberadas que otra persona me envió, de la más nueva a la más vieja.
+/// Cápsulas que otra persona me compartió (selladas o ya abiertas).
 ///
 /// El contador del badge usa [conteoAvisosSinLeer]: `leida_en` vacío.
 /// `abierta_en` no entra aquí; abrir el frasco es otro gesto.
@@ -10,8 +10,7 @@ List<CapsulaRecibida> avisosCapsulasCompartidas(
 ) {
   final avisos = [
     for (final recibida in recibidas)
-      if (recibida.estaLiberada && (uid == null || recibida.autorId != uid))
-        recibida,
+      if (uid == null || recibida.autorId != uid) recibida,
   ];
   avisos.sort((a, b) {
     final fechaA = a.liberadaEn ?? a.fechaApertura;

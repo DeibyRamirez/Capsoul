@@ -14,6 +14,7 @@ import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../../inicio/aplicacion/proveedores_inicio.dart';
 import '../../inicio/dominio/resumen_inicio.dart';
+import '../../legado/aplicacion/proveedores_legado.dart';
 import '../../elementos/dominio/elemento_borrador.dart';
 import '../../recuerdos/aplicacion/proveedores_recuerdos.dart';
 import '../../recuerdos/dominio/filtro_recuerdos.dart';
@@ -125,6 +126,7 @@ class PantallaPerfil extends ConsumerWidget {
           ref.invalidate(proveedorPerfilUsuarioActual);
           ref.invalidate(proveedorRecuerdos(FiltroRecuerdos.todos));
           ref.invalidate(proveedorResumenInicio);
+          ref.invalidate(proveedorHerenciasRecibidas);
           if (fotoPublicId != null && fotoPublicId.isNotEmpty) {
             ref.invalidate(proveedorUrlsAvatarPerfil(fotoPublicId));
             ref.invalidate(proveedorUrlAvatarPerfil(fotoPublicId));
@@ -204,6 +206,7 @@ class PantallaPerfil extends ConsumerWidget {
             //   ),
             // ),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            const SliverToBoxAdapter(child: _BloqueHerenciasRecibidas()),
             recuerdosAsincrono.when(
               loading: () => const SliverToBoxAdapter(
                 child: Padding(
@@ -228,6 +231,66 @@ class PantallaPerfil extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BloqueHerenciasRecibidas extends ConsumerWidget {
+  const _BloqueHerenciasRecibidas();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recibidas = ref.watch(proveedorHerenciasRecibidas);
+    return recibidas.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (lista) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                leading: const Icon(
+                  Icons.inventory_2_outlined,
+                  color: ColoresApp.primario,
+                ),
+                title: const Text('Herencias recibidas'),
+                subtitle: Text(
+                  lista.isEmpty
+                      ? 'Nadie te ha asignado un legado todavía'
+                      : '${lista.length} en tu perfil',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  ref.read(proveedorBandejaLegado.notifier).elegir(
+                        BandejaLegado.recibidas,
+                      );
+                  context.go(RutasApp.legado);
+                },
+              ),
+              for (final h in lista.take(3))
+                ListTile(
+                  dense: true,
+                  leading: Icon(
+                    h.contenidoVisible
+                        ? Icons.lock_open_outlined
+                        : Icons.lock_outline,
+                    color: ColoresApp.primario,
+                  ),
+                  title: Text(h.titulo),
+                  subtitle: Text(
+                    h.contenidoVisible
+                        ? 'De ${h.propietarioNombre}'
+                        : 'De ${h.propietarioNombre} · sellada',
+                  ),
+                  onTap: () =>
+                      context.push(RutasApp.detalleHerenciaDe(h.id)),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

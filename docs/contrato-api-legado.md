@@ -8,9 +8,11 @@ Implementación actual: **Supabase** (PostgREST + RPC). `RepositorioLegadoHttp` 
 |--------|------|----------------------|
 | GET | `/legado/resumen` | `rpc legado_resumen` |
 | GET | `/legado/por-beneficiario` | `rpc legado_agrupado_beneficiario` |
-| GET | `/herencias/{id}` | `rpc herencia_detalle` |
+| GET | `/herencias/recibidas` | `rpc herencias_recibidas` |
+| GET | `/herencias/por-confirmar` | `rpc herencias_por_confirmar` |
+| GET | `/herencias/{id}` | `rpc herencia_detalle` (metadatos solo si contenido visible) |
 | POST | `/herencias` | `insert herencias` |
-| PATCH | `/herencias/{id}` | `update herencias` (RLS) |
+| PATCH | `/herencias/{id}` | `rpc actualizar_herencia_sellada` |
 | POST | `/herencias/{id}/capsulas` | `rpc vincular_capsula_herencia` |
 | PUT | `/legado/instrucciones` | `rpc guardar_instrucciones_legado` |
 | PUT | `/legado/persona-confianza` | `rpc establecer_persona_confianza_legado` |

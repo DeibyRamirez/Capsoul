@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../nucleo/formato/valor_monetario.dart';
+
 @immutable
 class MetadatosHerencia {
   const MetadatosHerencia({
@@ -13,10 +15,17 @@ class MetadatosHerencia {
 
   final String? tipoActivo;
   final String? titular;
-  final String? valorAproximado;
+  /// Valor entero (sin puntos). En UI se muestra con miles.
+  final int? valorAproximado;
   final String moneda;
   final String? instrucciones;
   final String? mensajePersonal;
+
+  String get valorFormateado {
+    final v = valorAproximado;
+    if (v == null) return '';
+    return formatearMiles('$v');
+  }
 
   Map<String, dynamic> aJson() => {
         if (tipoActivo != null) 'tipo_activo': tipoActivo,
@@ -32,10 +41,17 @@ class MetadatosHerencia {
     return MetadatosHerencia(
       tipoActivo: json['tipo_activo'] as String?,
       titular: json['titular'] as String?,
-      valorAproximado: json['valor_aproximado'] as String?,
+      valorAproximado: _entero(json['valor_aproximado']),
       moneda: json['moneda'] as String? ?? 'COP',
       instrucciones: json['instrucciones'] as String?,
       mensajePersonal: json['mensaje_personal'] as String?,
     );
+  }
+
+  static int? _entero(Object? v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return parsearEnteroMiles(v);
+    return null;
   }
 }
