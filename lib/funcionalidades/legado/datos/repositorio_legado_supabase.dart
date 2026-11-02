@@ -7,6 +7,7 @@ import '../dominio/condicion_herencia.dart';
 import '../dominio/fallo_legado.dart';
 import '../dominio/grupo_legado_beneficiario.dart';
 import '../dominio/herencia.dart';
+import '../dominio/herencia_recibida.dart';
 import '../dominio/metadatos_herencia.dart';
 import '../dominio/repositorio_legado.dart';
 
@@ -227,6 +228,66 @@ class RepositorioLegadoSupabase implements RepositorioLegado {
       'solicitar_respaldo_legal_herencia',
       parametros: {'p_herencia': herenciaId},
     );
+  }
+
+  @override
+  Future<List<HerenciaRecibida>> listarRecibidas() async {
+    _exigirSesion();
+    final filas = await _cliente.rpc('herencias_recibidas');
+    return [
+      for (final fila in filas)
+        if (fila is Map)
+          HerenciaRecibida.desdeFila(Map<String, dynamic>.from(fila)),
+    ];
+  }
+
+  @override
+  Future<List<HerenciaPorConfirmar>> listarPorConfirmar() async {
+    _exigirSesion();
+    final filas = await _cliente.rpc('herencias_por_confirmar');
+    return [
+      for (final fila in filas)
+        if (fila is Map)
+          HerenciaPorConfirmar.desdeFila(Map<String, dynamic>.from(fila)),
+    ];
+  }
+
+  @override
+  Future<void> confirmarHerencia(String herenciaId) async {
+    _exigirSesion();
+    try {
+      await _cliente.rpc(
+        'confirmar_herencia',
+        parametros: {'p_herencia': herenciaId},
+      );
+    } catch (e) {
+      throw _traducir(e);
+    }
+  }
+
+  @override
+  Future<void> actualizarHerenciaSellada({
+    required String herenciaId,
+    required String titulo,
+    String? descripcion,
+    required MetadatosHerencia metadatos,
+    DateTime? fechaActivacion,
+  }) async {
+    _exigirSesion();
+    try {
+      await _cliente.rpc(
+        'actualizar_herencia_sellada',
+        parametros: {
+          'p_herencia': herenciaId,
+          'p_titulo': titulo,
+          'p_descripcion': descripcion ?? '',
+          'p_metadatos': metadatos.aJson(),
+          'p_fecha_activacion': fechaActivacion?.toUtc().toIso8601String(),
+        },
+      );
+    } catch (e) {
+      throw _traducir(e);
+    }
   }
 
   FalloLegado _traducir(Object error) {

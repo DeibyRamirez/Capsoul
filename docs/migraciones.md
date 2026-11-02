@@ -29,6 +29,9 @@ Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). 
 | `20261030000021` | Aviso push de solicitud de amistad (trigger `amistades_encolar_aviso`) y `amistades` en `supabase_realtime` (no aplicada en remoto) |
 | `20261030000022` | RPC `registrar_dispositivo_push` (upsert por token, reasigna cuenta) y reactivación de avisos push «Sin tokens FCM» de las últimas 24 h (no aplicada en remoto) |
 | `20261030000023` | Música con la API pública de Deezer: `musica_proveedor` admite `deezer`; para Deezer id numérico y `musica_preview_url` null (la URL caduca, se pide `/track/<id>` al reproducir). Sin columnas nuevas, RLS y grants sin cambios (**pendiente**, no aplicada en remoto) |
+| `20261101120000` | Solicitudes de amistad visibles |
+| `20261102000024` | Enum `tipo_notificacion`: `herencia_asignada`, `herencia_por_confirmar`, `capsula_compartida` |
+| `20261102000025` | Permisos de herencias: destinatarios por `origen_herencia_id`, no forzar cápsulas `liberada`, RLS de contenido, RPC recibidas/por confirmar/editar sellada, avisos FCM |
 
 El estado **aplicado en remoto** puede ir por detrás del repo; usar `supabase migration list` antes de cada release.
 

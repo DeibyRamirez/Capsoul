@@ -8,6 +8,7 @@ void main() {
     required String id,
     required String autorId,
     required EstadoCapsula estado,
+    DateTime? fechaApertura,
     DateTime? liberadaEn,
     DateTime? leidaEn,
   }) {
@@ -16,14 +17,14 @@ void main() {
       autorId: autorId,
       autorNombre: 'Beto',
       titulo: id,
-      fechaApertura: DateTime.utc(2026, 10, 1),
+      fechaApertura: fechaApertura ?? DateTime.utc(2026, 10, 1),
       estado: estado,
       liberadaEn: liberadaEn,
       leidaEn: leidaEn,
     );
   }
 
-  test('el badge ignora las propias, las cerradas y las ya leídas', () {
+  test('el badge ignora las propias y cuenta selladas compartidas', () {
     final avisos = avisosCapsulasCompartidas([
       recibida(
         id: 'propia',
@@ -35,6 +36,7 @@ void main() {
         id: 'cerrada',
         autorId: 'otro',
         estado: EstadoCapsula.programada,
+        fechaApertura: DateTime.utc(2026, 9, 1),
       ),
       recibida(
         id: 'leida',
@@ -57,8 +59,13 @@ void main() {
       ),
     ], 'yo');
 
-    expect(avisos.map((aviso) => aviso.id), ['mas-nueva', 'leida', 'nueva']);
-    expect(conteoAvisosSinLeer(avisos), 2);
+    expect(avisos.map((aviso) => aviso.id), [
+      'mas-nueva',
+      'leida',
+      'nueva',
+      'cerrada',
+    ]);
+    expect(conteoAvisosSinLeer(avisos), 3);
     expect(textoBadgeAvisos(0), isNull);
     expect(textoBadgeAvisos(2), '2');
     expect(textoBadgeAvisos(9), '9');

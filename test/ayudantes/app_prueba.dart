@@ -3,6 +3,7 @@ import 'package:capsoul/funcionalidades/amistades/aplicacion/proveedores_amistad
 import 'package:capsoul/funcionalidades/autenticacion/aplicacion/proveedores_autenticacion.dart';
 import 'package:capsoul/funcionalidades/capsulas/aplicacion/proveedores_capsulas.dart';
 import 'package:capsoul/funcionalidades/inicio/aplicacion/proveedores_inicio.dart';
+import 'package:capsoul/funcionalidades/legado/aplicacion/proveedores_legado.dart';
 import 'package:capsoul/funcionalidades/momentos/aplicacion/proveedores_momentos.dart';
 import 'package:capsoul/funcionalidades/recuerdos/aplicacion/proveedores_recuerdos.dart';
 import 'package:capsoul/funcionalidades/usuarios/aplicacion/proveedores_usuarios.dart';
@@ -15,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'falsos.dart';
 import 'falsos_amistades.dart';
 import 'falsos_capsulas.dart';
+import 'falsos_legado.dart';
 import 'falsos_momentos.dart';
 import 'falsos_recuerdos.dart';
 
@@ -49,6 +51,7 @@ Future<void> montarAppCapsoul(
   RepositorioRecuerdosFalso? recuerdos,
   RepositorioMomentosFalso? momentos,
   RepositorioAmistadesFalso? amistades,
+  RepositorioLegadoFalso? legado,
 }) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 3;
@@ -83,6 +86,9 @@ Future<void> montarAppCapsoul(
         ),
         proveedorRepositorioAmistades.overrideWithValue(
           amistades ?? RepositorioAmistadesFalso(),
+        ),
+        proveedorRepositorioLegado.overrideWithValue(
+          legado ?? RepositorioLegadoFalso(),
         ),
       ],
       child: envoltorioPrueba(const AppCapsoul()),

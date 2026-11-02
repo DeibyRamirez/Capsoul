@@ -11,6 +11,8 @@ class FalloLegado implements FalloApp {
   static const codigoFechaDebeSerFutura = 'fecha_debe_ser_futura';
   static const codigoPersonaConfianzaRequerida = 'persona_confianza_requerida';
   static const codigoInactividadRequerida = 'inactividad_requerida';
+  static const codigoCampoObligatorio = 'campo_obligatorio';
+  static const codigoValorInvalido = 'valor_invalido';
   static const codigoCondicionCoherente = 'condicion_coherente';
   static const codigoCapsulaInvalida = 'capsula_invalida';
   static const codigoHerenciaNoEditable = 'herencia_no_editable';
@@ -45,6 +47,21 @@ class FalloLegado implements FalloApp {
   static const inactividadRequerida = FalloLegado(
     codigoInactividadRequerida,
     'Indica cuántos días de inactividad deben pasar antes de activar el legado.',
+  );
+
+  static const campoObligatorio = FalloLegado(
+    codigoCampoObligatorio,
+    'Completa todos los campos para continuar.',
+  );
+
+  static const valorInvalido = FalloLegado(
+    codigoValorInvalido,
+    'El valor aproximado debe ser un número (usa puntos para los miles).',
+  );
+
+  static const beneficiarioRequerido = FalloLegado(
+    codigoCampoObligatorio,
+    'Elige a quién va dirigida esta pequeña herencia.',
   );
 
   static const condicionCoherente = FalloLegado(
@@ -83,6 +100,8 @@ class FalloLegado implements FalloApp {
         return capsulaInvalida;
       case 'herencia_no_editable':
         return herenciaNoEditable;
+      case 'titulo_requerido':
+        return campoObligatorio;
       case 'sin_sesion':
         return sinSesion;
       default:
@@ -103,6 +122,7 @@ class FalloLegado implements FalloApp {
       'debe_ser_amigo',
       'capsula_invalida',
       'herencia_no_editable',
+      'titulo_requerido',
     ]) {
       if (mensaje.contains(codigo)) {
         return desdeCodigoPostgres(codigo);

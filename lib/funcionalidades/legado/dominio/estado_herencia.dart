@@ -19,4 +19,9 @@ enum EstadoHerencia {
   }
 
   bool get requiereRevision => this == EstadoHerencia.enVerificacion;
+
+  bool get estaLiberada => this == EstadoHerencia.liberada;
+
+  bool get estaSellada =>
+      this == EstadoHerencia.borrador || this == EstadoHerencia.activa;
 }

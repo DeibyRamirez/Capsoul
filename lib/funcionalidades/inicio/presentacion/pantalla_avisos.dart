@@ -16,6 +16,8 @@ import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../capsulas/dominio/avisos_capsulas.dart';
 import '../../capsulas/dominio/capsula_recibida.dart';
+import '../../legado/aplicacion/proveedores_legado.dart';
+import '../../legado/dominio/herencia_recibida.dart';
 
 /// Solicitudes de amistad pendientes y cápsulas compartidas ya abiertas.
 class PantallaAvisos extends ConsumerWidget {
@@ -23,10 +25,12 @@ class PantallaAvisos extends ConsumerWidget {
 
   Future<void> _refrescar(WidgetRef ref) async {
     ref.invalidate(proveedorCapsulasRecibidas);
+    ref.invalidate(proveedorHerenciasRecibidas);
     refrescarAmistades(ref.invalidate);
     await Future.wait([
       ref.read(proveedorCapsulasRecibidas.future),
       ref.read(proveedorSolicitudesAmistad.future),
+      ref.read(proveedorHerenciasRecibidas.future),
     ]);
   }
 
@@ -35,8 +39,10 @@ class PantallaAvisos extends ConsumerWidget {
     final uid = ref.watch(proveedorEstadoAutenticacion).value?.uid;
     final recibidas = ref.watch(proveedorCapsulasRecibidas);
     final solicitudes = ref.watch(proveedorSolicitudesAmistad);
+    final herencias = ref.watch(proveedorHerenciasRecibidas);
     final cargandoCapsulas = recibidas.isLoading && !recibidas.hasValue;
     final cargandoSolicitudes = solicitudes.isLoading && !solicitudes.hasValue;
+    final cargandoHerencias = herencias.isLoading && !herencias.hasValue;
 
     return Scaffold(
       backgroundColor: ColoresApp.superficie,
@@ -45,11 +51,11 @@ class PantallaAvisos extends ConsumerWidget {
         children: [
           const CabeceraDetalleCapsoul(
             titulo: 'Avisos',
-            subtitulo: 'Solicitudes de amistad y cápsulas abiertas',
+            subtitulo: 'Amistad, cápsulas y herencias',
             trailing: null,
           ),
           Expanded(
-            child: cargandoCapsulas || cargandoSolicitudes
+            child: cargandoCapsulas || cargandoSolicitudes || cargandoHerencias
                 ? const Center(child: CircularProgressIndicator())
                 : _ListaAvisos(
                     uid: uid,
@@ -78,16 +84,22 @@ class _ListaAvisos extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final recibidas = ref.watch(proveedorCapsulasRecibidas);
     final solicitudes = ref.watch(proveedorSolicitudesAmistad);
+    final herencias = ref.watch(proveedorHerenciasRecibidas);
     final avisos = avisosCapsulasCompartidas(recibidas.value ?? const [], uid);
     final pendientes = solicitudes.value ?? const [];
-    final sinDatos = !recibidas.hasValue && !solicitudes.hasValue;
-    if (sinDatos && (recibidas.hasError || solicitudes.hasError)) {
+    final herenciasLista = herencias.value ?? const <HerenciaRecibida>[];
+    final sinDatos =
+        !recibidas.hasValue && !solicitudes.hasValue && !herencias.hasValue;
+    if (sinDatos &&
+        (recibidas.hasError || solicitudes.hasError || herencias.hasError)) {
       return _EstadoAvisos(
-        mensaje: mensajeParaUsuario(recibidas.error ?? solicitudes.error),
+        mensaje: mensajeParaUsuario(
+          recibidas.error ?? solicitudes.error ?? herencias.error,
+        ),
         alReintentar: () => alReintentar(),
       );
     }
-    if (avisos.isEmpty && pendientes.isEmpty) {
+    if (avisos.isEmpty && pendientes.isEmpty && herenciasLista.isEmpty) {
       if (recibidas.hasError || solicitudes.hasError) {
         return _EstadoAvisos(
           mensaje: mensajeParaUsuario(recibidas.error ?? solicitudes.error),
@@ -96,8 +108,8 @@ class _ListaAvisos extends ConsumerWidget {
       }
       return const _EstadoAvisos(
         mensaje:
-            'Cuando te llegue una solicitud de amistad o se abra una cápsula '
-            'compartida, aparecerá aquí.',
+            'Cuando te llegue una solicitud de amistad, una cápsula '
+            'compartida o una herencia, aparecerá aquí.',
       );
     }
     return RefreshIndicator(
@@ -108,10 +120,56 @@ class _ListaAvisos extends ConsumerWidget {
         children: [
           for (final solicitud in pendientes)
             TarjetaSolicitudAmistad(solicitud: solicitud),
+          for (var i = 0; i < herenciasLista.length; i++) ...[
+            if (pendientes.isNotEmpty || i > 0) const SizedBox(height: 12),
+            _TarjetaAvisoHerencia(herencia: herenciasLista[i]),
+          ],
           for (var indice = 0; indice < avisos.length; indice++) ...[
-            if (pendientes.isNotEmpty || indice > 0) const SizedBox(height: 12),
+            if (pendientes.isNotEmpty ||
+                herenciasLista.isNotEmpty ||
+                indice > 0)
+              const SizedBox(height: 12),
             _TarjetaAviso(aviso: avisos[indice]),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TarjetaAvisoHerencia extends StatelessWidget {
+  const _TarjetaAvisoHerencia({required this.herencia});
+
+  final HerenciaRecibida herencia;
+
+  @override
+  Widget build(BuildContext context) {
+    final estilos = Theme.of(context).textTheme;
+    return TarjetaCapsoul(
+      icono: herencia.contenidoVisible
+          ? Icons.inventory_2_outlined
+          : Icons.lock_outline,
+      alTocar: () => context.push(RutasApp.detalleHerenciaDe(herencia.id)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            herencia.titulo,
+            style: estilos.titleMedium?.copyWith(
+              fontFamily: TemaApp.fuenteTitulos,
+              color: ColoresApp.primario,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            herencia.contenidoVisible
+                ? 'De ${herencia.propietarioNombre} · ya puedes verla'
+                : 'De ${herencia.propietarioNombre} · te asignaron un legado',
+            style: estilos.bodyMedium?.copyWith(
+              color: ColoresApp.textoPrincipal,
+            ),
+          ),
         ],
       ),
     );
