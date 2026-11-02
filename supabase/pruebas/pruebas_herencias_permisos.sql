@@ -52,11 +52,7 @@ insert into public.capsula_destinatarios (capsula_id, usuario_id) values (
   'a0000000-0000-0000-0000-000000000002'
 );
 
-insert into public.usuarios (id, nombre_visible)
-  values ('a0000000-0000-0000-0000-000000000001', 'Uno')
-on conflict (id) do nothing;
-
--- Persona de confianza global = U2
+-- Persona de confianza global = U2 (el perfil lo crea el trigger de auth.users)
 reset role;
 update public.usuarios
    set persona_confianza_legado_id = 'a0000000-0000-0000-0000-000000000002'

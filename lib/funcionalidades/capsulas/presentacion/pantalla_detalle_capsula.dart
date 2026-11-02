@@ -232,10 +232,6 @@ class _EstadoContenidoDetalle extends ConsumerState<_ContenidoDetalle> {
                       : null,
                 ),
               ],
-              // Se debe aclarar
-              // const _Titulo('Persona de confianza'),
-              // const SizedBox(height: 6),
-              // const _PersonaConfianza(),
             ],
           ),
         ),
@@ -372,27 +368,6 @@ class _InvitacionAbrir extends StatelessWidget {
           label: const Text('Abrir cápsula'),
         ),
       ],
-    );
-  }
-}
-
-class _PersonaConfianza extends StatelessWidget {
-  const _PersonaConfianza();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: ColoresApp.acento.withValues(alpha: 0.15),
-        foregroundColor: ColoresApp.primario,
-        child: const Icon(Icons.person_outline),
-      ),
-      title: const Text('Sin asignar'),
-      trailing: const Chip(
-        label: Text('Próximamente'),
-        visualDensity: VisualDensity.compact,
-      ),
     );
   }
 }
