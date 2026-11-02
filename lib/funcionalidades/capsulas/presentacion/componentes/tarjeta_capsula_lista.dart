@@ -9,6 +9,7 @@ import '../../dominio/capsula.dart';
 import '../../dominio/capsula_recibida.dart';
 import '../../dominio/estado_capsula.dart';
 import '../../dominio/estado_visible_capsula.dart';
+import '../heroes_capsula.dart';
 import 'miniatura_imagen_capsula.dart';
 
 class TarjetaCapsulaLista extends StatelessWidget {
@@ -118,6 +119,7 @@ class _TarjetaContenido extends StatelessWidget {
                 imagenClave: imagenClave,
                 conCandado: presentacion.conCandado,
                 atenuada: !presentacion.brilla,
+                heroTag: HeroesCapsula.imagen(id),
               ),
               const SizedBox(width: 12),
               Expanded(

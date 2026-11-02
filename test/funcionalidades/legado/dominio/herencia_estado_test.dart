@@ -37,6 +37,28 @@ void main() {
     expect(herencia.etiquetaEstado(ahora: ahora), 'Liberada');
   });
 
+  test('cápsula vinculada lee imagen_clave del json', () {
+    final capsula = CapsulaVinculadaHerencia.desdeJson({
+      'capsula_id': 'c1',
+      'titulo': 'Carta',
+      'estado': 'programada',
+      'orden': 2,
+      'imagen_clave': 'capsula_05',
+    });
+    expect(capsula.capsulaId, 'c1');
+    expect(capsula.imagenClave, 'capsula_05');
+    expect(capsula.orden, 2);
+  });
+
+  test('cápsula vinculada tolera imagen_clave ausente', () {
+    final capsula = CapsulaVinculadaHerencia.desdeJson({
+      'capsula_id': 'c1',
+      'titulo': 'Carta',
+    });
+    expect(capsula.imagenClave, isNull);
+    expect(capsula.estado, 'programada');
+  });
+
   test('fecha ya vencida no se edita', () {
     final herencia = h(fecha: DateTime(2026, 10, 1));
     expect(herencia.sePuedeEditar(ahora: ahora), isFalse);

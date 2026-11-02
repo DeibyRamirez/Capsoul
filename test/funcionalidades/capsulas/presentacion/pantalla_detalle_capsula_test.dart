@@ -3,6 +3,7 @@ import 'package:capsoul/funcionalidades/autenticacion/dominio/usuario_app.dart';
 import 'package:capsoul/funcionalidades/capsulas/aplicacion/proveedores_capsulas.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/dominio/estado_capsula.dart';
+import 'package:capsoul/funcionalidades/capsulas/presentacion/heroes_capsula.dart';
 import 'package:capsoul/funcionalidades/capsulas/presentacion/pantalla_detalle_capsula.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/recuerdos/aplicacion/proveedores_recuerdos.dart';
@@ -100,6 +101,12 @@ void main() {
     );
 
     expect(find.text('Abrir en'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Hero && w.tag == HeroesCapsula.imagen('c1'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Sobre esta cápsula'), findsNothing);
     expect(
       find.text('Solo tú puedes ver el contenido hasta la fecha de apertura.'),
