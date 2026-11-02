@@ -411,30 +411,50 @@ class _BloquePorConfirmar extends ConsumerWidget {
               const SizedBox(height: 8),
               for (final h in lista)
                 Card(
-                  child: ListTile(
-                    title: Text(h.titulo),
-                    subtitle: Text(
-                      '${h.propietarioNombre} → ${h.beneficiarioNombre ?? 'alguien'}',
-                    ),
-                    trailing: FilledButton(
-                      onPressed: () async {
-                        try {
-                          await ref
-                              .read(proveedorRepositorioLegado)
-                              .confirmarHerencia(h.id);
-                          ref.invalidate(proveedorHerenciasPorConfirmar);
-                          ref.invalidate(proveedorHerenciasRecibidas);
-                          if (context.mounted) {
-                            mostrarAvisoInformativo(
-                              context,
-                              'Legado confirmado. El beneficiario ya puede verlo.',
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) mostrarAvisoError(context, e);
-                        }
-                      },
-                      child: const Text('Confirmar'),
+                  key: ValueKey(h.id),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          h.titulo,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${h.propietarioNombre} → ${h.beneficiarioNombre ?? 'alguien'}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: ColoresApp.atenuado),
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton(
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48),
+                          ),
+                          onPressed: () async {
+                            try {
+                              await ref
+                                  .read(proveedorRepositorioLegado)
+                                  .confirmarHerencia(h.id);
+                              ref.invalidate(proveedorHerenciasPorConfirmar);
+                              ref.invalidate(proveedorHerenciasRecibidas);
+                              if (context.mounted) {
+                                mostrarAvisoInformativo(
+                                  context,
+                                  'Legado confirmado. El beneficiario ya puede verlo.',
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                mostrarAvisoError(context, e);
+                              }
+                            }
+                          },
+                          child: const Text('Confirmar'),
+                        ),
+                      ],
                     ),
                   ),
                 ),

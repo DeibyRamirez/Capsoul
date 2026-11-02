@@ -9,10 +9,12 @@ import 'package:capsoul/funcionalidades/legado/dominio/herencia_recibida.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/metadatos_herencia.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/repositorio_legado.dart';
 import 'package:capsoul/funcionalidades/legado/presentacion/pantalla_detalle_herencia.dart';
+import 'package:capsoul/nucleo/enrutador/rutas_app.dart';
 import 'package:capsoul/nucleo/tema/tema_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 class _RepoDetalle implements RepositorioLegado {
   _RepoDetalle(this.detalle);
@@ -132,5 +134,65 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Reloj'), findsWidgets);
     expect(find.text('Editar información'), findsNothing);
+  });
+
+  testWidgets('toca una cápsula vinculada y abre su detalle', (tester) async {
+    final detalle = DetalleHerencia(
+      herencia: Herencia(
+        id: 'h1',
+        titulo: 'Reloj',
+        estado: EstadoHerencia.liberada,
+        condicionActivacion: CondicionHerencia.fecha,
+        fechaActivacion: DateTime(2026, 10, 1),
+        propietarioId: 'u1',
+        beneficiarioUsuarioId: 'u3',
+      ),
+      capsulas: const [
+        CapsulaVinculadaHerencia(
+          capsulaId: 'c1',
+          titulo: 'Carta a Tres',
+          estado: 'programada',
+        ),
+      ],
+    );
+    final enrutador = GoRouter(
+      initialLocation: RutasApp.detalleHerenciaDe('h1'),
+      routes: [
+        GoRoute(
+          path: '/legado/herencia/:id',
+          builder: (_, _) => const PantallaDetalleHerencia(herenciaId: 'h1'),
+        ),
+        GoRoute(
+          path: '/capsulas/:id',
+          builder: (_, state) =>
+              Text('detalle-${state.pathParameters['id']}'),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          proveedorRepositorioLegado.overrideWithValue(_RepoDetalle(detalle)),
+          proveedorReloj.overrideWithValue(() => DateTime(2026, 11, 2)),
+          proveedorEstadoAutenticacion.overrideWith(
+            (ref) => Stream.value(null),
+          ),
+        ],
+        child: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: MaterialApp.router(
+            theme: TemaApp.claro,
+            routerConfig: enrutador,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Carta a Tres'), findsOneWidget);
+    expect(find.text('Respeta su fecha de apertura'), findsOneWidget);
+
+    await tester.tap(find.text('Carta a Tres'));
+    await tester.pumpAndSettle();
+    expect(find.text('detalle-c1'), findsOneWidget);
   });
 }

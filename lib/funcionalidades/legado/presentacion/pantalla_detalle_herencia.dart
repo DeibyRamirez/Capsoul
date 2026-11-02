@@ -91,6 +91,7 @@ class PantallaDetalleHerencia extends ConsumerWidget {
                     Text('Cápsulas vinculadas (${d.capsulas.length})'),
                     for (final c in d.capsulas)
                       ListTile(
+                        key: ValueKey(c.capsulaId),
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
                           c.estado == 'liberada'
@@ -102,6 +103,10 @@ class PantallaDetalleHerencia extends ConsumerWidget {
                           c.estado == 'liberada'
                               ? 'Lista para abrir'
                               : 'Respeta su fecha de apertura',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(
+                          RutasApp.detalleCapsulaDe(c.capsulaId),
                         ),
                       ),
                     const SizedBox(height: 24),
