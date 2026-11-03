@@ -14,6 +14,7 @@ class ReferenciaMusica {
     this.uriProfundo,
     this.enlaceDeezer,
     this.proveedor = ProveedorMusica.spotify,
+    this.vistaPreviaConocida = false,
   });
 
   final ProveedorMusica proveedor;
@@ -23,6 +24,10 @@ class ReferenciaMusica {
 
   /// Clip de 30 s. En Deezer caduca: no se guarda y se vuelve a pedir.
   final String? previewUrl;
+
+  /// True si se supo que hay clip aunque la URL no esté (la caché de
+  /// búsqueda no la guarda). No se persiste.
+  final bool vistaPreviaConocida;
 
   /// Origen del clip de 30 s (`spotify`, `deezer` o null si no hay preview).
   final ProveedorPreviewMusica? previewProveedor;
@@ -35,8 +40,10 @@ class ReferenciaMusica {
 
   String get etiquetaCorta => '$artista — $titulo';
 
-  bool get tienePreview =>
-      previewUrl != null && previewUrl!.trim().isNotEmpty;
+  bool get tienePreview => previewUrl != null && previewUrl!.trim().isNotEmpty;
+
+  /// Hay clip para mostrar, aunque la caché haya quitado la URL.
+  bool get hayClipConocido => tienePreview || vistaPreviaConocida;
 
   bool get esDeezer => proveedor == ProveedorMusica.deezer;
 
@@ -60,19 +67,38 @@ class ReferenciaMusica {
     ProveedorPreviewMusica? previewProveedor,
     String? portadaUrl,
     String? enlaceDeezer,
-  }) =>
-      ReferenciaMusica(
-        proveedor: proveedor,
-        idExterno: idExterno,
-        titulo: titulo,
-        artista: artista,
-        urlCompleta: urlCompleta,
-        previewUrl: previewUrl,
-        previewProveedor: previewProveedor ?? this.previewProveedor,
-        portadaUrl: portadaUrl ?? this.portadaUrl,
-        uriProfundo: uriProfundo,
-        enlaceDeezer: enlaceDeezer ?? this.enlaceDeezer,
-      );
+  }) => ReferenciaMusica(
+    proveedor: proveedor,
+    idExterno: idExterno,
+    titulo: titulo,
+    artista: artista,
+    urlCompleta: urlCompleta,
+    previewUrl: previewUrl,
+    previewProveedor: previewProveedor ?? this.previewProveedor,
+    portadaUrl: portadaUrl ?? this.portadaUrl,
+    uriProfundo: uriProfundo,
+    enlaceDeezer: enlaceDeezer ?? this.enlaceDeezer,
+    vistaPreviaConocida: vistaPreviaConocida,
+  );
+
+  /// Copia para la caché de búsqueda: mismos metadatos, sin la URL del
+  /// preview. Caduca y no debe llegar vencida al reproductor; al oír el
+  /// clip se pide `GET /track/<id>`.
+  ReferenciaMusica sinUrlDePreview() {
+    if (!tienePreview) return this;
+    return ReferenciaMusica(
+      proveedor: proveedor,
+      idExterno: idExterno,
+      titulo: titulo,
+      artista: artista,
+      urlCompleta: urlCompleta,
+      previewProveedor: previewProveedor,
+      portadaUrl: portadaUrl,
+      uriProfundo: uriProfundo,
+      enlaceDeezer: enlaceDeezer,
+      vistaPreviaConocida: true,
+    );
+  }
 
   static ReferenciaMusica? desdeJsonApi(Object? datos) {
     if (datos is! Map) return null;
@@ -92,7 +118,9 @@ class ReferenciaMusica {
       artista: artista.trim(),
       urlCompleta: url.trim(),
       previewUrl: _texto(datos['previewUrl']),
-      previewProveedor: ProveedorPreviewMusica.desdeApi(datos['previewProveedor']),
+      previewProveedor: ProveedorPreviewMusica.desdeApi(
+        datos['previewProveedor'],
+      ),
       portadaUrl: _texto(datos['portadaUrl']),
       uriProfundo: _texto(datos['uriProfundo']),
       enlaceDeezer: _texto(datos['enlaceDeezer']),
@@ -111,7 +139,7 @@ class ReferenciaMusica {
 
   String get etiquetaPreview {
     if (esDeezer) {
-      return tienePreview ? 'Vista previa de 30 s' : 'Sin vista previa';
+      return hayClipConocido ? 'Vista previa de 30 s' : 'Sin vista previa';
     }
     return switch (previewProveedorEfectivo) {
       ProveedorPreviewMusica.deezer => 'Vista previa (Deezer)',
@@ -131,7 +159,8 @@ class ReferenciaMusica {
         url is! String) {
       return null;
     }
-    final proveedor = ProveedorMusica.desdeValorBd(datos['musica_proveedor']) ??
+    final proveedor =
+        ProveedorMusica.desdeValorBd(datos['musica_proveedor']) ??
         ProveedorMusica.spotify;
     final previewUrl = _texto(datos['musica_preview_url']);
     final previewProv = ProveedorPreviewMusica.desdeApi(
@@ -153,19 +182,19 @@ class ReferenciaMusica {
 
   /// Solo metadatos. En Deezer nunca se guarda la URL del preview (caduca).
   Map<String, dynamic> aFilaBd() => {
-        'musica_proveedor': proveedor.valorBd,
-        'musica_id_externo': idExterno,
-        'musica_titulo': titulo,
-        'musica_artista': artista,
-        'musica_preview_url': esDeezer ? null : previewUrl,
-        if (previewProveedor != null || esDeezer)
-          'musica_preview_proveedor':
-              (previewProveedor ?? ProveedorPreviewMusica.deezer).valorApi,
-        'musica_url_completa': urlCompleta,
-        'musica_portada_url': portadaUrl,
-        'musica_uri_profundo': uriProfundo,
-        'musica_enlace_deezer': enlaceDeezer,
-      };
+    'musica_proveedor': proveedor.valorBd,
+    'musica_id_externo': idExterno,
+    'musica_titulo': titulo,
+    'musica_artista': artista,
+    'musica_preview_url': esDeezer ? null : previewUrl,
+    if (previewProveedor != null || esDeezer)
+      'musica_preview_proveedor':
+          (previewProveedor ?? ProveedorPreviewMusica.deezer).valorApi,
+    'musica_url_completa': urlCompleta,
+    'musica_portada_url': portadaUrl,
+    'musica_uri_profundo': uriProfundo,
+    'musica_enlace_deezer': enlaceDeezer,
+  };
 
   static String? _texto(Object? valor) =>
       valor is String && valor.trim().isNotEmpty ? valor.trim() : null;
@@ -183,21 +212,23 @@ class ReferenciaMusica {
           other.urlCompleta == urlCompleta &&
           other.portadaUrl == portadaUrl &&
           other.uriProfundo == uriProfundo &&
-          other.enlaceDeezer == enlaceDeezer;
+          other.enlaceDeezer == enlaceDeezer &&
+          other.vistaPreviaConocida == vistaPreviaConocida;
 
   @override
   int get hashCode => Object.hash(
-        proveedor,
-        idExterno,
-        titulo,
-        artista,
-        previewUrl,
-        previewProveedor,
-        urlCompleta,
-        portadaUrl,
-        uriProfundo,
-        enlaceDeezer,
-      );
+    proveedor,
+    idExterno,
+    titulo,
+    artista,
+    previewUrl,
+    previewProveedor,
+    urlCompleta,
+    portadaUrl,
+    uriProfundo,
+    enlaceDeezer,
+    vistaPreviaConocida,
+  );
 }
 
 enum ProveedorMusica {

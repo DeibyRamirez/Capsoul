@@ -22,10 +22,30 @@ sequenceDiagram
   App->>App: just_audio reproduce la URL
 ```
 
-- **Catálogo y búsqueda:** API pública de **Deezer** (`musica_proveedor = deezer`). La app llama a `api.deezer.com` directo.
-- **Preview de 30 s:** URL de Deezer. Caduca y no se guarda; al reproducir se vuelve a pedir `/track/<id>`.
+- **Catálogo y búsqueda:** API pública de **Deezer** (`musica_proveedor = deezer`). La app llama a `api.deezer.com` directo, con antirrebote y caché en memoria (abajo). No guarda la respuesta en Postgres.
+- **Preview de 30 s:** URL de Deezer. Caduca y no se guarda (ni en la base ni en la caché de búsqueda); al reproducir se vuelve a pedir `/track/<id>`.
 - `buscar-musica` hace la misma búsqueda (JWT, máximo 10, `proveedor: deezer`) y **no** la usa la app. No hay secretos de catálogo.
 - **Spotify** queda para el botón «Buscar en Spotify» (enlace externo) y para recuerdos ya guardados con ese proveedor.
+
+## Antirrebote y caché de búsqueda (2026-11-03)
+
+La pantalla de buscar música no llama a Deezer en cada tecla. Así se bajan las consultas a `api.deezer.com` (la cuota pública es corta: código 4 al pasarse).
+
+| Comportamiento | Detalle |
+|---|---|
+| Antirrebote | 400 ms desde la última tecla. Si el usuario sigue escribiendo, el temporizador se reinicia. |
+| Mínimo | No se busca con menos de 2 caracteres después de quitar los espacios de los extremos. |
+| Respuesta vieja | Cada búsqueda lleva un número. Si llega tarde la de una consulta anterior, se descarta y no tapa a la más reciente. |
+| `dispose` | Al salir de la pantalla se cancela el temporizador. |
+| Caché | Solo en la memoria del teléfono. La llave es la consulta en minúsculas, sin espacios al inicio ni al final y con los espacios internos reducidos a uno. Vigencia de 15 minutos. Máximo 50 entradas; al llenarse se borran las más viejas. |
+| En curso | Dos búsquedas con la misma llave, todavía sin respuesta, comparten el mismo `Future`. |
+| Preview | La caché guarda título, artista, portada e id, **sin** `previewUrl`. No se escribe en Postgres y el reproductor no recibe una URL vencida. Al pulsar play se sigue pidiendo `GET /track/<id>` y el audio sale con `AudioSource.uri` sin headers. |
+
+`obtenerPorId` (`/track/<id>`) no pasa por esta caché: cada reproducción pide un preview fresco. Las ocho reglas de la sección siguiente no cambian.
+
+Archivos: `lib/funcionalidades/musica/aplicacion/controlador_busqueda_musica.dart`, `lib/funcionalidades/musica/dominio/cache_busquedas_musica.dart`, `lib/funcionalidades/musica/datos/repositorio_musica_con_cache.dart`.
+
+Pruebas: `controlador_busqueda_musica_test.dart` (`fakeAsync`: «H», «HOL» y «HOLA» hacen una sola petición), `cache_busquedas_musica_test.dart` (vigencia y tope) y `repositorio_musica_con_cache_test.dart` (búsquedas duplicadas y `/track/<id>` sin caché).
 
 ## Spotify (enlaces y recuerdos antiguos)
 
