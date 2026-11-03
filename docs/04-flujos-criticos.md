@@ -151,7 +151,7 @@ Ambas leen `proveedorMomentos`; el filtro en memoria (`proveedorFiltroMomentos`)
 
 ## 7. Música (Deezer, elemento `musica`)
 
-1. La app busca en la API pública de Deezer (`RepositorioMusicaDeezer`). No invoca la Edge Function.
+1. La app busca en la API pública de Deezer (`RepositorioMusicaDeezer`), con antirrebote de 400 ms y caché en memoria de 15 minutos. No invoca la Edge Function. La URL del preview no se cachea ni se guarda: al reproducir se pide `/track/<id>`.
 2. El usuario guarda un recuerdo `musica` o adjunta la pista a una `foto` (`musica_proveedor = deezer`). Las filas antiguas de Spotify se siguen leyendo.
 3. Reproducción: `just_audio` en streaming. La URL del preview caduca; al reproducir se pide `GET /track/<id>` (o una búsqueda si la fila antigua no tiene id de Deezer).
 4. «Escuchar completa» abre Deezer, una búsqueda en Spotify o YouTube (`url_launcher`; `queries` en Android).

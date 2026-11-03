@@ -246,10 +246,10 @@ class _FilaPista extends StatelessWidget {
                     pista.etiquetaPreview,
                     style: TextStyle(
                       fontSize: 12,
-                      color: pista.tienePreview
+                      color: pista.hayClipConocido
                           ? ColoresApp.acento
                           : ColoresApp.atenuado,
-                      fontWeight: pista.tienePreview
+                      fontWeight: pista.hayClipConocido
                           ? FontWeight.w600
                           : FontWeight.w400,
                     ),

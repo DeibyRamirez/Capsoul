@@ -6,8 +6,9 @@ import '../dominio/fallo_musica.dart';
 import 'estado_busqueda_musica.dart';
 import 'proveedores_musica.dart';
 
-/// Búsqueda con debounce. Cada búsqueda lleva un número; si llega la
-/// respuesta de una búsqueda vieja, se ignora.
+/// Búsqueda con antirrebote: espera tras la última tecla y, si el usuario
+/// sigue escribiendo, reinicia la espera. Una respuesta vieja no pisa a la
+/// más reciente. El temporizador se cancela al destruir el controlador.
 class ControladorBusquedaMusica extends Notifier<EstadoBusquedaMusica> {
   Timer? _espera;
   int _peticion = 0;
@@ -43,7 +44,7 @@ class ControladorBusquedaMusica extends Notifier<EstadoBusquedaMusica> {
     state = state.copiarCon(cargando: true, quitarError: true);
     try {
       final resultados = await ref
-          .read(proveedorRepositorioCatalogoMusica)
+          .read(proveedorRepositorioBusquedaMusica)
           .buscar(consulta);
       if (!ref.mounted || numero != _peticion) return;
       state = EstadoBusquedaMusica(
@@ -64,7 +65,8 @@ class ControladorBusquedaMusica extends Notifier<EstadoBusquedaMusica> {
   }
 }
 
-final proveedorControladorBusquedaMusica = NotifierProvider.autoDispose<
-    ControladorBusquedaMusica, EstadoBusquedaMusica>(
-  ControladorBusquedaMusica.new,
-);
+final proveedorControladorBusquedaMusica =
+    NotifierProvider.autoDispose<
+      ControladorBusquedaMusica,
+      EstadoBusquedaMusica
+    >(ControladorBusquedaMusica.new);

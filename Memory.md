@@ -48,7 +48,7 @@
   **Cloudinary** (cloud `dee3zdenh`, plan Free) para medios; **Firebase solo FCM** (`capsoul-ebea3`).
 - `go_router ^16.2.0`, `supabase_flutter ^2.18.0` (resuelto 2.18.0; gotrue 2.27.2, postgrest 2.9.1),
   `firebase_core ^4.1.0`, `flutter_riverpod ^3.4.3`, `flutter_lints`.
-- Dev: `mocktail ^1.0.5`.
+- Dev: `mocktail ^1.0.5`, `fake_async ^1.3.3` (pruebas del antirrebote de música).
 - Quitados el 2026-10-02: `firebase_auth`, `cloud_firestore`, `firebase_storage`, `fake_cloud_firestore`.
 - Medios (2026-10-03, rama `funcionalidad/capsulas`): `camera ^0.12.1` (camerax 0.7.5+1, avfoundation 0.10.3+1),
   `record ^7.1.1`, `flutter_image_compress ^2.5.1`, `http ^1.6.0`, `path_provider ^2.1.6`, `flutter_localizations`
@@ -90,7 +90,7 @@ lib/
     inicio/{aplicacion,datos,dominio,presentacion}         # Inicio del mockup con conteos reales (RepositorioResumenInicio)
     recuerdos/{aplicacion,datos,dominio,presentacion}      # banco de recuerdos, URLs firmadas (firmar-medio), reproductores, elegir
     momentos/{aplicacion,datos,dominio,presentacion}       # feed vertical, crear, detalle bento, filtros perfil
-    musica/{aplicacion,datos,dominio,presentacion}       # API pública de Deezer, preview 30 s (streaming), enlaces externos
+    musica/{aplicacion,datos,dominio,presentacion}       # Deezer, preview 30 s (streaming), caché de búsqueda 15 min, enlaces externos
     legado/{aplicacion,datos,dominio,presentacion}       # herencias, wizard, persona de confianza
     retos/{aplicacion,datos,dominio,presentacion}        # retos globales
     crear/                                                 # selector + hoja opciones crear
@@ -286,6 +286,7 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
 - **2026-09-26** Riverpod como gestor de estado único; repositorios detrás de interfaces abstractas inyectadas por
   proveedores (`proveedorRepositorioAutenticacion`, `proveedorRepositorioUsuarios`) para simularlos en pruebas.
 - **2026-10-31 Preview de música (NO romper).** Reglas: `AudioSource.uri` sin headers, caché ni proxy (en Android, el proxy 127.0.0.1 de just_audio es cleartext y se bloquea); solo streaming; nunca guardar la `preview_url` de Deezer: pedir siempre `/track/<id>` y usarla en memoria; ignorar las URL `dzcdn` guardadas en filas antiguas de Spotify; el UPDATE no envía `duracion_segundos` ni `musica_preview_proveedor` (sin grant: 42501); respetar el check de la 000023; el overlay de música sobre foto no se envuelve en otro `Positioned`. Tabla de reglas y tests en `docs/08-musica-producto-y-licencias.md`, sección «Reglas del preview que no se pueden romper».
+- **2026-11-03** Búsqueda de música: antirrebote de 400 ms y caché en memoria del teléfono (15 min, 50 consultas, llave normalizada). La caché no guarda la URL del preview; `GET /track/<id>` no se cachea y el audio sigue sin headers. No se tocó Supabase.
 
 ## 8. Bitácora
 
@@ -435,3 +436,4 @@ Todo lo que toca un entorno requiere aprobación del PO (regla 7).
   sigue en `api.deezer.com`, con el botón «buscar en Spotify» y las canciones antiguas. Rama
   `tarea/buscar-musica-deezer`. Sin despliegue.
 - **2026-10-31** Música (rama `correccion/preview-musica`): el preview falla en Android por el proxy local de just_audio (con headers, cleartext a 127.0.0.1); ahora se reproduce directo. En filas antiguas, la URL de Deezer caducada (403) se refrescaba y se intentaba guardar con columnas sin grant, lo que daba 42501 y `permiso_denegado`; ahora la URL de Deezer vive solo en memoria y la guardada se ignora. Visor: se quitó el doble `Positioned` del overlay de música sobre foto. Detalle en `docs/08-musica-producto-y-licencias.md`.
+- **2026-11-03** Búsqueda de Deezer (rama `mejora/antirrebote-cache-deezer`, PR hacia `develop`, sin fusionar): antirrebote de 400 ms (`H` / `HOL` / `HOLA` → una petición) y caché en memoria (15 min, 50 entradas, búsquedas duplicadas unidas). La caché no guarda `previewUrl`; al reproducir se sigue pidiendo `/track/<id>`. Sin cambios en Supabase. Documentado en `docs/08-musica-producto-y-licencias.md`.
