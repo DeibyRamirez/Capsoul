@@ -84,7 +84,7 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
       return;
     }
     setState(() => _inicializandoCamara = true);
-    await actual?.dispose();
+    actual?.dispose();
     final nueva = GestorCamara(paraVideo: necesitaVideo);
     _camara = nueva;
     await nueva.iniciar();
@@ -94,7 +94,7 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
   Future<void> _alCambiarModo(ModoCaptura modo) async {
     ref.read(proveedorControladorSesionCaptura.notifier).elegirModo(modo);
     if (modo == ModoCaptura.texto) {
-      await _camara?.dispose();
+      _camara?.dispose();
       _camara = null;
       if (!mounted) return;
       setState(() {});

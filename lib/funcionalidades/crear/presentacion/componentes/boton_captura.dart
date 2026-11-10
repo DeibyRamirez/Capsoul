@@ -33,7 +33,7 @@ class BotonCaptura extends StatelessWidget {
       (_, true) => 'Pausar grabación',
       _ => 'Iniciar grabación',
     };
-  return Semantics(
+    return Semantics(
       button: true,
       enabled: habilitado,
       label: etiqueta,
