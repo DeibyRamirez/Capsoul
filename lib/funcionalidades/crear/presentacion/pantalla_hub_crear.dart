@@ -57,10 +57,16 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
     if (camara == null) return;
     if (estado == AppLifecycleState.inactive) {
       final sesion = ref.read(proveedorControladorSesionCaptura);
-      if (sesion.grabando) _detenerVideo();
-      camara.pausar();
+      if (sesion.grabando) unawaited(_detenerVideo());
+      unawaited(_pausarCamaraEnSegundoPlano(camara));
     }
-    if (estado == AppLifecycleState.resumed) camara.reanudar();
+    if (estado == AppLifecycleState.resumed) {
+      unawaited(camara.reanudar());
+    }
+  }
+
+  Future<void> _pausarCamaraEnSegundoPlano(GestorCamara camara) async {
+    await camara.pausar();
   }
 
   @override
@@ -79,7 +85,7 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
     final camara = _camara;
     _camara = null;
     if (camara == null) return;
-    await camara.pausar();
+    await camara.liberar();
     camara.dispose();
   }
 

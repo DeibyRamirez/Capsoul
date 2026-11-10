@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 
@@ -79,6 +81,14 @@ class GestorCamara extends ChangeNotifier {
     await _abrir();
   }
 
+  /// Libera el [CameraController] y marca el gestor como inactivo.
+  /// Usar antes de descartar el gestor (p. ej. hub al cambiar modo).
+  Future<void> liberar() async {
+    if (_liberado) return;
+    await pausar();
+    _liberado = true;
+  }
+
   Future<void> _abrir() async {
     await pausar();
     final nuevo = CameraController(
@@ -125,10 +135,16 @@ class GestorCamara extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_liberado) {
+      super.dispose();
+      return;
+    }
     _liberado = true;
     final anterior = _controlador;
     _controlador = null;
-    anterior?.dispose();
+    if (anterior != null) {
+      unawaited(anterior.dispose());
+    }
     super.dispose();
   }
 }
