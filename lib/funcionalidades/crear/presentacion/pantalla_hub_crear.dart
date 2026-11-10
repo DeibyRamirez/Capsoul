@@ -75,6 +75,14 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
 
   bool get _paraVideo => _modo == ModoCaptura.video;
 
+  Future<void> _liberarCamara() async {
+    final camara = _camara;
+    _camara = null;
+    if (camara == null) return;
+    await camara.pausar();
+    camara.dispose();
+  }
+
   Future<void> _sincronizarCamara() async {
     final modo = ref.read(proveedorControladorSesionCaptura).modo;
     if (modo == ModoCaptura.texto) return;
@@ -84,7 +92,9 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
       return;
     }
     setState(() => _inicializandoCamara = true);
-    actual?.dispose();
+    if (actual != null) {
+      await _liberarCamara();
+    }
     final nueva = GestorCamara(paraVideo: necesitaVideo);
     _camara = nueva;
     await nueva.iniciar();
@@ -94,8 +104,7 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
   Future<void> _alCambiarModo(ModoCaptura modo) async {
     ref.read(proveedorControladorSesionCaptura.notifier).elegirModo(modo);
     if (modo == ModoCaptura.texto) {
-      _camara?.dispose();
-      _camara = null;
+      await _liberarCamara();
       if (!mounted) return;
       setState(() {});
       final borrador = await context.push<ElementoBorrador>(RutasApp.crearEscribir);
