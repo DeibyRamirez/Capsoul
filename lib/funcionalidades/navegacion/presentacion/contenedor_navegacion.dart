@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../funcionalidades/crear/presentacion/componentes/hoja_opciones_crear.dart';
+import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
 
@@ -30,7 +30,7 @@ class ContenedorNavegacion extends StatelessWidget {
 
   void _alSeleccionarDestino(BuildContext context, int posicion) {
     if (posicion == _posicionCrear) {
-      HojaOpcionesCrear.mostrar(context);
+      context.push(RutasApp.hubCrear);
       return;
     }
     final indiceRama = switch (posicion) {

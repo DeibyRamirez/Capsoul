@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../funcionalidades/crear/presentacion/tema/tokens_crear.dart';
 import 'colores_app.dart';
 
 /// Tema Material 3 de Capsoul: modo claro, Poppins en la UI y Playfair
@@ -237,6 +238,7 @@ abstract final class TemaApp {
         foregroundColor: ColoresApp.sobrePrimario,
         shape: CircleBorder(),
       ),
+      extensions: const [TokensCrear.claro],
     );
   }
 }

@@ -20,6 +20,7 @@ abstract final class RutasApp {
   static const String yo = '/yo';
   static const String amigos = '/yo/amigos';
   static const String crear = '/crear';
+  static const String hubCrear = '/crear/hub';
   static const String crearVideo = '/crear/video';
   static const String crearAudio = '/crear/audio';
   static const String crearEscribir = '/crear/escribir';
