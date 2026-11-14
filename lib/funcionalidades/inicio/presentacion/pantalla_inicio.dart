@@ -11,7 +11,6 @@ import '../../amistades/aplicacion/proveedores_amistades.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../capsulas/dominio/avisos_capsulas.dart';
-import '../../crear/presentacion/componentes/hoja_opciones_crear.dart';
 import '../aplicacion/proveedores_inicio.dart';
 import '../dominio/resumen_inicio.dart';
 import 'componentes/banner_frase_inicio.dart';
@@ -85,7 +84,7 @@ class PantallaInicio extends ConsumerWidget {
                   minimumSize: const Size(220, 48),
                   shape: const StadiumBorder(),
                 ),
-                onPressed: () => HojaOpcionesCrear.mostrar(context),
+                onPressed: () => context.push(RutasApp.hubCrear),
                 icon: const Icon(Icons.add),
                 label: const Text('Guardar algo hoy'),
               ),
