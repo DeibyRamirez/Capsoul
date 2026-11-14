@@ -151,6 +151,7 @@ void main() {
     expect(find.text('05:30'), findsOneWidget);
     expect(find.text('Nota de voz'), findsOneWidget);
     expect(find.text('01:32'), findsOneWidget);
+    expect(find.text('Persona de confianza'), findsNothing);
     expect(find.text('Abrir cápsula'), findsNothing);
   });
 
