@@ -11,7 +11,7 @@ class FilaDestacadosPerfil extends StatelessWidget {
 
   static const _destacados = <({String etiqueta, IconData icono, Color fondo})>[
     (
-      etiqueta: 'Retos',
+      etiqueta: 'Diario',
       icono: Icons.flag_outlined,
       fondo: ColoresApp.pastelAzul,
     ),

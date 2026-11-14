@@ -34,7 +34,7 @@ object AvisoBandeja {
             "Avisos de Capsoul",
             NotificationManager.IMPORTANCE_HIGH,
         )
-        canal.description = "Cápsulas, amistades, legado y retos"
+        canal.description = "Cápsulas, amistades, legado y diario"
         contexto.getSystemService(NotificationManager::class.java)
             .createNotificationChannel(canal)
     }

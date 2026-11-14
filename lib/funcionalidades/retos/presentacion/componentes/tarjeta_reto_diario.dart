@@ -40,7 +40,7 @@ class TarjetaRetoDiario extends StatelessWidget {
                   Icon(Icons.wb_sunny_outlined, color: ColoresApp.acento),
                   const SizedBox(width: 8),
                   Text(
-                    'Reto diario',
+                    'Entrada del día',
                     style: tema.textTheme.titleSmall?.copyWith(
                       color: ColoresApp.textoSecundario,
                       fontWeight: FontWeight.w600,

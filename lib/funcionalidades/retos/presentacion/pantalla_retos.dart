@@ -107,7 +107,7 @@ class _PantallaRetosState extends ConsumerState<PantallaRetos> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No hay más retos activos por ahora.')),
+      const SnackBar(content: Text('No hay más entradas activas por ahora.')),
     );
   }
 
@@ -173,7 +173,7 @@ class _ContenidoRetos extends StatelessWidget {
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               const EncabezadoSeccionCapsoul(
-                titulo: 'Retos',
+                titulo: 'Diario',
                 subtitulo:
                     'Pequeños pasos que hoy construyen grandes recuerdos.',
                 icono: Icons.auto_awesome_outlined,
@@ -192,7 +192,7 @@ class _ContenidoRetos extends StatelessWidget {
             hasScrollBody: false,
             child: EstadoVacioRetos(
               icono: Icons.favorite_border,
-              mensaje: 'Próximamente podrás marcar retos favoritos.',
+              mensaje: 'Próximamente podrás marcar entradas favoritas.',
             ),
           ),
         },
@@ -212,7 +212,7 @@ class _ContenidoRetos extends StatelessWidget {
       return const SliverFillRemaining(
         hasScrollBody: false,
         child: EstadoVacioRetos(
-          mensaje: 'No tienes retos activos. ¡Buen trabajo!',
+          mensaje: 'No tienes entradas activas. ¡Buen trabajo!',
         ),
       );
     }
@@ -230,7 +230,7 @@ class _ContenidoRetos extends StatelessWidget {
           ],
           if (c.semanales.isNotEmpty) ...[
             _EncabezadoSeccion(
-              titulo: 'Retos semanales',
+              titulo: 'Entradas semanales',
               accion: 'Ver todos',
               alAccion: alVerTodosSemanales,
             ),
@@ -248,7 +248,7 @@ class _ContenidoRetos extends StatelessWidget {
             const SizedBox(height: 14),
           ],
           if (c.especial != null) ...[
-            _EncabezadoSeccion(titulo: 'Retos especiales'),
+            _EncabezadoSeccion(titulo: 'Entradas especiales'),
             const SizedBox(height: 12),
             TarjetaRetoEspecial(
               reto: c.especial!,
@@ -260,7 +260,7 @@ class _ContenidoRetos extends StatelessWidget {
           if (c.restoActivos.isNotEmpty) ...[
             KeyedSubtree(
               key: claveRestoActivos,
-              child: _EncabezadoSeccion(titulo: 'Más retos'),
+              child: _EncabezadoSeccion(titulo: 'Más entradas'),
             ),
             const SizedBox(height: 12),
             ...c.restoActivos.map(
@@ -283,7 +283,7 @@ class _ContenidoRetos extends StatelessWidget {
     if (c.completados.isEmpty) {
       return const SliverFillRemaining(
         hasScrollBody: false,
-        child: EstadoVacioRetos(mensaje: 'Aún no has completado ningún reto.'),
+        child: EstadoVacioRetos(mensaje: 'Aún no has completado ninguna entrada.'),
       );
     }
 
