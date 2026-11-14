@@ -14,6 +14,7 @@ import '../../funcionalidades/capsulas/presentacion/pantalla_editar_capsula.dart
 import '../../funcionalidades/capsulas/presentacion/pantalla_detalle_capsula.dart';
 import '../../funcionalidades/capsulas/presentacion/pantalla_capsulas_recibidas.dart';
 import '../../funcionalidades/capsulas/presentacion/pantalla_mis_capsulas.dart';
+import '../../funcionalidades/crear/presentacion/pantalla_hub_crear.dart';
 import '../../funcionalidades/crear/presentacion/pantalla_selector_crear.dart';
 import '../../funcionalidades/elementos/dominio/elemento_borrador.dart';
 import '../../funcionalidades/elementos/presentacion/pantalla_capturar_foto.dart';
@@ -279,6 +280,12 @@ GoRouter crearEnrutadorApp({
         parentNavigatorKey: claveNavegadorRaiz,
         builder: (context, state) => const PantallaSelectorCrear(),
         routes: [
+          GoRoute(
+            path: 'hub',
+            name: 'hub-crear',
+            parentNavigatorKey: claveNavegadorRaiz,
+            builder: (context, state) => const PantallaHubCrear(),
+          ),
           GoRoute(
             path: 'capsula',
             name: 'crear-capsula',

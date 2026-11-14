@@ -1,7 +1,9 @@
 import 'package:capsoul/app_capsoul.dart';
 import 'package:capsoul/funcionalidades/amistades/aplicacion/proveedores_amistades.dart';
 import 'package:capsoul/funcionalidades/autenticacion/aplicacion/proveedores_autenticacion.dart';
+import 'package:camera/camera.dart';
 import 'package:capsoul/funcionalidades/capsulas/aplicacion/proveedores_capsulas.dart';
+import 'package:capsoul/funcionalidades/elementos/aplicacion/proveedores_elementos.dart';
 import 'package:capsoul/funcionalidades/inicio/aplicacion/proveedores_inicio.dart';
 import 'package:capsoul/funcionalidades/legado/aplicacion/proveedores_legado.dart';
 import 'package:capsoul/funcionalidades/momentos/aplicacion/proveedores_momentos.dart';
@@ -81,6 +83,9 @@ Future<void> montarAppCapsoul(
         ),
         proveedorArchivosMedio.overrideWithValue(ArchivosMedioFalso()),
         proveedorReloj.overrideWithValue(() => ahoraPrueba),
+        proveedorBuscarCamaras.overrideWithValue(
+          () async => const <CameraDescription>[],
+        ),
         proveedorRepositorioDispositivosPush.overrideWithValue(
           RegistroDispositivosPushFalso(),
         ),

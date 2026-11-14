@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
-import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/componentes/asistente_pasos.dart';
 import '../../../nucleo/componentes/cabecera_detalle_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/componentes/tarjeta_capsoul.dart';
@@ -63,7 +63,7 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
 
   /// Captura un recuerdo nuevo, lo guarda en el banco y lo agrega.
   Future<void> _capturarAhora(TipoElemento tipo) async {
-    final recuerdo = await capturarRecuerdo(context, tipo);
+    final recuerdo = await capturarRecuerdo(context, tipo, origenHub: true);
     if (recuerdo != null && mounted) _controlador.agregarRecuerdos([recuerdo]);
   }
 
@@ -117,121 +117,131 @@ class _EstadoPantallaCrearCapsula extends ConsumerState<PantallaCrearCapsula> {
           Expanded(
             child: SafeArea(
               top: false,
-              child: ListView(
-                key: const Key('formulario-capsula'),
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                children: [
-                  TarjetaCapsoul(
-                    icono: Icons.photo_library_outlined,
-                    titulo: 'Recuerdos ($total/${EstadoCrearCapsula.maximo})',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final recuerdo in estado.recuerdos)
-                          TarjetaRecuerdoElegido(
-                            key: ValueKey(recuerdo.id),
-                            recuerdo: recuerdo,
-                            alQuitar: estado.guardando
-                                ? null
-                                : () => _controlador.quitar(recuerdo.id),
-                          ),
-                        OutlinedButton.icon(
-                          key: const Key('boton-elegir-recuerdos'),
-                          onPressed: puedeAgregar
-                              ? _elegirDeMisRecuerdos
-                              : null,
-                          icon: const Icon(Icons.photo_library_outlined),
-                          label: const Text('Elegir de mis recuerdos'),
+              child: AsistentePasos(
+                etiquetasPasos: const ['Contenido', 'Detalles', 'Confirmar'],
+                cargando: estado.guardando,
+                etiquetaFinal: 'Guardar cápsula',
+                alTerminar: _guardar,
+                pasos: [
+                  ListView(
+                    key: const Key('formulario-capsula-paso-1'),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    children: [
+                      TarjetaCapsoul(
+                        icono: Icons.photo_library_outlined,
+                        titulo:
+                            'Recuerdos ($total/${EstadoCrearCapsula.maximo})',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (final recuerdo in estado.recuerdos)
+                              TarjetaRecuerdoElegido(
+                                key: ValueKey(recuerdo.id),
+                                recuerdo: recuerdo,
+                                alQuitar: estado.guardando
+                                    ? null
+                                    : () => _controlador.quitar(recuerdo.id),
+                              ),
+                            OutlinedButton.icon(
+                              key: const Key('boton-elegir-recuerdos'),
+                              onPressed:
+                                  puedeAgregar ? _elegirDeMisRecuerdos : null,
+                              icon: const Icon(Icons.photo_library_outlined),
+                              label: const Text('Elegir de mis recuerdos'),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Capturar ahora',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: ColoresApp.atenuado),
+                            ),
+                            const SizedBox(height: 8),
+                            BotonesAgregarElemento(
+                              habilitado: puedeAgregar,
+                              alElegir: _capturarAhora,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Capturar ahora',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: ColoresApp.atenuado),
-                        ),
-                        const SizedBox(height: 8),
-                        BotonesAgregarElemento(
-                          habilitado: puedeAgregar,
-                          alElegir: _capturarAhora,
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  TarjetaCapsoul(
-                    icono: Icons.edit_outlined,
-                    titulo: 'Título y mensaje',
-                    child: Column(
-                      children: [
-                        TextField(
-                          key: const Key('campo-titulo'),
-                          controller: _titulo,
-                          enabled: !estado.guardando,
-                          maxLength: ValidadorCapsula.caracteresMaxTitulo,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            labelText: 'Título',
-                            hintText: 'Para …',
-                          ),
+                  ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    children: [
+                      TarjetaCapsoul(
+                        icono: Icons.edit_outlined,
+                        titulo: 'Título y mensaje',
+                        child: Column(
+                          children: [
+                            TextField(
+                              key: const Key('campo-titulo'),
+                              controller: _titulo,
+                              enabled: !estado.guardando,
+                              maxLength: ValidadorCapsula.caracteresMaxTitulo,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: const InputDecoration(
+                                labelText: 'Título',
+                                hintText: 'Para …',
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              key: const Key('campo-mensaje'),
+                              controller: _mensaje,
+                              enabled: !estado.guardando,
+                              minLines: 3,
+                              maxLines: 6,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: const InputDecoration(
+                                labelText: 'Mensaje',
+                                hintText:
+                                    'Cuéntale por qué guardas esto para el futuro',
+                                alignLabelWithHint: true,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          key: const Key('campo-mensaje'),
-                          controller: _mensaje,
-                          enabled: !estado.guardando,
-                          minLines: 3,
-                          maxLines: 6,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            labelText: 'Mensaje',
-                            hintText:
-                                'Cuéntale por qué guardas esto para el futuro',
-                            alignLabelWithHint: true,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  TarjetaCapsoul(
-                    icono: Icons.image_outlined,
-                    titulo: 'Imagen de la cápsula',
-                    child: SelectorImagenCapsula(
-                      seleccionada: estado.imagenClave,
-                      deshabilitado: estado.guardando,
-                      alElegir: _controlador.elegirImagen,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TarjetaCapsoul(
-                    icono: Icons.lock_clock_outlined,
-                    titulo: 'Apertura y destinatarios',
-                    child: Column(
-                      children: [
-                        _CampoFecha(
-                          texto: textoFechaHoraApertura(fecha),
-                          alTocar: estado.guardando ? null : _elegirFecha,
-                        ),
-                        const SizedBox(height: 8),
-                        InterruptorCapsulaParaMi(
-                          seleccionados: estado.destinatariosUsuarioIds,
-                          uidActual: uid,
+                  ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    children: [
+                      TarjetaCapsoul(
+                        icono: Icons.image_outlined,
+                        titulo: 'Imagen de la cápsula',
+                        child: SelectorImagenCapsula(
+                          seleccionada: estado.imagenClave,
                           deshabilitado: estado.guardando,
-                          alCambiar: _controlador.elegirDestinatarios,
+                          alElegir: _controlador.elegirImagen,
                         ),
-                        SelectorDestinatariosAmigos(
-                          seleccionados: estado.destinatariosUsuarioIds,
-                          deshabilitado: estado.guardando,
-                          alCambiar: _controlador.elegirDestinatarios,
+                      ),
+                      const SizedBox(height: 16),
+                      TarjetaCapsoul(
+                        icono: Icons.lock_clock_outlined,
+                        titulo: 'Apertura y destinatarios',
+                        child: Column(
+                          children: [
+                            _CampoFecha(
+                              texto: textoFechaHoraApertura(fecha),
+                              alTocar: estado.guardando ? null : _elegirFecha,
+                            ),
+                            const SizedBox(height: 8),
+                            InterruptorCapsulaParaMi(
+                              seleccionados: estado.destinatariosUsuarioIds,
+                              uidActual: uid,
+                              deshabilitado: estado.guardando,
+                              alCambiar: _controlador.elegirDestinatarios,
+                            ),
+                            SelectorDestinatariosAmigos(
+                              seleccionados: estado.destinatariosUsuarioIds,
+                              deshabilitado: estado.guardando,
+                              alCambiar: _controlador.elegirDestinatarios,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  BotonPrincipal(
-                    etiqueta: 'Guardar cápsula',
-                    cargando: estado.guardando,
-                    alPresionar: _guardar,
+                      ),
+                    ],
                   ),
                 ],
               ),

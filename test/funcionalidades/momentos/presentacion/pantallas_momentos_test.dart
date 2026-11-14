@@ -38,38 +38,39 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Nuevo momento'), findsOneWidget);
 
-    await tester.enterText(
-      find.byKey(const Key('campo-nombre-momento')),
-      'Vacaciones',
-    );
     final agregar = find.byKey(const Key('boton-agregar-filtro'));
     await tester.ensureVisible(agregar);
     await tester.pumpAndSettle();
     await tester.tap(agregar);
     await tester.pumpAndSettle();
     expect(find.text('Recuerdos (2/60)'), findsOneWidget);
-    // La primera foto queda como portada.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
+    // Paso 2: nombre del momento.
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('campo-nombre-momento')),
+      'Vacaciones',
+    );
+
+    // Paso 3: la primera foto queda como portada.
+    await tester.tap(find.text('Siguiente'));
+    await tester.pumpAndSettle();
     final desplazable = find
         .descendant(
-          of: find.byKey(const Key('formulario-momento')),
+          of: find
+              .descendant(of: find.byType(PageView), matching: find.byType(ListView))
+              .first,
           matching: find.byType(Scrollable),
         )
         .first;
     final portada = find.byKey(const ValueKey('portada-f1'));
     await tester.scrollUntilVisible(portada, 200, scrollable: desplazable);
     expect(portada, findsOneWidget);
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
 
-    final guardar = find.text('Guardar momento');
-    await tester.scrollUntilVisible(guardar, 200,
-        scrollable: find
-            .descendant(
-              of: find.byKey(const Key('formulario-momento')),
-              matching: find.byType(Scrollable),
-            )
-            .first);
-    await tester.tap(guardar);
+    await tester.tap(find.text('Guardar momento'));
     await tester.pumpAndSettle();
 
     final creado = momentos.creados.single;

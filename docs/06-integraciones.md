@@ -34,7 +34,7 @@ Ver [`supabase/migrations/`](../supabase/migrations/) y [`modelo_er.md`](modelo_
 
 Resumen para producto y licencias: [08-musica-producto-y-licencias.md](08-musica-producto-y-licencias.md).
 
-- La app busca con `GET https://api.deezer.com/search` y refresca el preview con `GET https://api.deezer.com/track/<id>` (`RepositorioMusicaDeezer`). No invoca la Edge Function.
+- La app busca con `GET https://api.deezer.com/search` y refresca el preview con `GET https://api.deezer.com/track/<id>` (`RepositorioMusicaDeezer`). No invoca la Edge Function. La pantalla espera 400 ms tras la última tecla y reutiliza en memoria las consultas de los últimos 15 minutos (máximo 50, sin la URL del preview). Detalle en [08-musica-producto-y-licencias.md](08-musica-producto-y-licencias.md).
 - `buscar-musica` repite esa búsqueda para quien la llame con JWT (`verify_jwt = true` en `supabase/config.toml`). Cuerpo `{ consulta, limite, mercado }`; respuesta `{ resultados }` con `proveedor: "deezer"`, `previewUrl`, `previewProveedor: "deezer"` si hay clip, `enlaceDeezer`, `urlCompleta` y `uriProfundo` (`deezer://www.deezer.com/track/<id>`). Máximo **10** resultados. `mercado` se acepta y no se reenvía: la API pública no filtra por país.
 - No hay secretos de catálogo ni respaldo a otro proveedor. El despliegue de la función, si se hace, requiere aprobación del PO.
 - Reproducción en la app: preview de ~30 s con `just_audio` (sin SDK). La URL caduca y no se guarda. Pista completa: «Abrir en Deezer», «Buscar en Spotify» y YouTube (`url_launcher`).

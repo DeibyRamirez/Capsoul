@@ -2,6 +2,17 @@
 
 Índice de la documentación del proyecto **Capsoul** (app Flutter de cápsulas del tiempo y legado digital).
 
+## Manuales de entrega
+
+Escritos para lectura continua (estilo AgroControl). Autor: **Deiby Ramírez**. Versión 1.0 — 1 de noviembre de 2026.
+
+| Documento | Markdown | Word |
+|---|---|---|
+| Manual técnico (arquitectura, capas, Postgres, Edge Functions, CI) | [Manual_Tecnico_Capsoul.md](manuales/Manual_Tecnico_Capsoul.md) | [Manual_Tecnico_Capsoul.docx](manuales/Manual_Tecnico_Capsoul.docx) |
+| Manual de usuario (instalación, pestañas, FAQ) | [Manual_Usuario_Capsoul.md](manuales/Manual_Usuario_Capsoul.md) | [Manual_Usuario_Capsoul.docx](manuales/Manual_Usuario_Capsoul.docx) |
+
+El README del repositorio resume producto, stack y diagramas: [`README.md`](../README.md).
+
 ## Lectura recomendada
 
 | Orden | Documento | Para qué sirve |
