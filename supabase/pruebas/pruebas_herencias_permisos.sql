@@ -4,6 +4,10 @@
 
 \set ON_ERROR_STOP 1
 
+-- Todo corre en una transaccion que se deshace al final, para no dejar filas
+-- que choquen con las pruebas siguientes (comparten la misma base).
+begin;
+
 insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) values
  ('a0000000-0000-0000-0000-000000000001','u1@x.co','{"nombre_visible":"Uno"}', now()),
  ('a0000000-0000-0000-0000-000000000002','u2@x.co','{"nombre_visible":"Dos"}', now()),
@@ -124,3 +128,5 @@ select tipo, usuario_id from public.notificaciones
    'c0000000-0000-0000-0000-000000000001'
  )
  order by tipo, usuario_id;
+
+rollback;
