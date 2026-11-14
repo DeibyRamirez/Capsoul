@@ -104,10 +104,18 @@ select count(*) elementos_u3_despues from public.elementos;
 
 \echo '--- Cliente no puede insertar herencia_capsulas'
 set request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000001';
-insert into public.herencia_capsulas (herencia_id, capsula_id) values (
-  'b0000000-0000-0000-0000-000000000001',
-  'c0000000-0000-0000-0000-000000000001'
-);
+do $$
+begin
+  insert into public.herencia_capsulas (herencia_id, capsula_id) values (
+    'b0000000-0000-0000-0000-000000000001',
+    'c0000000-0000-0000-0000-000000000001'
+  );
+  raise exception 'FALLO: el cliente pudo insertar en herencia_capsulas';
+exception
+  when insufficient_privilege then
+    raise notice 'OK: el cliente no puede insertar en herencia_capsulas (42501)';
+end
+$$;
 
 reset role;
 select tipo, usuario_id from public.notificaciones

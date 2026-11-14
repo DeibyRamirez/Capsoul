@@ -17,9 +17,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Mismo canal que ci.yml (stable, sin version fija). Si se fija una version
-  # en ci.yml, fijar la misma aqui (la local del equipo es 3.47.2).
+  # Misma version fija que ci.yml (3.47.2, la local del equipo). Si se cambia
+  # aqui, cambiarla tambien en ci.yml.
   FLUTTER_CHANNEL: stable
+  FLUTTER_VERSION: 3.47.2
 
 jobs:
   android:
@@ -39,6 +40,7 @@ jobs:
       - name: Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
@@ -143,6 +145,7 @@ jobs:
       - name: Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
