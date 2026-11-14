@@ -1,10 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import '../../dominio/modo_captura.dart';
 import '../tema/tokens_crear.dart';
 import 'anillo_progreso_grabacion.dart';
 
 /// Disparador de foto/video del hub (tap; video también admite long-press).
+///
+/// Anillo exterior fijo (con el progreso del video) y un centro que, al
+/// grabar, pasa con una animación suave de círculo a un cuadrado redondeado
+/// más pequeño y centrado, al estilo de las apps de video cortos.
 class BotonCaptura extends StatelessWidget {
   const BotonCaptura({
     super.key,
@@ -25,10 +30,32 @@ class BotonCaptura extends StatelessWidget {
   final VoidCallback? alFinLongPress;
   final bool habilitado;
 
+  /// Proporción del lado del cuadrado de grabación respecto al botón.
+  static const double proporcionCuadrado = 0.4;
+
+  /// Radio de las esquinas del cuadrado respecto a su lado.
+  static const double proporcionEsquinas = 0.25;
+
   @override
   Widget build(BuildContext context) {
     final tokens = tokensCrearDe(context);
-    final duracion = duracionMotionCrear(context, const Duration(milliseconds: 200));
+    final duracion =
+        duracionMotionCrear(context, const Duration(milliseconds: 240));
+    final esVideo = modo == ModoCaptura.video;
+    final enGrabacion = esVideo && grabando;
+
+    final tamano = tokens.tamanoBotonCaptura;
+    final grosor = tokens.grosorAnillo;
+    // Aire entre el anillo y el centro para que no se toquen.
+    final separacion = grosor * 0.75;
+    final diametroReposo = tamano - 2 * (grosor + separacion);
+    final ladoGrabando = tamano * proporcionCuadrado;
+    final lado = enGrabacion ? ladoGrabando : diametroReposo;
+    final radio =
+        enGrabacion ? ladoGrabando * proporcionEsquinas : diametroReposo / 2;
+    final colorCentro =
+        esVideo ? Theme.of(context).colorScheme.error : tokens.sobreMarca;
+
     final etiqueta = switch ((modo, grabando)) {
       (ModoCaptura.foto, _) => 'Tomar foto',
       (_, true) => 'Pausar grabación',
@@ -38,89 +65,48 @@ class BotonCaptura extends StatelessWidget {
       button: true,
       enabled: habilitado,
       label: etiqueta,
-      hint: modo == ModoCaptura.video ? 'Toca para iniciar o pausar' : null,
+      hint: esVideo ? 'Toca para iniciar o pausar' : null,
       child: GestureDetector(
         onTap: habilitado ? alTap : null,
-        onLongPressStart: habilitado && modo == ModoCaptura.video
-            ? (_) => alInicioLongPress?.call()
-            : null,
-        onLongPressEnd: habilitado && modo == ModoCaptura.video
-            ? (_) => alFinLongPress?.call()
-            : null,
-        child: AnimatedScale(
-          scale: grabando ? 1.15 : 1,
+        onLongPressStart:
+            habilitado && esVideo ? (_) => alInicioLongPress?.call() : null,
+        onLongPressEnd:
+            habilitado && esVideo ? (_) => alFinLongPress?.call() : null,
+        child: AnimatedOpacity(
+          opacity: habilitado ? 1 : 0.5,
           duration: duracion,
-          curve: Curves.easeOutBack,
           child: SizedBox.square(
-            dimension: tokens.tamanoBotonCaptura,
+            key: const Key('boton-captura'),
+            dimension: tamano,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                if (modo == ModoCaptura.video)
-                  RepaintBoundary(
-                    child: ValueListenableBuilder<double>(
-                      valueListenable: progreso,
-                      builder: (_, valor, _) => AnilloProgresoGrabacion(
-                        progreso: valor,
-                        color: tokens.marcaPrimario,
-                        grosor: tokens.grosorAnillo,
-                      ),
+                RepaintBoundary(
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: progreso,
+                    builder: (_, valor, _) => AnilloProgresoGrabacion(
+                      progreso: esVideo ? valor : 0,
+                      color: tokens.marcaPrimario,
+                      colorPista: tokens.superficieCamaraAtenuada,
+                      grosor: grosor,
                     ),
                   ),
-                AnimatedOpacity(
-                  opacity: grabando ? 0 : 1,
-                  duration: duracion,
-                  child: _FormaInterior(
-                    circular: true,
-                    grabando: grabando,
-                    modo: modo,
-                    tokens: tokens,
-                  ),
                 ),
-                AnimatedOpacity(
-                  opacity: grabando ? 1 : 0,
+                AnimatedContainer(
+                  key: const Key('centro-boton-captura'),
                   duration: duracion,
-                  child: _FormaInterior(
-                    circular: false,
-                    grabando: grabando,
-                    modo: modo,
-                    tokens: tokens,
+                  curve: Curves.easeInOutCubic,
+                  width: lado,
+                  height: lado,
+                  decoration: BoxDecoration(
+                    color: colorCentro,
+                    borderRadius: BorderRadius.circular(radio),
                   ),
                 ),
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FormaInterior extends StatelessWidget {
-  const _FormaInterior({
-    required this.circular,
-    required this.grabando,
-    required this.modo,
-    required this.tokens,
-  });
-
-  final bool circular;
-  final bool grabando;
-  final ModoCaptura modo;
-  final TokensCrear tokens;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorError = Theme.of(context).colorScheme.error;
-    final interior = modo == ModoCaptura.video && grabando
-        ? colorError
-        : tokens.sobreMarca;
-    return Container(
-      width: 64,
-      height: 64,
-      decoration: BoxDecoration(
-        color: interior,
-        borderRadius: BorderRadius.circular(circular ? 32 : 12),
       ),
     );
   }
