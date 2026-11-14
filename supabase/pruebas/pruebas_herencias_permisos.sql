@@ -64,7 +64,7 @@ insert into public.herencias (
   id, propietario_id, titulo, beneficiario_usuario_id,
   condicion_activacion, fecha_activacion, estado, metadatos
 ) values (
-  'h0000000-0000-0000-0000-000000000001',
+  'b0000000-0000-0000-0000-000000000001',
   'a0000000-0000-0000-0000-000000000001',
   'Reloj de Tres',
   'a0000000-0000-0000-0000-000000000003',
@@ -74,7 +74,7 @@ insert into public.herencias (
   '{"valor_aproximado": 1500000}'::jsonb
 );
 select public.vincular_capsula_herencia(
-  'h0000000-0000-0000-0000-000000000001',
+  'b0000000-0000-0000-0000-000000000001',
   'c0000000-0000-0000-0000-000000000001'
 );
 
@@ -91,9 +91,9 @@ select titulo, contenido_visible from public.herencias_recibidas();
 
 \echo '--- Liberar la herencia NO abre la cápsula'
 reset role;
-select privado.liberar_herencia('h0000000-0000-0000-0000-000000000001');
+select privado.liberar_herencia('b0000000-0000-0000-0000-000000000001');
 select estado as estado_herencia from public.herencias
- where id = 'h0000000-0000-0000-0000-000000000001';
+ where id = 'b0000000-0000-0000-0000-000000000001';
 select estado as estado_capsula from public.capsulas
  where id = 'c0000000-0000-0000-0000-000000000001';
 
@@ -105,14 +105,14 @@ select count(*) elementos_u3_despues from public.elementos;
 \echo '--- Cliente no puede insertar herencia_capsulas'
 set request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000001';
 insert into public.herencia_capsulas (herencia_id, capsula_id) values (
-  'h0000000-0000-0000-0000-000000000001',
+  'b0000000-0000-0000-0000-000000000001',
   'c0000000-0000-0000-0000-000000000001'
 );
 
 reset role;
 select tipo, usuario_id from public.notificaciones
  where referencia_id in (
-   'h0000000-0000-0000-0000-000000000001',
+   'b0000000-0000-0000-0000-000000000001',
    'c0000000-0000-0000-0000-000000000001'
  )
  order by tipo, usuario_id;
