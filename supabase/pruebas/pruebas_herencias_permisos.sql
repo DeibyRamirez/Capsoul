@@ -4,6 +4,10 @@
 
 \set ON_ERROR_STOP 1
 
+-- Todo corre en una transaccion que se deshace al final, para no dejar filas
+-- que choquen con las pruebas siguientes (comparten la misma base).
+begin;
+
 insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at) values
  ('a0000000-0000-0000-0000-000000000001','u1@x.co','{"nombre_visible":"Uno"}', now()),
  ('a0000000-0000-0000-0000-000000000002','u2@x.co','{"nombre_visible":"Dos"}', now()),
@@ -52,11 +56,7 @@ insert into public.capsula_destinatarios (capsula_id, usuario_id) values (
   'a0000000-0000-0000-0000-000000000002'
 );
 
-insert into public.usuarios (id, nombre_visible)
-  values ('a0000000-0000-0000-0000-000000000001', 'Uno')
-on conflict (id) do nothing;
-
--- Persona de confianza global = U2
+-- Persona de confianza global = U2 (el perfil lo crea el trigger de auth.users)
 reset role;
 update public.usuarios
    set persona_confianza_legado_id = 'a0000000-0000-0000-0000-000000000002'
@@ -68,7 +68,7 @@ insert into public.herencias (
   id, propietario_id, titulo, beneficiario_usuario_id,
   condicion_activacion, fecha_activacion, estado, metadatos
 ) values (
-  'h0000000-0000-0000-0000-000000000001',
+  'b0000000-0000-0000-0000-000000000001',
   'a0000000-0000-0000-0000-000000000001',
   'Reloj de Tres',
   'a0000000-0000-0000-0000-000000000003',
@@ -78,7 +78,7 @@ insert into public.herencias (
   '{"valor_aproximado": 1500000}'::jsonb
 );
 select public.vincular_capsula_herencia(
-  'h0000000-0000-0000-0000-000000000001',
+  'b0000000-0000-0000-0000-000000000001',
   'c0000000-0000-0000-0000-000000000001'
 );
 
@@ -95,9 +95,9 @@ select titulo, contenido_visible from public.herencias_recibidas();
 
 \echo '--- Liberar la herencia NO abre la cápsula'
 reset role;
-select privado.liberar_herencia('h0000000-0000-0000-0000-000000000001');
+select privado.liberar_herencia('b0000000-0000-0000-0000-000000000001');
 select estado as estado_herencia from public.herencias
- where id = 'h0000000-0000-0000-0000-000000000001';
+ where id = 'b0000000-0000-0000-0000-000000000001';
 select estado as estado_capsula from public.capsulas
  where id = 'c0000000-0000-0000-0000-000000000001';
 
@@ -108,15 +108,25 @@ select count(*) elementos_u3_despues from public.elementos;
 
 \echo '--- Cliente no puede insertar herencia_capsulas'
 set request.jwt.claim.sub = 'a0000000-0000-0000-0000-000000000001';
-insert into public.herencia_capsulas (herencia_id, capsula_id) values (
-  'h0000000-0000-0000-0000-000000000001',
-  'c0000000-0000-0000-0000-000000000001'
-);
+do $$
+begin
+  insert into public.herencia_capsulas (herencia_id, capsula_id) values (
+    'b0000000-0000-0000-0000-000000000001',
+    'c0000000-0000-0000-0000-000000000001'
+  );
+  raise exception 'FALLO: el cliente pudo insertar en herencia_capsulas';
+exception
+  when insufficient_privilege then
+    raise notice 'OK: el cliente no puede insertar en herencia_capsulas (42501)';
+end
+$$;
 
 reset role;
 select tipo, usuario_id from public.notificaciones
  where referencia_id in (
-   'h0000000-0000-0000-0000-000000000001',
+   'b0000000-0000-0000-0000-000000000001',
    'c0000000-0000-0000-0000-000000000001'
  )
  order by tipo, usuario_id;
+
+rollback;

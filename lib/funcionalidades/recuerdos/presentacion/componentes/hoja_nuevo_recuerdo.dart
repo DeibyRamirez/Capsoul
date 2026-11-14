@@ -9,6 +9,7 @@ import '../../../../nucleo/tema/colores_app.dart';
 import '../../../elementos/aplicacion/proveedores_elementos.dart';
 import '../../../elementos/dominio/elemento_borrador.dart';
 import '../../../elementos/dominio/tipo_elemento.dart';
+import '../../../crear/presentacion/flujo_publicar_desde_hub.dart';
 import '../../../elementos/presentacion/componentes/hoja_origen_medio.dart';
 import '../../../musica/dominio/referencia_musica.dart';
 import '../../aplicacion/proveedores_recuerdos.dart';
@@ -47,8 +48,9 @@ BuildContext? contextoNavegacionPrincipal(BuildContext context) {
 /// modal.
 Future<Recuerdo?> capturarRecuerdo(
   BuildContext context,
-  TipoElemento tipo,
-) async {
+  TipoElemento tipo, {
+  bool origenHub = false,
+}) async {
   final nav = contextoNavegacionPrincipal(context);
   if (nav == null) {
     debugPrint(
@@ -69,22 +71,32 @@ Future<Recuerdo?> capturarRecuerdo(
   } else if (tipo == TipoElemento.foto ||
       tipo == TipoElemento.video ||
       tipo == TipoElemento.audio) {
-    final origen = await mostrarHojaOrigenMedio(nav, tipo);
-    if (origen == null || !nav.mounted) return null;
-    if (origen == OrigenMedio.dispositivo) {
-      try {
-        borrador = await contenedor.read(proveedorImportadorMedios).importar(tipo);
-      } on FalloApp catch (fallo) {
-        if (nav.mounted) mostrarAvisoError(nav, fallo);
-        return null;
-      }
+    if (origenHub && tipo != TipoElemento.audio) {
+      final resultado = await nav.push<Object?>(RutasApp.hubCrear);
+      if (resultado is Recuerdo) return resultado;
+      return null;
     } else {
-      borrador = await nav.push<ElementoBorrador>(rutaCaptura(tipo));
+      final origen = await mostrarHojaOrigenMedio(nav, tipo);
+      if (origen == null || !nav.mounted) return null;
+      if (origen == OrigenMedio.dispositivo) {
+        try {
+          borrador =
+              await contenedor.read(proveedorImportadorMedios).importar(tipo);
+        } on FalloApp catch (fallo) {
+          if (nav.mounted) mostrarAvisoError(nav, fallo);
+          return null;
+        }
+      } else {
+        borrador = await nav.push<ElementoBorrador>(rutaCaptura(tipo));
+      }
     }
   } else {
     borrador = await nav.push<ElementoBorrador>(rutaCaptura(tipo));
   }
   if (borrador == null || !nav.mounted) return null;
+  if (origenHub) {
+    return continuarPublicacionDesdeHub(nav, borrador);
+  }
   contenedor.read(proveedorBorradorRecuerdoPendiente.notifier).establecer(borrador);
   return nav.push<Recuerdo>(RutasApp.guardarRecuerdo, extra: borrador);
 }

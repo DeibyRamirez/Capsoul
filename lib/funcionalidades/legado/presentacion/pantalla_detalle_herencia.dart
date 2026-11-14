@@ -50,12 +50,10 @@ class PantallaDetalleHerencia extends ConsumerWidget {
                   children: [
                     const SizedBox(height: 16),
 
-                    Expanded(
-                      child: Text(
-                        h.titulo,
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
+                    Text(
+                      h.titulo,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 16),
 

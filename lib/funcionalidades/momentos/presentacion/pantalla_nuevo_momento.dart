@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../nucleo/componentes/avisos_emergentes.dart';
-import '../../../nucleo/componentes/boton_principal.dart';
+import '../../../nucleo/componentes/asistente_pasos.dart';
 import '../../../nucleo/componentes/cabecera_detalle_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/componentes/tarjeta_capsoul.dart';
@@ -129,45 +129,17 @@ class _EstadoPantallaNuevoMomento extends ConsumerState<PantallaNuevoMomento> {
           Expanded(
             child: SafeArea(
               top: false,
-              child: ListView(
-                key: const Key('formulario-momento'),
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                children: [
-                  TarjetaCapsoul(
-                    icono: Icons.auto_stories_outlined,
-                    titulo: 'Nombre y descripción',
-                    child: Column(
-                      children: [
-                        TextField(
-                          key: const Key('campo-nombre-momento'),
-                          controller: _titulo,
-                          enabled: !ocupado,
-                          maxLength: ValidadorMomento.caracteresMaxTitulo,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            labelText: 'Nombre',
-                            hintText: 'Ej.: Vacaciones en Cartagena',
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          key: const Key('campo-descripcion-momento'),
-                          controller: _descripcion,
-                          enabled: !ocupado,
-                          minLines: 2,
-                          maxLines: 5,
-                          maxLength: ValidadorMomento.caracteresMaxDescripcion,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: const InputDecoration(
-                            labelText: 'Descripción (opcional)',
-                            alignLabelWithHint: true,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TarjetaCapsoul(
+              child: AsistentePasos(
+                etiquetasPasos: const ['Contenido', 'Detalles', 'Confirmar'],
+                cargando: ocupado,
+                etiquetaFinal: 'Guardar momento',
+                alTerminar: _guardar,
+                pasos: [
+                  ListView(
+                    key: const Key('formulario-momento-paso-1'),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    children: [
+                      TarjetaCapsoul(
                     icono: Icons.filter_list,
                     titulo: 'Agregar recuerdos',
                     child: Column(
@@ -233,93 +205,138 @@ class _EstadoPantallaNuevoMomento extends ConsumerState<PantallaNuevoMomento> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  TarjetaCapsoul(
-                    icono: Icons.collections_outlined,
-                    titulo:
-                        'Recuerdos (${estado.recuerdos.length}/'
-                        '${ValidadorMomento.recuerdosMax})',
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (estado.recuerdos.isEmpty)
-                          Text(
-                            'Aún no agregaste recuerdos.',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: ColoresApp.atenuado),
-                          ),
-                        for (final recuerdo in estado.recuerdos)
-                          TarjetaRecuerdoElegido(
-                            key: ValueKey(recuerdo.id),
-                            recuerdo: recuerdo,
-                            alQuitar: ocupado
-                                ? null
-                                : () => _controlador.quitar(recuerdo.id),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (estado.visuales.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    TarjetaCapsoul(
-                      icono: Icons.image_outlined,
-                      titulo: 'Portada',
-                      child: SizedBox(
-                        height: 84,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: estado.visuales.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: 8),
-                          itemBuilder: (context, indice) {
-                            final recuerdo = estado.visuales[indice];
-                            final elegida = recuerdo.id == estado.portadaId;
-                            return Semantics(
-                              selected: elegida,
-                              button: true,
-                              label: 'Portada: ${recuerdo.nombre}',
-                              child: GestureDetector(
-                                key: ValueKey('portada-${recuerdo.id}'),
-                                onTap: ocupado
-                                    ? null
-                                    : () => _controlador.elegirPortada(
-                                        recuerdo.id,
-                                      ),
-                                child: Container(
-                                  width: 84,
-                                  padding: const EdgeInsets.all(3),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(
-                                      TemaApp.radioPequeno + 3,
-                                    ),
-                                    border: Border.all(
-                                      color: elegida
-                                          ? ColoresApp.acento
-                                          : Colors.transparent,
-                                      width: 3,
-                                    ),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                      TemaApp.radioPequeno,
-                                    ),
-                                    child: MiniaturaRecuerdoFirmada(
-                                      recuerdo: recuerdo,
-                                      tamanoIcono: 22,
-                                    ),
-                                  ),
-                                ),
+                      TarjetaCapsoul(
+                        icono: Icons.collections_outlined,
+                        titulo:
+                            'Recuerdos (${estado.recuerdos.length}/'
+                            '${ValidadorMomento.recuerdosMax})',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (estado.recuerdos.isEmpty)
+                              Text(
+                                'Aún no agregaste recuerdos.',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: ColoresApp.atenuado),
                               ),
-                            );
-                          },
+                            for (final recuerdo in estado.recuerdos)
+                              TarjetaRecuerdoElegido(
+                                key: ValueKey(recuerdo.id),
+                                recuerdo: recuerdo,
+                                alQuitar: ocupado
+                                    ? null
+                                    : () => _controlador.quitar(recuerdo.id),
+                              ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: 28),
-                  BotonPrincipal(
-                    etiqueta: 'Guardar momento',
-                    cargando: ocupado,
-                    alPresionar: _guardar,
+                    ],
+                  ),
+                  ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    children: [
+                      TarjetaCapsoul(
+                        icono: Icons.auto_stories_outlined,
+                        titulo: 'Nombre y descripción',
+                        child: Column(
+                          children: [
+                            TextField(
+                              key: const Key('campo-nombre-momento'),
+                              controller: _titulo,
+                              enabled: !ocupado,
+                              maxLength: ValidadorMomento.caracteresMaxTitulo,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: const InputDecoration(
+                                labelText: 'Nombre',
+                                hintText: 'Ej.: Vacaciones en Cartagena',
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            TextField(
+                              key: const Key('campo-descripcion-momento'),
+                              controller: _descripcion,
+                              enabled: !ocupado,
+                              minLines: 2,
+                              maxLines: 5,
+                              maxLength:
+                                  ValidadorMomento.caracteresMaxDescripcion,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: const InputDecoration(
+                                labelText: 'Descripción (opcional)',
+                                alignLabelWithHint: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    children: [
+                      if (estado.visuales.isEmpty)
+                        Text(
+                          'Agrega recuerdos visuales en el primer paso para '
+                          'elegir portada.',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: ColoresApp.atenuado),
+                        )
+                      else
+                        TarjetaCapsoul(
+                          icono: Icons.image_outlined,
+                          titulo: 'Portada',
+                          child: SizedBox(
+                            height: 84,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: estado.visuales.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(width: 8),
+                              itemBuilder: (context, indice) {
+                                final recuerdo = estado.visuales[indice];
+                                final elegida = recuerdo.id == estado.portadaId;
+                                return Semantics(
+                                  selected: elegida,
+                                  button: true,
+                                  label: 'Portada: ${recuerdo.nombre}',
+                                  child: GestureDetector(
+                                    key: ValueKey('portada-${recuerdo.id}'),
+                                    onTap: ocupado
+                                        ? null
+                                        : () => _controlador.elegirPortada(
+                                              recuerdo.id,
+                                            ),
+                                    child: Container(
+                                      width: 84,
+                                      padding: const EdgeInsets.all(3),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(
+                                          TemaApp.radioPequeno + 3,
+                                        ),
+                                        border: Border.all(
+                                          color: elegida
+                                              ? ColoresApp.acento
+                                              : Colors.transparent,
+                                          width: 3,
+                                        ),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                          TemaApp.radioPequeno,
+                                        ),
+                                        child: MiniaturaRecuerdoFirmada(
+                                          recuerdo: recuerdo,
+                                          tamanoIcono: 22,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),

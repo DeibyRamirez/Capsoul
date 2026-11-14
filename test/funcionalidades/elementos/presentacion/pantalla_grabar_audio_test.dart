@@ -120,7 +120,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(compresor.duracionRecibida, const Duration(seconds: 3));
-    expect(find.text('Usar nota de voz'), findsOneWidget);
+    expect(find.text('Usar esta nota'), findsOneWidget);
   });
 
   testWidgets('se detiene sola a los 5 minutos', (tester) async {
@@ -135,7 +135,7 @@ void main() {
 
     expect(grabadora.grabando, isFalse);
     expect(compresor.duracionRecibida, const Duration(minutes: 5));
-    expect(find.text('Usar nota de voz'), findsOneWidget);
+    expect(find.text('Usar esta nota'), findsOneWidget);
   });
 
   testWidgets('sin permiso del micrófono avisa en español', (tester) async {
