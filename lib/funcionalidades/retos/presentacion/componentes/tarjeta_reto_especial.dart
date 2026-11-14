@@ -42,7 +42,7 @@ class TarjetaRetoEspecial extends StatelessWidget {
                   Icon(Icons.card_giftcard_outlined, color: ColoresApp.primario),
                   const SizedBox(width: 8),
                   Text(
-                    'Reto especial',
+                    'Entrada especial',
                     style: tema.textTheme.titleSmall?.copyWith(
                       color: ColoresApp.primario,
                       fontWeight: FontWeight.w600,

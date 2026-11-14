@@ -142,13 +142,13 @@ class _RejillaSecciones extends StatelessWidget {
         retraso: const Duration(milliseconds: 80),
         child: TarjetaSeccionInicio(
           icono: Icons.flag_outlined,
-          titulo: 'Retos',
+          titulo: 'Diario',
           descripcion: 'Pequeños pasos, grandes cambios.',
           conteo: resumen.retosActivos,
           etiquetaConteo: etiquetaConteo(
             resumen.retosActivos,
-            'reto activo',
-            'retos activos',
+            'entrada activa',
+            'entradas activas',
           ),
           ilustracion: const IlustracionSeccion(
             rutaAsset: IlustracionesInicio.retos,

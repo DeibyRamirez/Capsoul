@@ -109,10 +109,10 @@ export function armarContenido(datos: DatosPlantilla): ContenidoAviso {
       };
     case "reto":
       return {
-        titulo: "Tienes un reto",
+        titulo: "Tienes algo nuevo en tu diario",
         cuerpo: nombre
-          ? `El reto «${nombre}» te está esperando.`
-          : "Tienes un reto nuevo en Capsoul.",
+          ? `«${nombre}» te espera en tu diario.`
+          : "Tienes una entrada nueva en tu diario de Capsoul.",
         data: { ...base, reto_id: id, ruta: ruta("reto", id) },
       };
     default:

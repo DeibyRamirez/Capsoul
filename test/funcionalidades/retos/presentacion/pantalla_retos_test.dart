@@ -39,9 +39,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Reto diario'), findsOneWidget);
-    expect(find.text('Retos semanales'), findsOneWidget);
-    expect(find.text('Retos especiales'), findsOneWidget);
+    expect(find.text('Entrada del día'), findsOneWidget);
+    expect(find.text('Entradas semanales'), findsOneWidget);
+    expect(find.text('Entradas especiales'), findsOneWidget);
     expect(find.text('Reto 1'), findsOneWidget);
   });
 
@@ -89,7 +89,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Próximamente podrás marcar retos favoritos.'),
+      find.text('Próximamente podrás marcar entradas favoritas.'),
       findsOneWidget,
     );
   });

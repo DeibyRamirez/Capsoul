@@ -26,7 +26,7 @@ void main() {
     await tester.scrollUntilVisible(find.text('Pequeñas herencias'), 200);
     expect(find.text('128'), findsOneWidget);
     expect(find.text('recuerdos guardados'), findsOneWidget);
-    expect(find.text('retos activos'), findsOneWidget);
+    expect(find.text('entradas activas'), findsOneWidget);
     // Las etiquetas de cápsulas y herencias llevan espacios de relleno para el salto de línea.
     expect(find.textContaining(RegExp(r'^cápsula\s+creada$')), findsOneWidget);
     expect(find.textContaining(RegExp(r'^herencias\s+creadas$')), findsOneWidget);
