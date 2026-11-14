@@ -63,10 +63,13 @@ class _BotonRail extends StatelessWidget {
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: item.alPresionar,
-        child: SizedBox(
-          width: tokens.objetivoTactilMin,
-          height: tokens.objetivoTactilMin,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: tokens.objetivoTactilMin,
+            minHeight: tokens.objetivoTactilMin,
+          ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               DecoratedBox(

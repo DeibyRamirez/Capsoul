@@ -27,9 +27,9 @@ void main() {
     await tester.tap(find.text('Guardar nota'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Guardar recuerdo'), findsWidgets);
+    expect(find.byKey(const Key('campo-titulo-rapido')), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Guardar recuerdo'));
+    await tester.tap(find.text('Guardar'));
     await tester.pumpAndSettle();
 
     final creado = recuerdos.creados.single;

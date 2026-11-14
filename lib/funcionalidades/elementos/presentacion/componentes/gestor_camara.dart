@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../../dominio/fallo_medios.dart';
 import '../../dominio/limites_medios.dart';
@@ -9,7 +10,12 @@ import '../../dominio/limites_medios.dart';
 /// Abre la cámara (frontal o trasera), permite cambiarla y la libera. Lo
 /// usan las pantallas de foto y de video.
 class GestorCamara extends ChangeNotifier {
-  GestorCamara({required this.paraVideo});
+  GestorCamara({
+    required this.paraVideo,
+    Future<List<CameraDescription>> Function()? buscarCamaras,
+  }) : _buscarCamaras = buscarCamaras ?? availableCameras;
+
+  final Future<List<CameraDescription>> Function() _buscarCamaras;
 
   /// `true`: 720p con audio y bitrate de [LimitesMedios]; `false`: foto en
   /// alta resolución (luego se comprime a 1600 px).
@@ -35,9 +41,15 @@ class GestorCamara extends ChangeNotifier {
 
   Future<void> iniciar() async {
     try {
-      _camaras = await availableCameras();
+      _camaras = await _buscarCamaras();
     } on CameraException catch (error) {
       _asignarError(traducirErrorCamara(error.code));
+      return;
+    } on PlatformException {
+      _asignarError(const FalloMedios.camaraNoDisponible());
+      return;
+    } on MissingPluginException {
+      _asignarError(const FalloMedios.camaraNoDisponible());
       return;
     }
     if (_camaras.isEmpty) {

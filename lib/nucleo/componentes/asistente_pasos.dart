@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tema/colores_app.dart';
+import '../tema/tema_app.dart';
 
 /// Asistente de varios pasos con indicador y botones Siguiente / Atrás.
 class AsistentePasos extends StatefulWidget {
@@ -75,13 +76,21 @@ class _EstadoAsistentePasos extends State<AsistentePasos> {
                       thickness: 2,
                     ),
                   ),
-                Semantics(
+                Flexible(
+                  flex: 5,
+                  child: Semantics(
                   header: true,
                   label:
                       'Paso ${i + 1}: ${widget.etiquetasPasos[i]}',
                   selected: i == _indice,
                   child: Chip(
-                    label: Text(widget.etiquetasPasos[i]),
+                    visualDensity: VisualDensity.compact,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 4),
+                    label: Text(
+                      widget.etiquetasPasos[i],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     backgroundColor: i == _indice
                         ? ColoresApp.acento.withValues(alpha: 0.15)
                         : null,
@@ -91,6 +100,7 @@ class _EstadoAsistentePasos extends State<AsistentePasos> {
                           : ColoresApp.bordeTarjeta,
                     ),
                   ),
+                ),
                 ),
               ],
             ],
@@ -113,8 +123,13 @@ class _EstadoAsistentePasos extends State<AsistentePasos> {
                   onPressed: widget.cargando ? null : _atras,
                   child: const Text('Atrás'),
                 ),
-              const Spacer(),
-              FilledButton(
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton(
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(64, TemaApp.altoBoton),
+                ),
                 onPressed: widget.deshabilitado || widget.cargando
                     ? null
                     : _siguiente,
@@ -123,7 +138,13 @@ class _EstadoAsistentePasos extends State<AsistentePasos> {
                         dimension: 22,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(ultimo ? widget.etiquetaFinal : 'Siguiente'),
+                    : Text(
+                        ultimo ? widget.etiquetaFinal : 'Siguiente',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+              ),
+                ),
               ),
             ],
           ),

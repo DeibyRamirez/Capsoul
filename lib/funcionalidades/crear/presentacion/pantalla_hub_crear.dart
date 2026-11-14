@@ -99,10 +99,16 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
     if (actual != null) {
       await _liberarCamara();
     }
-    final nueva = GestorCamara(paraVideo: necesitaVideo);
+    final nueva = GestorCamara(
+      paraVideo: necesitaVideo,
+      buscarCamaras: ref.read(proveedorBuscarCamaras),
+    );
     _camara = nueva;
-    await nueva.iniciar();
-    if (mounted) setState(() => _inicializandoCamara = false);
+    try {
+      await nueva.iniciar();
+    } finally {
+      if (mounted) setState(() => _inicializandoCamara = false);
+    }
   }
 
   Future<void> _alCambiarModo(ModoCaptura modo) async {
@@ -371,8 +377,10 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
                           icon: Icon(Icons.close, color: tokensCrearDe(context).superficieCamara),
                           tooltip: 'Cerrar',
                         ),
-                        const Spacer(),
-                        SingleChildScrollView(
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
@@ -423,6 +431,8 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
                                 },
                               ),
                             ],
+                          ),
+                        ),
                           ),
                         ),
                       ],

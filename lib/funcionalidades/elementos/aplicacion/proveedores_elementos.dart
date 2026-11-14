@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../nucleo/infraestructura/proveedores_infraestructura.dart';
@@ -24,6 +25,12 @@ final proveedorRepositorioMedios = Provider<RepositorioMedios>((ref) {
     almacenamiento: ref.watch(proveedorClienteAlmacenamiento),
   );
 });
+
+/// Lista las cámaras del dispositivo. En pruebas se reemplaza por una lista
+/// vacía para no depender del plugin de cámara.
+final proveedorBuscarCamaras = Provider<Future<List<CameraDescription>> Function()>(
+  (ref) => availableCameras,
+);
 
 final proveedorFabricaGrabadora = Provider<GrabadoraAudio Function()>(
   (ref) => GrabadoraAudioRecord.new,

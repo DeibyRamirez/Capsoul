@@ -228,9 +228,11 @@ class _CuerpoPublicarRapido extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: 160,
-          child: VistaPreviaBorrador(elemento: elemento),
+        Center(
+          child: SizedBox(
+            width: 176,
+            child: VistaPreviaBorrador(elemento: elemento),
+          ),
         ),
         const SizedBox(height: 16),
         TextField(
