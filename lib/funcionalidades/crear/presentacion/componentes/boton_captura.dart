@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../dominio/modo_captura.dart';
 import '../tema/tokens_crear.dart';
@@ -59,7 +60,7 @@ class BotonCaptura extends StatelessWidget {
                   RepaintBoundary(
                     child: ValueListenableBuilder<double>(
                       valueListenable: progreso,
-                      builder: (_, valor, __) => AnilloProgresoGrabacion(
+                      builder: (_, valor, _) => AnilloProgresoGrabacion(
                         progreso: valor,
                         color: tokens.marcaPrimario,
                         grosor: tokens.grosorAnillo,

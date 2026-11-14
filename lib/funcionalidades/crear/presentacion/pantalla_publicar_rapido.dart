@@ -7,6 +7,7 @@ import '../../../nucleo/componentes/boton_principal.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
+import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../elementos/dominio/elemento_borrador.dart';
 import '../../elementos/dominio/tipo_elemento.dart';
 import '../../musica/dominio/referencia_musica.dart';

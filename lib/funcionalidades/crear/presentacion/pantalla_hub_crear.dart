@@ -14,10 +14,10 @@ import '../../../nucleo/tema/colores_app.dart';
 import '../../elementos/aplicacion/proveedores_elementos.dart';
 import '../../elementos/dominio/elemento_borrador.dart';
 import '../../elementos/dominio/tipo_elemento.dart';
+import '../../elementos/dominio/validador_medios.dart';
 import '../../elementos/presentacion/componentes/componentes_captura.dart';
 import '../../elementos/presentacion/componentes/gestor_camara.dart';
 import '../../musica/dominio/referencia_musica.dart';
-import '../../recuerdos/dominio/recuerdo.dart';
 import '../aplicacion/proveedores_crear.dart';
 import '../dominio/configuracion_crear.dart';
 import '../dominio/modo_captura.dart';
@@ -78,8 +78,6 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
   }
 
   ModoCaptura get _modo => ref.read(proveedorControladorSesionCaptura).modo;
-
-  bool get _paraVideo => _modo == ModoCaptura.video;
 
   Future<void> _liberarCamara() async {
     final camara = _camara;
@@ -228,7 +226,7 @@ class _EstadoPantallaHubCrear extends ConsumerState<PantallaHubCrear>
     final tipo = modo == ModoCaptura.video ? TipoElemento.video : TipoElemento.foto;
     try {
       final borrador = await ref.read(proveedorImportadorMedios).importar(tipo);
-      if (!mounted) return;
+      if (borrador == null || !mounted) return;
       await _finalizarConBorrador(borrador);
     } on FalloApp catch (fallo) {
       if (mounted) mostrarAvisoError(context, fallo);
