@@ -20,7 +20,7 @@ create or replace function privado.cumple_criterio_reto(
   p_clave text,
   p_params jsonb
 ) returns boolean
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = '' as $$
 declare
   v_minimo int;
 begin
@@ -171,7 +171,7 @@ $$;
 
 -- 3. Evaluar también cambios de perfil (foto y persona de confianza)
 create or replace function privado.trg_evaluar_retos_usuarios()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 begin
   perform privado.evaluar_retos_globales(new.id);
   return new;
@@ -179,7 +179,7 @@ end;
 $$;
 
 create or replace function privado.trg_evaluar_retos_capsula_elementos()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 declare
   v_autor uuid;
 begin
@@ -192,7 +192,7 @@ end;
 $$;
 
 create or replace function privado.trg_evaluar_retos_momento_elementos()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 declare
   v_autor uuid;
 begin
@@ -205,7 +205,7 @@ end;
 $$;
 
 create or replace function privado.trg_evaluar_retos_capsula_destinatarios()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 declare
   v_autor uuid;
 begin
@@ -218,7 +218,7 @@ end;
 $$;
 
 create or replace function privado.trg_evaluar_retos_herencia_capsulas()
-returns trigger language plpgsql security definer set search_path = public as $$
+returns trigger language plpgsql security definer set search_path = '' as $$
 declare
   v_propietario uuid;
 begin
