@@ -70,7 +70,7 @@ insert into public.capsula_elementos (capsula_id, elemento_id, orden) values
 insert into public.capsula_destinatarios (capsula_id, correo_externo)
   values ('95000000-0000-0000-0000-00000000c102', 'destino-reto@example.com');
 
-insert into public.momentos (id, autor_id, texto) values
+insert into public.momentos (id, autor_id, titulo) values
   ('95000000-0000-0000-0000-00000000d101', '00000000-0000-0000-0000-0000000095aa', 'Momento 1'),
   ('95000000-0000-0000-0000-00000000d102', '00000000-0000-0000-0000-0000000095aa', 'Momento 2'),
   ('95000000-0000-0000-0000-00000000d103', '00000000-0000-0000-0000-0000000095aa', 'Momento 3');
