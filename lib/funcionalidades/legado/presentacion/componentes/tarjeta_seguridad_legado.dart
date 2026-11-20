@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../nucleo/componentes/tarjeta_capsoul.dart';
 import '../../../../nucleo/enrutador/rutas_app.dart';
 import '../../../../nucleo/tema/colores_app.dart';
+import '../../../../nucleo/tema/tema_app.dart';
 import '../heroes_legado.dart';
 
 class TarjetaSeguridadLegado extends StatelessWidget {
@@ -18,50 +19,59 @@ class TarjetaSeguridadLegado extends StatelessWidget {
         tag: HeroesLegado.seguridad,
         child: Material(
           type: MaterialType.transparency,
-          child: Column(
-            children: [
-              Image.asset(
-                'assets/Fondo.jpg',
-                width: 250,
-                height: 250,
-                fit: BoxFit.cover, // Ajuste de la imagen
-              ),
-              TarjetaCapsoul(
-                icono: Icons.verified_user_outlined,
-                titulo: 'Todo está protegido',
-                alTocar: () => context.push(RutasApp.legadoSeguridad),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tu información y tus legados están guardados de forma segura. '
-                      'Solo se liberan según las condiciones que definas.',
-                      style: estilos.bodyMedium?.copyWith(
-                        color: ColoresApp.atenuado,
+          child: TarjetaCapsoul(
+            icono: Icons.verified_user_outlined,
+            titulo: 'Tu espacio seguro',
+            alTocar: () => context.push(RutasApp.legadoSeguridad),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tus recuerdos y cápsulas quedan a salvo. '
+                        'Solo se abren cuando se cumplen las condiciones que definas.',
+                        style: estilos.bodyMedium?.copyWith(
+                          color: ColoresApp.atenuado,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Text(
-                          'Ver seguridad y respaldo',
-                          style: estilos.labelLarge?.copyWith(
-                            color: ColoresApp.primario,
-                            fontWeight: FontWeight.w600,
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'Ver seguridad y respaldo',
+                              style: estilos.labelLarge?.copyWith(
+                                color: ColoresApp.primario,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: ColoresApp.primario,
-                        ),
-                      ],
-                    ),
-                    
-                  ],
+                          const SizedBox(width: 4),
+                          const Icon(
+                            Icons.chevron_right,
+                            color: ColoresApp.primario,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 14),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(TemaApp.radioMediano),
+                  child: Image.asset(
+                    'assets/Fondo.jpg',
+                    width: 88,
+                    height: 88,
+                    fit: BoxFit.cover,
+                    excludeFromSemantics: true,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

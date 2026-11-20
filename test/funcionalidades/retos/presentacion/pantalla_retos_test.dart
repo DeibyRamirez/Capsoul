@@ -10,39 +10,43 @@ Reto _reto(
   int orden, {
   bool completado = false,
   String? titulo,
-}) =>
-    Reto(
-      id: 'id_$orden',
-      slug: 'slug_$orden',
-      titulo: titulo ?? 'Reto $orden',
-      descripcion: 'Descripción $orden',
-      pasos: const ['Paso uno'],
-      orden: orden,
-      criterioClave: 'test',
-      completado: completado,
-    );
+  String? slug,
+  String criterio = 'test',
+}) => Reto(
+  id: 'id_$orden',
+  slug: slug ?? 'slug_$orden',
+  titulo: titulo ?? 'Reto $orden',
+  descripcion: 'Descripción $orden',
+  pasos: const ['Paso uno'],
+  orden: orden,
+  criterioClave: criterio,
+  completado: completado,
+);
 
 void main() {
   testWidgets('pestaña Activos muestra secciones del mockup', (tester) async {
-    final lista = [_reto(1), _reto(2), _reto(3), _reto(4, titulo: 'Especial')];
+    final lista = [
+      _reto(1),
+      _reto(2),
+      _reto(3),
+      _reto(4, titulo: 'Especial', slug: 'veinticinco_recuerdos'),
+    ];
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          proveedorListaRetos.overrideWith((ref) async => lista),
-        ],
-        child: MaterialApp(
-          theme: TemaApp.claro,
-          home: const PantallaRetos(),
-        ),
+        overrides: [proveedorListaRetos.overrideWith((ref) async => lista)],
+        child: MaterialApp(theme: TemaApp.claro, home: const PantallaRetos()),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Entrada del día'), findsOneWidget);
     expect(find.text('Entradas semanales'), findsOneWidget);
-    expect(find.text('Entradas especiales'), findsOneWidget);
+    expect(find.text('Tu progreso'), findsOneWidget);
+    expect(find.text('0 / 4'), findsOneWidget);
     expect(find.text('Reto 1'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Entradas especiales'), 200);
+    expect(find.text('Entradas especiales'), findsOneWidget);
   });
 
   testWidgets('pestaña Completados filtra retos terminados', (tester) async {
@@ -53,13 +57,8 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          proveedorListaRetos.overrideWith((ref) async => lista),
-        ],
-        child: MaterialApp(
-          theme: TemaApp.claro,
-          home: const PantallaRetos(),
-        ),
+        overrides: [proveedorListaRetos.overrideWith((ref) async => lista)],
+        child: MaterialApp(theme: TemaApp.claro, home: const PantallaRetos()),
       ),
     );
     await tester.pumpAndSettle();
@@ -77,10 +76,7 @@ void main() {
         overrides: [
           proveedorListaRetos.overrideWith((ref) async => [_reto(1)]),
         ],
-        child: MaterialApp(
-          theme: TemaApp.claro,
-          home: const PantallaRetos(),
-        ),
+        child: MaterialApp(theme: TemaApp.claro, home: const PantallaRetos()),
       ),
     );
     await tester.pumpAndSettle();

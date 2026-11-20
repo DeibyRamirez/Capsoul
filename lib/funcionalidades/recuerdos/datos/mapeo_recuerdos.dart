@@ -8,8 +8,9 @@ import '../dominio/recuerdo.dart';
 /// cápsulas y momentos).
 const String columnasRecuerdo =
     'id, propietario_id, tipo, titulo, fecha_recuerdo, creado_en, '
-    'contenido_texto, cloudinary_public_id, formato, bytes, ancho, alto, '
-    'duracion_segundos, musica_proveedor, musica_id_externo, musica_titulo, '
+    'contenido_texto, contenido_rico, cloudinary_public_id, formato, bytes, '
+    'ancho, alto, duracion_segundos, musica_proveedor, musica_id_externo, '
+    'musica_titulo, '
     'musica_artista, musica_preview_url, musica_preview_proveedor, '
     'musica_url_completa, musica_portada_url, '
     'musica_uri_profundo, musica_enlace_deezer';
@@ -37,20 +38,21 @@ Recuerdo? recuerdoDesdeFila(Object? datos) {
   final tipo = TipoElemento.desdeValorBd(datos['tipo']);
   final creado = datos['creado_en'];
   final creadoEn = creado is String ? DateTime.tryParse(creado) : null;
-  if (id is! String || propietario is! String || tipo == null ||
+  if (id is! String ||
+      propietario is! String ||
+      tipo == null ||
       creadoEn == null) {
     return null;
   }
-  final fecha = fechaDesdeBd(datos['fecha_recuerdo']) ??
+  final fecha =
+      fechaDesdeBd(datos['fecha_recuerdo']) ??
       DateTime(creadoEn.year, creadoEn.month, creadoEn.day);
   final duracion = datos['duracion_segundos'];
   final musica = ReferenciaMusica.desdeFilaBd(
     Map<dynamic, dynamic>.from(datos),
   );
   if (tipo == TipoElemento.musica && musica == null) {
-    debugPrint(
-      'recuerdoDesdeFila: tipo musica sin metadatos musica (id=$id)',
-    );
+    debugPrint('recuerdoDesdeFila: tipo musica sin metadatos musica (id=$id)');
   }
   return Recuerdo(
     id: id,
@@ -60,6 +62,7 @@ Recuerdo? recuerdoDesdeFila(Object? datos) {
     creadoEn: creadoEn,
     titulo: _texto(datos['titulo']),
     contenidoTexto: _texto(datos['contenido_texto']),
+    contenidoRico: datos['contenido_rico'],
     publicId: _texto(datos['cloudinary_public_id']),
     formato: _texto(datos['formato']),
     bytes: _entero(datos['bytes']),
@@ -67,9 +70,7 @@ Recuerdo? recuerdoDesdeFila(Object? datos) {
     alto: _entero(datos['alto']),
     duracion: duracion is num
         ? Duration(milliseconds: (duracion * 1000).round())
-        : (duracion is String
-            ? _duracionDesdeTexto(duracion)
-            : null),
+        : (duracion is String ? _duracionDesdeTexto(duracion) : null),
     musica: musica,
   );
 }

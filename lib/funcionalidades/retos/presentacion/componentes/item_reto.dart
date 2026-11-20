@@ -24,7 +24,9 @@ class ItemReto extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(
-              reto.completado ? Icons.check_circle : Icons.radio_button_unchecked,
+              reto.completado
+                  ? Icons.check_circle
+                  : Icons.radio_button_unchecked,
               color: reto.completado ? ColoresApp.acento : ColoresApp.atenuado,
             ),
             const SizedBox(width: 12),
@@ -39,7 +41,8 @@ class ItemReto extends StatelessWidget {
                       color: ColoresApp.sobreSuperficie,
                     ),
                   ),
-                  if (reto.descripcion != null && reto.descripcion!.isNotEmpty) ...[
+                  if (reto.descripcion != null &&
+                      reto.descripcion!.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
                       reto.descripcion!,

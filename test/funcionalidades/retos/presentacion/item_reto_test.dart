@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('ItemReto muestra título y check cuando está completado', (tester) async {
+  testWidgets('ItemReto muestra título y check cuando está completado', (
+    tester,
+  ) async {
     const reto = Reto(
       id: 'r1',
       slug: 'recuerdo_nota',
@@ -16,7 +18,9 @@ void main() {
       completado: true,
     );
     await tester.pumpWidget(
-      MaterialApp(home: Scaffold(body: ItemReto(reto: reto))),
+      MaterialApp(
+        home: Scaffold(body: ItemReto(reto: reto)),
+      ),
     );
     expect(find.text('Escribe una nota'), findsOneWidget);
     expect(find.byIcon(Icons.check_circle), findsOneWidget);

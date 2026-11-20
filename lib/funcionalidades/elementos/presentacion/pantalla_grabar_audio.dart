@@ -90,7 +90,9 @@ class _CuerpoGrabadora extends StatelessWidget {
           Text(
             texto,
             textAlign: TextAlign.center,
-            style: estilos.titleMedium?.copyWith(color: ColoresApp.sobrePrimario),
+            style: estilos.titleMedium?.copyWith(
+              color: ColoresApp.sobrePrimario,
+            ),
           ),
         ],
       ),
@@ -113,7 +115,11 @@ class _BotonMicrofono extends StatelessWidget {
       child: fase == FaseGrabacion.procesando
           ? const SizedBox.square(
               dimension: 84,
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: ColoresApp.sobrePrimario,
+                ),
+              ),
             )
           : Tooltip(
               message: etiqueta,

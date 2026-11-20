@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 
 import '../../elementos/dominio/nota_serializada.dart';
@@ -17,6 +19,7 @@ class Recuerdo {
     required this.creadoEn,
     this.titulo,
     this.contenidoTexto,
+    this.contenidoRico,
     this.publicId,
     this.formato,
     this.bytes,
@@ -35,6 +38,15 @@ class Recuerdo {
   final DateTime creadoEn;
   final String? titulo;
   final String? contenidoTexto;
+
+  /// Delta JSON de una nota enriquecida (`null` en notas legacy y medios).
+  final Object? contenidoRico;
+
+  /// Nota parseada desde `contenido_texto` + `contenido_rico`.
+  NotaSerializada get nota => NotaSerializada.desdeColumnas(
+    contenidoTexto: contenidoTexto,
+    contenidoRico: contenidoRico,
+  );
 
   /// `public_id` de Cloudinary (`null` en las notas).
   final String? publicId;
@@ -62,9 +74,11 @@ class Recuerdo {
       return musica!.etiquetaCorta;
     }
     if (tipo == TipoElemento.texto) {
-      final cuerpo = NotaSerializada.parse(contenidoTexto).cuerpo;
-      final primeraLinea =
-          NotaSerializada.markdownAPlano(cuerpo).trim().split('\n').first;
+      final cuerpo = nota.cuerpo;
+      final primeraLinea = NotaSerializada.markdownAPlano(cuerpo)
+          .trim()
+          .split('\n')
+          .first;
       if (primeraLinea.isEmpty) return tipo.etiqueta;
       final runas = primeraLinea.runes.toList();
       return runas.length <= _caracteresNombreNota
@@ -85,6 +99,7 @@ class Recuerdo {
           other.creadoEn == creadoEn &&
           other.titulo == titulo &&
           other.contenidoTexto == contenidoTexto &&
+          _ricoCanonico(other.contenidoRico) == _ricoCanonico(contenidoRico) &&
           other.publicId == publicId &&
           other.formato == formato &&
           other.bytes == bytes &&
@@ -93,10 +108,43 @@ class Recuerdo {
           other.duracion == duracion &&
           other.musica == musica;
 
+  static String? _ricoCanonico(Object? valor) {
+    if (valor == null) return null;
+    try {
+      return jsonEncode(_ordenarJson(valor));
+    } catch (_) {
+      return valor.toString();
+    }
+  }
+
+  static Object? _ordenarJson(Object? valor) {
+    if (valor is Map) {
+      final claves = valor.keys.map((clave) => clave.toString()).toList()
+        ..sort();
+      return {for (final clave in claves) clave: _ordenarJson(valor[clave])};
+    }
+    if (valor is List) return [for (final item in valor) _ordenarJson(item)];
+    return valor;
+  }
+
   @override
-  int get hashCode => Object.hash(id, propietarioId, tipo, fechaRecuerdo,
-      creadoEn, titulo, contenidoTexto, publicId, formato, bytes, ancho, alto,
-      duracion, musica);
+  int get hashCode => Object.hash(
+    id,
+    propietarioId,
+    tipo,
+    fechaRecuerdo,
+    creadoEn,
+    titulo,
+    contenidoTexto,
+    _ricoCanonico(contenidoRico),
+    publicId,
+    formato,
+    bytes,
+    ancho,
+    alto,
+    duracion,
+    musica,
+  );
 
   @override
   String toString() => 'Recuerdo($id, ${tipo.valorBd})';

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../dominio/reto.dart';
-import '../clasificacion_retos_ui.dart';
 
 class TarjetaRetoSemanal extends StatelessWidget {
   const TarjetaRetoSemanal({
@@ -21,7 +20,7 @@ class TarjetaRetoSemanal extends StatelessWidget {
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final icono = indice.isEven ? Icons.eco_outlined : Icons.favorite_outline;
-    final numerador = numeradorProgresoSemanal(indice, reto);
+    final pasos = reto.pasos.length;
 
     return Material(
       color: ColoresApp.tarjeta,
@@ -49,7 +48,8 @@ class TarjetaRetoSemanal extends StatelessWidget {
                         color: ColoresApp.textoPrincipal,
                       ),
                     ),
-                    if (reto.descripcion != null && reto.descripcion!.isNotEmpty)
+                    if (reto.descripcion != null &&
+                        reto.descripcion!.isNotEmpty)
                       Text(
                         reto.descripcion!,
                         maxLines: 1,
@@ -61,13 +61,24 @@ class TarjetaRetoSemanal extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(
-                '$numerador/7',
-                style: tema.textTheme.labelLarge?.copyWith(
-                  color: ColoresApp.acento,
-                  fontWeight: FontWeight.w600,
+              if (pasos > 0)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.checklist_rounded,
+                      size: 14,
+                      color: ColoresApp.atenuado,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$pasos ${pasos == 1 ? 'paso' : 'pasos'}',
+                      style: tema.textTheme.labelSmall?.copyWith(
+                        color: ColoresApp.atenuado,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
               const SizedBox(width: 4),
               Icon(Icons.chevron_right, color: ColoresApp.atenuado),
             ],

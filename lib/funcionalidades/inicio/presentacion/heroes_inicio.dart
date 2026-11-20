@@ -1,4 +1,4 @@
-/// Tags de [Hero] de la rejilla y el banner de Inicio.
+/// Tags de [Hero] de las secciones y el banner de Inicio.
 abstract final class HeroesInicio {
   static const recuerdos = 'hero-inicio-recuerdos';
   static const retos = 'hero-inicio-retos';

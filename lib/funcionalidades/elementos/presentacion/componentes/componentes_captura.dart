@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../nucleo/tema/colores_app.dart';
@@ -76,8 +77,9 @@ class BotonObturador extends StatelessWidget {
                 color: alPresionar == null
                     ? colorInterior.withValues(alpha: 0.4)
                     : colorInterior,
-                borderRadius:
-                    BorderRadius.circular(grabando ? TemaApp.radioPequeno / 2 : 40),
+                borderRadius: BorderRadius.circular(
+                  grabando ? TemaApp.radioPequeno / 2 : 40,
+                ),
               ),
             ),
           ),
@@ -128,13 +130,22 @@ class ContadorGrabacion extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: ColoresApp.primario.withValues(alpha: 0.7),
+        color: ColoresApp.sobrePrimario.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(TemaApp.radioGrande),
+        border: Border.all(
+          color: ColoresApp.sobrePrimario.withValues(alpha: 0.28),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.circle, size: 10, color: grabando ? colorError : ColoresApp.atenuado),
+          Icon(
+            Icons.circle,
+            size: 10,
+            color: grabando
+                ? colorError
+                : ColoresApp.sobrePrimario.withValues(alpha: 0.55),
+          ),
           const SizedBox(width: 8),
           Text(
             '${formatearDuracion(transcurrido)} / ${formatearDuracion(maximo)}',
@@ -177,7 +188,10 @@ class AvisoCaptura extends StatelessWidget {
             Text(
               mensaje,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: ColoresApp.sobrePrimario, fontSize: 16),
+              style: const TextStyle(
+                color: ColoresApp.sobrePrimario,
+                fontSize: 16,
+              ),
             ),
             if (alReintentar != null) ...[
               const SizedBox(height: 24),
@@ -232,9 +246,7 @@ class BarraConfirmarCaptura extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: ColoresApp.acento,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: ColoresApp.acento),
               onPressed: procesando ? null : alUsar,
               icon: procesando
                   ? const SizedBox.square(
@@ -242,7 +254,7 @@ class BarraConfirmarCaptura extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.check),
-              label: Text(etiquetaUsar, style: TextStyle(fontSize: 13),),
+              label: Text(etiquetaUsar, style: TextStyle(fontSize: 13)),
             ),
           ),
         ],
@@ -271,40 +283,59 @@ class EstructuraCaptura extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColoresApp.primario,
-      appBar: AppBar(
-        title: Text(titulo),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          tooltip: 'Cerrar',
-          onPressed: () {
-            if (context.canPop()) context.pop();
-          },
+    final estilos = Theme.of(context).textTheme;
+    return Theme(
+      data: Theme.of(context).copyWith(
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: ColoresApp.sobrePrimario,
         ),
-        actions: acciones,
       ),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  cuerpo,
-                  if (indicadorSuperior != null)
-                    Positioned(
-                      top: 16,
-                      left: 0,
-                      right: 0,
-                      child: Center(child: indicadorSuperior),
-                    ),
-                ],
+      child: Scaffold(
+        backgroundColor: ColoresApp.primario,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          foregroundColor: ColoresApp.sobrePrimario,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
+          iconTheme: const IconThemeData(color: ColoresApp.sobrePrimario),
+          actionsIconTheme: const IconThemeData(
+            color: ColoresApp.sobrePrimario,
+          ),
+          titleTextStyle: estilos.titleMedium?.copyWith(
+            color: ColoresApp.sobrePrimario,
+            fontWeight: FontWeight.w600,
+          ),
+          title: Text(titulo),
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: 'Cerrar',
+            onPressed: () {
+              if (context.canPop()) context.pop();
+            },
+          ),
+          actions: acciones,
+        ),
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    cuerpo,
+                    if (indicadorSuperior != null)
+                      Positioned(
+                        top: 16,
+                        left: 0,
+                        right: 0,
+                        child: Center(child: indicadorSuperior),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            ?controles,
-          ],
+              ?controles,
+            ],
+          ),
         ),
       ),
     );

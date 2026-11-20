@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'nucleo/componentes/refresco_avisos_al_volver.dart';
@@ -25,16 +26,16 @@ class AppCapsoul extends ConsumerWidget {
       // Textos de Material (selector de fecha, tooltips) en español.
       locale: const Locale('es', 'CO'),
       supportedLocales: const [Locale('es', 'CO'), Locale('es')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      localizationsDelegates: const [
+        ...GlobalMaterialLocalizations.delegates,
+        FlutterQuillLocalizations.delegate,
+      ],
       routerConfig: enrutador,
     );
-    final enPrueba =
-        !kIsWeb && Platform.environment['FLUTTER_TEST'] == 'true';
+    final enPrueba = !kIsWeb && Platform.environment['FLUTTER_TEST'] == 'true';
     if (enPrueba) return app;
     return EscuchaTokensPush(
-      child: RefrescoAvisosAlVolver(
-        child: EscuchaEnlacesApp(child: app),
-      ),
+      child: RefrescoAvisosAlVolver(child: EscuchaEnlacesApp(child: app)),
     );
   }
 }

@@ -1,6 +1,6 @@
 import '../dominio/reto.dart';
 
-/// Agrupa el catálogo plano en secciones del mockup (heurísticas en cliente).
+/// Agrupa el catálogo plano en secciones del Diario.
 class ClasificacionRetosUi {
   const ClasificacionRetosUi({
     required this.diario,
@@ -18,7 +18,8 @@ class ClasificacionRetosUi {
   final List<Reto> completados;
   final int totalCompletados;
 
-  static const int metaEspecialDias = 30;
+  /// El catálogo ampliado reserva esta entrada como meta final del Diario.
+  static const String slugEspecial = 'veinticinco_recuerdos';
 }
 
 /// Presentación hasta migración de categorías / favoritos en backend.
@@ -32,22 +33,35 @@ ClasificacionRetosUi clasificarRetosParaUi(List<Reto> todos) {
       return fb.compareTo(fa);
     });
 
-  final diario = activos.isEmpty ? null : activos.first;
-  final trasDiario = diario == null ? activos : activos.sublist(1);
-  final semanales = trasDiario.take(2).toList();
-  final trasSemanales = trasDiario.skip(2).toList();
-
   Reto? especial;
-  List<Reto> restoActivos;
-  if (activos.length >= 4 && trasSemanales.isNotEmpty) {
-    especial = trasSemanales.last;
-    restoActivos = trasSemanales.length > 1
-        ? trasSemanales.sublist(0, trasSemanales.length - 1)
-        : const [];
-  } else {
-    especial = null;
-    restoActivos = trasSemanales;
+  for (final reto in activos) {
+    if (reto.slug == ClasificacionRetosUi.slugEspecial) {
+      especial = reto;
+      break;
+    }
   }
+
+  Reto? diario;
+  for (final reto in activos) {
+    if (reto.id != especial?.id) {
+      diario = reto;
+      break;
+    }
+  }
+
+  final semanales = activos
+      .where((reto) => reto.id != diario?.id && reto.id != especial?.id)
+      .take(2)
+      .toList();
+
+  final excluidos = <String>{
+    if (diario != null) diario.id,
+    if (especial != null) especial.id,
+    ...semanales.map((reto) => reto.id),
+  };
+  final restoActivos = activos
+      .where((reto) => !excluidos.contains(reto.id))
+      .toList();
 
   return ClasificacionRetosUi(
     diario: diario,
@@ -59,19 +73,41 @@ ClasificacionRetosUi clasificarRetosParaUi(List<Reto> todos) {
   );
 }
 
-/// Puntos del reto diario (máx. 6 círculos).
-int puntosDiariosRellenos(Reto reto) {
-  if (reto.completado) return puntosDiariosTotal(reto);
-  return reto.pasos.isEmpty ? 0 : 1;
+/// Agrupa las entradas restantes para que el catálogo largo siga siendo legible.
+List<({String titulo, List<Reto> retos})> agruparRestoActivos(
+  List<Reto> retos,
+) {
+  const ordenGrupos = [
+    'Primeros pasos',
+    'Recuerdos',
+    'Cápsulas',
+    'Momentos',
+    'Legado',
+  ];
+  final grupos = <String, List<Reto>>{
+    for (final titulo in ordenGrupos) titulo: <Reto>[],
+  };
+  for (final reto in retos) {
+    grupos[_grupoDeReto(reto)]!.add(reto);
+  }
+  return [
+    for (final titulo in ordenGrupos)
+      if (grupos[titulo]!.isNotEmpty)
+        (titulo: titulo, retos: List.unmodifiable(grupos[titulo]!)),
+  ];
 }
 
-int puntosDiariosTotal(Reto reto) {
-  final total = reto.pasos.isEmpty ? 6 : reto.pasos.length;
-  return total.clamp(1, 6);
-}
-
-/// Fracción decorativa semanal en pestaña Activos (mock 2/7, 1/7).
-int numeradorProgresoSemanal(int indice, Reto reto) {
-  if (reto.completado) return 7;
-  return (2 - indice).clamp(0, 7);
+String _grupoDeReto(Reto reto) {
+  final clave = reto.criterioClave;
+  if (clave == 'primer_momento' || clave.startsWith('momento')) {
+    return 'Momentos';
+  }
+  if (clave.startsWith('herencia') || clave == 'persona_confianza') {
+    return 'Legado';
+  }
+  if (clave == 'primer_capsula' || clave.startsWith('capsula')) {
+    return 'Cápsulas';
+  }
+  if (clave.startsWith('recuerdo')) return 'Recuerdos';
+  return 'Primeros pasos';
 }

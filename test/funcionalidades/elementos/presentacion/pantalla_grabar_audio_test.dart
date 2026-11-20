@@ -8,6 +8,7 @@ import 'package:capsoul/funcionalidades/elementos/dominio/grabadora_audio.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/validador_medios.dart';
 import 'package:capsoul/funcionalidades/elementos/presentacion/pantalla_grabar_audio.dart';
+import 'package:capsoul/nucleo/tema/colores_app.dart';
 import 'package:capsoul/nucleo/tema/tema_app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,8 +76,7 @@ class _CompresorFalso implements CompresorMedios {
     String rutaOriginal, {
     int rotacionGrados = 0,
     bool esCamaraFrontal = false,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 
   @override
   Future<ElementoBorrador> prepararVideo(String ruta, Duration duracion) =>
@@ -94,14 +94,28 @@ Future<void> _montar(
         proveedorFabricaGrabadora.overrideWithValue(() => grabadora),
         proveedorCompresorMedios.overrideWithValue(compresor),
       ],
-      child: MaterialApp(theme: TemaApp.claro, home: const PantallaGrabarAudio()),
+      child: MaterialApp(
+        theme: TemaApp.claro,
+        home: const PantallaGrabarAudio(),
+      ),
     ),
   );
 }
 
 void main() {
-  testWidgets('graba con contador y onda y termina al tocar detener',
-      (tester) async {
+  testWidgets('la barra superior usa texto e iconos blancos', (tester) async {
+    await _montar(tester, _GrabadoraFalsa(), _CompresorFalso());
+
+    final barra = tester.widget<AppBar>(find.byType(AppBar));
+    expect(barra.foregroundColor, ColoresApp.sobrePrimario);
+    expect(barra.titleTextStyle?.color, ColoresApp.sobrePrimario);
+    expect(barra.iconTheme?.color, ColoresApp.sobrePrimario);
+    expect(barra.actionsIconTheme?.color, ColoresApp.sobrePrimario);
+  });
+
+  testWidgets('graba con contador y onda y termina al tocar detener', (
+    tester,
+  ) async {
     final grabadora = _GrabadoraFalsa();
     final compresor = _CompresorFalso();
     await _montar(tester, grabadora, compresor);
@@ -145,7 +159,10 @@ void main() {
     await tester.tap(find.byTooltip('Empezar a grabar'));
     await tester.pump();
 
-    expect(find.textContaining('permiso para usar el micrófono'), findsOneWidget);
+    expect(
+      find.textContaining('permiso para usar el micrófono'),
+      findsOneWidget,
+    );
     expect(grabadora.grabando, isFalse);
   });
 

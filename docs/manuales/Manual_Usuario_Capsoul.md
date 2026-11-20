@@ -25,7 +25,7 @@ Guía paso a paso para el usuario final — Versión de la app 1.0
 10. Momentos
 11. Cápsulas
 12. Mi legado
-13. Retos
+13. Diario
 14. Yo, amigos y perfil
 15. Música
 16. Avisos
@@ -162,7 +162,7 @@ El selector ofrece Video, Audio, Escribir, Foto y Música (según la versión).
 3. Captura o escribe.
 4. En **Guardar recuerdo** revisa título y fecha y confirma.
 
-Las notas permiten formato: selecciona un fragmento y aplica Normal, Negrita, Cursiva o Subrayado. Máximo 5000 caracteres.
+Las notas permiten formato WYSIWYG: selecciona un fragmento y usa Negrita, Cursiva o Subrayado sin escribir símbolos. El botón de estilo permite cambiar color de fondo y tipografía. Máximo 5000 caracteres.
 
 `[CAPTURA DE PANTALLA: Selector Crear]`
 
@@ -204,7 +204,7 @@ Cuando llega el día, la cápsula se **libera**. Ábrela, mira los recuerdos y m
 Prepara lo que dejas: herencias con recuerdos y, si quieres, cápsulas vinculadas.
 
 1. Abre **Mi legado**.
-2. Revisa **Todo está protegido** (seguridad y persona de confianza).
+2. Revisa **Tu espacio seguro** (seguridad y persona de confianza).
 3. Toca **Nueva** para el asistente de herencia: a quién, qué recuerdos, cuándo se activa.
 4. La persona de confianza debe ser un **amigo**; puede confirmar cuando corresponda.
 
@@ -212,17 +212,19 @@ Prepara lo que dejas: herencias con recuerdos y, si quieres, cápsulas vinculada
 
 Figura: Mi legado
 
-## 13. Retos
+## 13. Diario
 
-Lista de retos activos, completados y favoritos (diario, semanal, especial).
+Lista de 25 entradas activas, completadas y favoritas (diario, semanal y especial).
+El progreso se valida automáticamente en el servidor cuando completas la acción.
 
-1. Entra desde Inicio o el menú de retos.
-2. Lee el título y los pasos.
-3. Completa el reto según las instrucciones de la pantalla.
+1. Entra desde Inicio o el menú de Diario.
+2. Revisa tu progreso y las entradas agrupadas por tema.
+3. Lee el título y los pasos.
+4. Completa la acción en la app: la entrada se marcará sola.
 
-`[CAPTURA DE PANTALLA: Retos]`
+`[CAPTURA DE PANTALLA: Diario]`
 
-Figura: Retos
+Figura: Diario
 
 ## 14. Yo, amigos y perfil
 

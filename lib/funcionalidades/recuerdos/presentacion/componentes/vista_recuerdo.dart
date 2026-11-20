@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
-import '../../../elementos/dominio/nota_serializada.dart';
 import '../../../elementos/dominio/tipo_elemento.dart';
+import '../../../elementos/presentacion/componentes/vista_nota_rica.dart';
 import '../../dominio/aspecto_medio.dart';
 import '../../dominio/recuerdo.dart';
 import 'miniatura_recuerdo_firmada.dart';
@@ -24,14 +23,14 @@ class VistaRecuerdo extends StatelessWidget {
     return switch (recuerdo.tipo) {
       TipoElemento.texto => _NotaRecuerdo(recuerdo: recuerdo),
       TipoElemento.foto => ClipRRect(
-          borderRadius: BorderRadius.circular(TemaApp.radioGrande),
-          child: _contenidoFoto(recuerdo),
-        ),
+        borderRadius: BorderRadius.circular(TemaApp.radioGrande),
+        child: _contenidoFoto(recuerdo),
+      ),
       TipoElemento.musica => _contenidoMusica(context, recuerdo),
       TipoElemento.video => ClipRRect(
-          borderRadius: BorderRadius.circular(TemaApp.radioGrande),
-          child: ReproductorVideoRecuerdo(recuerdo: recuerdo),
-        ),
+        borderRadius: BorderRadius.circular(TemaApp.radioGrande),
+        child: ReproductorVideoRecuerdo(recuerdo: recuerdo),
+      ),
       TipoElemento.audio => ReproductorAudioRecuerdo(recuerdo: recuerdo),
     };
   }
@@ -67,17 +66,13 @@ class VistaRecuerdo extends StatelessWidget {
           child: Text(
             'No se pudo cargar la canción.',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: ColoresApp.atenuado,
-                ),
+            style: Theme.of(context).textTheme.bodyLarge
+                ?.copyWith(color: ColoresApp.atenuado),
           ),
         ),
       );
     }
-    return VistaRecuerdoMusica(
-      referencia: musica,
-      recuerdo: recuerdo,
-    );
+    return VistaRecuerdoMusica(referencia: musica, recuerdo: recuerdo);
   }
 }
 
@@ -89,13 +84,13 @@ class MarcoMiniatura extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AspectRatio(
-        aspectRatio: aspectoMedio(
-          tipo: recuerdo.tipo,
-          ancho: recuerdo.ancho,
-          alto: recuerdo.alto,
-        ),
-        child: MiniaturaRecuerdoFirmada(recuerdo: recuerdo, tamanoIcono: 48),
-      );
+    aspectRatio: aspectoMedio(
+      tipo: recuerdo.tipo,
+      ancho: recuerdo.ancho,
+      alto: recuerdo.alto,
+    ),
+    child: MiniaturaRecuerdoFirmada(recuerdo: recuerdo, tamanoIcono: 48),
+  );
 }
 
 class _NotaRecuerdo extends StatelessWidget {
@@ -105,26 +100,12 @@ class _NotaRecuerdo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nota = NotaSerializada.parse(recuerdo.contenidoTexto);
-    final fam = nota.estilo.esPlayfair()
-        ? TemaApp.fuenteTitulos
-        : TemaApp.fuenteUi;
+    final nota = recuerdo.nota;
     return Card(
       color: nota.estilo.colorFondo(),
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: MarkdownBody(
-          data: nota.cuerpo.isEmpty ? ' ' : nota.cuerpo,
-          selectable: true,
-          styleSheet: MarkdownStyleSheet(
-            p: TextStyle(
-              fontSize: 16,
-              height: 1.5,
-              fontFamily: fam,
-              color: ColoresApp.textoPrincipal,
-            ),
-          ),
-        ),
+        child: VistaNotaRica(nota: nota, seleccionable: true),
       ),
     );
   }

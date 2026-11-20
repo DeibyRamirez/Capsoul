@@ -22,36 +22,65 @@ void main() {
     expect(recuerdo.nombre, 'Exotiqueo');
   });
 
-  testWidgets('MiniaturaRecuerdo nota no muestra front matter ni ** literales',
-      (tester) async {
-    const nota = NotaSerializada(
-      estilo: EstiloNota(fondo: 'pastelVerde'),
-      cuerpo: '**Exotiqueo**',
+  test('Recuerdo.nota lee el contenido enriquecido de la fila', () {
+    final nota = NotaSerializada(
+      estilo: const EstiloNota(fondo: 'pastelAzul'),
+      cuerpo: 'Hola mundo',
+      delta: [
+        {'insert': 'Hola '},
+        {
+          'insert': 'mundo',
+          'attributes': {'bold': true},
+        },
+        {'insert': '\n'},
+      ],
     );
     final recuerdo = Recuerdo(
-      id: 'n1',
+      id: 'n2',
       propietarioId: 'u1',
       tipo: TipoElemento.texto,
       fechaRecuerdo: DateTime(2026, 10, 16),
       creadoEn: DateTime(2026, 10, 16),
-      contenidoTexto: nota.serializar(),
+      contenidoTexto: 'Hola mundo',
+      contenidoRico: nota.contenidoRico,
     );
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 200,
-            height: 200,
-            child: MiniaturaRecuerdo(recuerdo: recuerdo),
+    expect(recuerdo.nota.esRica, isTrue);
+    expect(recuerdo.nota.cuerpo, 'Hola mundo');
+  });
+
+  testWidgets(
+    'MiniaturaRecuerdo nota no muestra front matter ni ** literales',
+    (tester) async {
+      const nota = NotaSerializada(
+        estilo: EstiloNota(fondo: 'pastelVerde'),
+        cuerpo: '**Exotiqueo**',
+      );
+      final recuerdo = Recuerdo(
+        id: 'n1',
+        propietarioId: 'u1',
+        tipo: TipoElemento.texto,
+        fechaRecuerdo: DateTime(2026, 10, 16),
+        creadoEn: DateTime(2026, 10, 16),
+        contenidoTexto: nota.serializar(),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 200,
+              height: 200,
+              child: MiniaturaRecuerdo(recuerdo: recuerdo),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(find.text('Exotiqueo'), findsOneWidget);
-    expect(find.textContaining('---capsoul'), findsNothing);
-    expect(find.text('**Exotiqueo**'), findsNothing);
-  });
+      expect(find.text('Exotiqueo'), findsOneWidget);
+      expect(find.textContaining('---capsoul'), findsNothing);
+      expect(find.text('**Exotiqueo**'), findsNothing);
+    },
+  );
 }

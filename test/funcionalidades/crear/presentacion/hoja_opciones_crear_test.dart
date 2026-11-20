@@ -1,5 +1,6 @@
 import 'package:capsoul/funcionalidades/elementos/dominio/nota_serializada.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../ayudantes/app_prueba.dart';
@@ -13,7 +14,9 @@ void main() {
     final recuerdos = RepositorioRecuerdosFalso();
     await montarAppCapsoul(
       tester,
-      autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
+      autenticacion: RepositorioAutenticacionFalso(
+        usuarioInicial: usuarioPrueba,
+      ),
       recuerdos: recuerdos,
     );
 
@@ -23,8 +26,17 @@ void main() {
     await tester.tap(find.text('Texto'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byKey(const Key('campo-nota')), 'Desde la hoja');
-    await tester.tap(find.text('Guardar nota'));
+    final editor = tester.widget<quill.QuillEditor>(
+      find.byKey(const Key('campo-nota')),
+    );
+    editor.controller.replaceText(
+      0,
+      0,
+      'Desde la hoja',
+      const TextSelection.collapsed(offset: 13),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('guardar-nota')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('campo-titulo-rapido')), findsOneWidget);

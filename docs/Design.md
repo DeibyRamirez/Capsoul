@@ -99,13 +99,17 @@ Respetar `MediaQuery.disableAnimations` → pintor estático. No en listas, tabs
 | `FondoCapsoul` | `nucleo/componentes/fondo_capsoul.dart` | Envoltorio de degradado |
 | `PantallaCapsoul` | `nucleo/componentes/pantalla_capsoul.dart` | Scaffold estándar (fondo suave) |
 | `TarjetaCapsoul` | `nucleo/componentes/tarjeta_capsoul.dart` | Tarjeta blanca con borde, sombra y chip de icono |
-| `TarjetaSeccionInicio` | `inicio/.../tarjeta_seccion_inicio.dart` | Tarjeta de la rejilla 2×2 |
+| `TarjetaSeccionInicio` | `inicio/.../tarjeta_seccion_inicio.dart` | Fila de la lista de secciones |
+| `TarjetaHerenciaRecibida` | `legado/.../tarjeta_herencia_recibida.dart` | Herencia recibida con medallón sellado y estado |
+| `VistaNotaRica` | `elementos/.../vista_nota_rica.dart` | Nota renderizada desde texto plano y Delta |
 
 ---
 
 ## Patrones de pantalla
 
-- **Inicio:** encabezado claro (logo Playfair `primario`, slogan `textoSecundario`, campana `primario`), tarjeta medianoche con frasco, botón píldora "Guardar algo hoy", rejilla 2×2 (separación 16) y banner medianoche.
+- **Inicio:** encabezado claro (logo Playfair `primario`, slogan `textoSecundario`, campana `primario`), tarjeta medianoche con frasco, botón píldora "Guardar algo hoy", lista vertical de secciones (separación 12) y banner medianoche.
+- **Notas:** editor WYSIWYG con barra Negrita/Cursiva/Subrayado; `contenido_texto` guarda el texto plano y `contenido_rico` el Delta. El estilo (color y tipografía) se elige en una hoja aparte.
+- **Diario:** encabezado, tarjeta de progreso, filtros Activos/Completados/Favoritos, entrada del día, semanales, especial y grupos temáticos de entradas restantes.
 - **Detalle:** cabecera clara (`CabeceraDetalleCapsoul`) o `CabeceraCapsula`; cuerpo sobre `superficie` con `TarjetaCapsoul`.
 - **Autenticación:** fondo suave, banner con luciérnagas y panel `decoracionTarjeta()` centrado.
 - **Navegación inferior:** Inicio | Momentos | + | Mi legado | Yo. `NavigationBar` blanca, activo `primario`, inactivo `navInactivo`, indicador `primario @ 10%`; `+` circular `primario` con sombra.

@@ -110,6 +110,7 @@ erDiagram
         uuid propietario_id FK
         tipo_elemento tipo "foto video audio texto"
         text contenido_texto "solo texto"
+        jsonb contenido_rico "delta WYSIWYG, solo notas"
         text cloudinary_public_id UK
         text cloudinary_tipo_recurso "image video raw"
         text cloudinary_tipo_entrega "solo authenticated"
@@ -230,7 +231,8 @@ La fila se crea **automáticamente** con un trigger sobre `auth.users` (`privado
 | `id` | uuid | PK |
 | `propietario_id` | uuid | FK → usuarios |
 | `tipo` | enum | `foto`, `video`, `audio`, `texto` |
-| `contenido_texto` | text | Solo cuando `tipo = 'texto'` |
+| `contenido_texto` | text | Texto plano de la nota (límite de 5000) |
+| `contenido_rico` | jsonb | Delta de Quill de la nota enriquecida; `null` en notas legacy y medios |
 | `cloudinary_public_id` | text | Único y aleatorio (lo fija la Edge Function `firmar-subida`). Obligatorio si el tipo no es `texto`. Es lo único que se guarda del medio, junto con sus metadatos |
 | `cloudinary_tipo_recurso` | text | `image`, `video` o `raw` (en Cloudinary el audio se sube como `video`) |
 | `cloudinary_tipo_entrega` | text | Solo `authenticated` (decisión D2 del PO) |
@@ -477,7 +479,8 @@ create table public.elementos (
   id                       uuid primary key default gen_random_uuid(),
   propietario_id           uuid not null references public.usuarios (id) on delete cascade,
   tipo                     public.tipo_elemento not null,
-  contenido_texto          text,       -- solo para tipo = 'texto'
+  contenido_texto          text,       -- texto plano, solo para tipo = 'texto'
+  contenido_rico           jsonb,      -- delta WYSIWYG, solo para tipo = 'texto'
   cloudinary_public_id     text,       -- aleatorio, lo fija la Edge Function firmar-subida (decisión D2 del PO)
   cloudinary_tipo_recurso  text check (cloudinary_tipo_recurso in ('image', 'video', 'raw')), -- el audio es 'video' en Cloudinary
   cloudinary_tipo_entrega  text not null default 'authenticated'

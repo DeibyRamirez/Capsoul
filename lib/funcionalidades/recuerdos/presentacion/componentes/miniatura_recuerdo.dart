@@ -35,7 +35,11 @@ class MiniaturaRecuerdo extends StatelessWidget {
           const Positioned(
             right: 6,
             top: 6,
-            child: Icon(Icons.music_note, color: ColoresApp.sobrePrimario, size: 20),
+            child: Icon(
+              Icons.music_note,
+              color: ColoresApp.sobrePrimario,
+              size: 20,
+            ),
           ),
       ],
     );
@@ -52,39 +56,43 @@ class _Fondo extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (recuerdo.tipo) {
       TipoElemento.texto => VistaNotaCompacta(
-          contenidoTexto: recuerdo.contenidoTexto,
-        ),
+        contenidoTexto: recuerdo.contenidoTexto,
+        contenidoRico: recuerdo.contenidoRico,
+      ),
       TipoElemento.audio => ColoredBox(
-          color: ColoresApp.acento.withValues(alpha: 0.15),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: OndaAudio(
-              color: ColoresApp.acento.withValues(alpha: 0.45),
-              colorProgreso: ColoresApp.acento,
-              progreso: 0.35,
-              semilla: recuerdo.id.hashCode,
-              barras: 22,
-              altura: 40,
-            ),
+        color: ColoresApp.acento.withValues(alpha: 0.15),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: OndaAudio(
+            color: ColoresApp.acento.withValues(alpha: 0.45),
+            colorProgreso: ColoresApp.acento,
+            progreso: 0.35,
+            semilla: recuerdo.id.hashCode,
+            barras: 22,
+            altura: 40,
           ),
         ),
-      TipoElemento.musica => _PortadaMusica(recuerdo: recuerdo, tamanoIcono: tamanoIcono),
+      ),
+      TipoElemento.musica => _PortadaMusica(
+        recuerdo: recuerdo,
+        tamanoIcono: tamanoIcono,
+      ),
       TipoElemento.foto || TipoElemento.video => DecoratedBox(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [ColoresApp.acento, ColoresApp.primario],
-            ),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [ColoresApp.acento, ColoresApp.primario],
           ),
-          child: recuerdo.tipo == TipoElemento.foto
-              ? Icon(
-                  Icons.photo_outlined,
-                  color: ColoresApp.sobrePrimario.withValues(alpha: 0.8),
-                  size: tamanoIcono,
-                )
-              : const SizedBox.expand(),
         ),
+        child: recuerdo.tipo == TipoElemento.foto
+            ? Icon(
+                Icons.photo_outlined,
+                color: ColoresApp.sobrePrimario.withValues(alpha: 0.8),
+                size: tamanoIcono,
+              )
+            : const SizedBox.expand(),
+      ),
     };
   }
 }
@@ -109,9 +117,9 @@ class _PortadaMusica extends StatelessWidget {
   }
 
   Widget _iconoFallback(double tamano) => ColoredBox(
-        color: ColoresApp.acento.withValues(alpha: 0.2),
-        child: Icon(Icons.music_note, size: tamano, color: ColoresApp.primario),
-      );
+    color: ColoresApp.acento.withValues(alpha: 0.2),
+    child: Icon(Icons.music_note, size: tamano, color: ColoresApp.primario),
+  );
 }
 
 class _IconoReproducir extends StatelessWidget {

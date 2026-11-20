@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "descripcion": "Contrato para importar retos globales en public.retos (creador_id null). Uso futuro: panel admin web con service_role. Hoy el catálogo se carga con la migración 20261011000012; actualizar el sistema requiere aprobación del PO.",
+  "descripcion": "Contrato para importar retos globales en public.retos (creador_id null). Uso futuro: panel admin web con service_role. El catálogo vigente tiene 25 entradas (migración 20261120000028); actualizar el sistema requiere aprobación del PO.",
   "retos": [
     {
       "slug": "primer_capsula",
@@ -173,13 +173,133 @@
     {
       "slug": "recuerdos_tres",
       "titulo": "Tres tipos distintos",
-      "descripcion": "Prueba foto, nota y audio (mín. 3 recuerdos).",
-      "pasos": ["Varía los formatos"],
+      "descripcion": "Prueba al menos tres formatos distintos.",
+      "pasos": ["Guarda una foto", "Escribe una nota", "Graba un audio"],
       "orden": 15,
       "activo": true,
       "criterio": {
-        "clave": "recuerdos_cantidad",
+        "clave": "recuerdos_tipos",
         "parametros": { "minimo": 3 }
+      }
+    },
+    {
+      "slug": "persona_confianza",
+      "titulo": "Elige a tu persona de confianza",
+      "descripcion": "Deja tu legado en manos de alguien de confianza.",
+      "pasos": ["Abre Mi legado", "Elige una persona de confianza"],
+      "orden": 16,
+      "activo": true,
+      "criterio": {
+        "clave": "persona_confianza",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "tres_capsulas",
+      "titulo": "Tres cápsulas al futuro",
+      "descripcion": "Programa tres mensajes para el futuro.",
+      "pasos": ["Crea una cápsula", "Repite hasta tener tres"],
+      "orden": 17,
+      "activo": true,
+      "criterio": {
+        "clave": "capsulas_cantidad",
+        "parametros": { "minimo": 3 }
+      }
+    },
+    {
+      "slug": "capsula_tres_recuerdos",
+      "titulo": "Una cápsula con tres recuerdos",
+      "descripcion": "Sella una cápsula con al menos tres recuerdos.",
+      "pasos": ["Crea una cápsula", "Añade tres recuerdos"],
+      "orden": 18,
+      "activo": true,
+      "criterio": {
+        "clave": "capsula_elementos_cantidad",
+        "parametros": { "minimo": 3 }
+      }
+    },
+    {
+      "slug": "tres_momentos",
+      "titulo": "Tres momentos",
+      "descripcion": "Organiza tu historia en tres momentos.",
+      "pasos": ["Abre Momentos", "Crea tres momentos"],
+      "orden": 19,
+      "activo": true,
+      "criterio": {
+        "clave": "momentos_cantidad",
+        "parametros": { "minimo": 3 }
+      }
+    },
+    {
+      "slug": "momento_tres_recuerdos",
+      "titulo": "Un momento con tres recuerdos",
+      "descripcion": "Reúne tres recuerdos en un mismo momento.",
+      "pasos": ["Crea un momento", "Añade tres recuerdos"],
+      "orden": 20,
+      "activo": true,
+      "criterio": {
+        "clave": "momento_elementos_cantidad",
+        "parametros": { "minimo": 3 }
+      }
+    },
+    {
+      "slug": "herencia_con_capsula",
+      "titulo": "Un legado con cápsula",
+      "descripcion": "Vincula una cápsula a una herencia.",
+      "pasos": ["Abre Mi legado", "Crea una herencia", "Vincula una cápsula"],
+      "orden": 21,
+      "activo": true,
+      "criterio": {
+        "clave": "herencia_con_capsula",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "comparte_capsula",
+      "titulo": "Comparte una cápsula",
+      "descripcion": "Envía una cápsula a alguien especial.",
+      "pasos": ["Crea una cápsula", "Añade un destinatario"],
+      "orden": 22,
+      "activo": true,
+      "criterio": {
+        "clave": "capsula_compartida",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "recuerdo_con_musica",
+      "titulo": "Música para un recuerdo",
+      "descripcion": "Acompaña cualquier recuerdo con una canción.",
+      "pasos": ["Guarda un recuerdo", "Añade música"],
+      "orden": 23,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdo_con_musica",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "perfil_con_foto",
+      "titulo": "Ponle cara a tu perfil",
+      "descripcion": "Completa tu perfil con una foto.",
+      "pasos": ["Abre Perfil", "Cambia tu foto"],
+      "orden": 24,
+      "activo": true,
+      "criterio": {
+        "clave": "perfil_con_foto",
+        "parametros": {}
+      }
+    },
+    {
+      "slug": "veinticinco_recuerdos",
+      "titulo": "Veinticinco recuerdos",
+      "descripcion": "Tu banco de recuerdos ya es una historia.",
+      "pasos": ["Sigue guardando recuerdos"],
+      "orden": 25,
+      "activo": true,
+      "criterio": {
+        "clave": "recuerdos_cantidad",
+        "parametros": { "minimo": 25 }
       }
     }
   ],
@@ -229,12 +349,52 @@
       "descripcion": "usuarios.nombre_usuario configurado."
     },
     {
+      "clave": "recuerdo_con_musica",
+      "descripcion": "Cualquier elemento con musica_id_externo no nulo."
+    },
+    {
       "clave": "recuerdos_cantidad",
       "descripcion": "Mínimo de elementos; parametros.minimo (entero)."
     },
     {
+      "clave": "recuerdos_tipos",
+      "descripcion": "Mínimo de tipos distintos; parametros.minimo (entero)."
+    },
+    {
+      "clave": "capsulas_cantidad",
+      "descripcion": "Mínimo de cápsulas no canceladas; parametros.minimo."
+    },
+    {
+      "clave": "capsula_elementos_cantidad",
+      "descripcion": "Una cápsula con al menos parametros.minimo elementos."
+    },
+    {
+      "clave": "capsula_compartida",
+      "descripcion": "Cápsula con un destinatario distinto del autor."
+    },
+    {
+      "clave": "momentos_cantidad",
+      "descripcion": "Mínimo de momentos; parametros.minimo."
+    },
+    {
+      "clave": "momento_elementos_cantidad",
+      "descripcion": "Un momento con al menos parametros.minimo recuerdos."
+    },
+    {
       "clave": "herencia_borrador",
       "descripcion": "Al menos una herencia no revocada."
+    },
+    {
+      "clave": "herencia_con_capsula",
+      "descripcion": "Una herencia no revocada con al menos una cápsula."
+    },
+    {
+      "clave": "persona_confianza",
+      "descripcion": "usuarios.persona_confianza_legado_id configurado."
+    },
+    {
+      "clave": "perfil_con_foto",
+      "descripcion": "usuarios.foto_public_id configurado."
     }
   ]
 }
