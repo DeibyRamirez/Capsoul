@@ -44,6 +44,10 @@ jobs:
           channel: ${{ env.FLUTTER_CHANNEL }}
           cache: true
 
+      # Evita que Gradle instale el NDK sin reintentos durante el build.
+      - name: Preparar SDK de Android
+        uses: ./.github/actions/preparar-android
+
       # Crea env/dev.json (ignorado por git) desde los secretos, sin hacer echo.
       # jq lee los valores del entorno, no de la linea de comandos.
       - name: Crear env/dev.json desde secretos
