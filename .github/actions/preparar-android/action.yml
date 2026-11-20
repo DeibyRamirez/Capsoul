@@ -1,0 +1,59 @@
+name: Preparar Android
+description: Acepta licencias e instala el NDK con reintentos para evitar descargas corruptas.
+
+inputs:
+  ndk-version:
+    description: Versión del NDK que usa Flutter (flutter.ndkVersion).
+    required: false
+    default: "28.2.13676358"
+
+runs:
+  using: composite
+  steps:
+    - name: Licencias e instalación del NDK
+      shell: bash
+      env:
+        NDK_VERSION: ${{ inputs.ndk-version }}
+      run: |
+        set -euo pipefail
+
+        SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+        if [ -z "$SDK" ]; then
+          echo "::error::El runner no expone ANDROID_SDK_ROOT ni ANDROID_HOME."
+          exit 1
+        fi
+
+        tool="$(find "$SDK/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+        if [ -z "$tool" ]; then
+          echo "::error::No está sdkmanager en $SDK."
+          exit 1
+        fi
+
+        # Aceptar licencias una sola vez.
+        yes | "$tool" --sdk_root="$SDK" --licenses >/dev/null 2>&1 || true
+
+        NDK_DIR="$SDK/ndk/$NDK_VERSION"
+        if [ -f "$NDK_DIR/source.properties" ] && \
+           [ -d "$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" ]; then
+          echo "NDK $NDK_VERSION ya está instalado."
+          exit 0
+        fi
+
+        for intento in 1 2 3; do
+          # sdkmanager guarda restos de descargas en .temp; si el ZIP quedó
+          # corrupto, hay que borrarlos antes de reintentar.
+          rm -rf "$NDK_DIR" "$SDK/.temp" "$SDK/.downloadIntermediates"
+          echo "Instalando NDK $NDK_VERSION (intento $intento/3)..."
+          if "$tool" --sdk_root="$SDK" --install "ndk;$NDK_VERSION"; then
+            if [ -f "$NDK_DIR/source.properties" ] && \
+               [ -d "$NDK_DIR/toolchains/llvm/prebuilt/linux-x86_64" ]; then
+              echo "NDK $NDK_VERSION instalado correctamente."
+              exit 0
+            fi
+          fi
+          echo "::warning::Falló la instalación del NDK (intento $intento/3). Reintentando..."
+          sleep $((intento * 10))
+        done
+
+        echo "::error::No se pudo instalar el NDK $NDK_VERSION después de 3 intentos."
+        exit 1

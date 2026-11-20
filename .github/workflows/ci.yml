@@ -42,23 +42,10 @@ jobs:
           channel: stable
           cache: true
 
-      # El runner trae el SDK, pero sin licencias Gradle no descarga
-      # platform ni NDK cuando faltan (compileSdk 36, NDK de Flutter).
-      - name: Licencias del SDK de Android
-        run: |
-          set -euo pipefail
-          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
-          if [ -z "$SDK" ]; then
-            echo "::error::El runner no expone ANDROID_SDK_ROOT ni ANDROID_HOME."
-            exit 1
-          fi
-          tool="$(find "$SDK/cmdline-tools" -type f -name sdkmanager | head -n 1)"
-          if [ -z "$tool" ]; then
-            echo "::error::No está sdkmanager en $SDK."
-            exit 1
-          fi
-          yes | "$tool" --sdk_root="$SDK" --licenses >/dev/null || true
-          echo "SDK de Android: $SDK"
+      # Instala el NDK con reintentos. Una descarga corrupta del ZIP deja a
+      # sdkmanager con "Error reading Zip content from a SeekableByteChannel".
+      - name: Preparar SDK de Android
+        uses: ./.github/actions/preparar-android
 
       - name: Dependencias
         run: flutter pub get

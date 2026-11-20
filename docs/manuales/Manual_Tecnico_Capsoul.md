@@ -322,6 +322,8 @@ flutter test
 
 `.github/workflows/build.yml` se dispara a mano (`workflow_dispatch`) o en **push a `main`**. Produce APK/AAB de Android (firma de release si hay keystore en secretos; si no, debug) e IPA de iOS **sin firmar**. Los secretos `SUPABASE_URL` y `SUPABASE_ANON_KEY` se inyectan a `env/dev.json` en el runner; no se imprimen.
 
+Antes de compilar, `.github/actions/preparar-android` acepta las licencias e instala el NDK de Flutter con reintentos. Así una descarga corrupta de `sdkmanager` no tumba el build.
+
 Compilación local de Android (sin release):
 
 ```bash
