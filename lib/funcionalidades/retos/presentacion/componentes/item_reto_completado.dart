@@ -44,7 +44,8 @@ class ItemRetoCompletado extends StatelessWidget {
                         color: ColoresApp.textoPrincipal,
                       ),
                     ),
-                    if (reto.descripcion != null && reto.descripcion!.isNotEmpty)
+                    if (reto.descripcion != null &&
+                        reto.descripcion!.isNotEmpty)
                       Text(
                         reto.descripcion!,
                         maxLines: 2,

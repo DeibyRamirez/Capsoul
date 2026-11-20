@@ -3,6 +3,7 @@ import 'package:capsoul/funcionalidades/capsulas/presentacion/componentes/botone
 import 'package:capsoul/funcionalidades/elementos/dominio/nota_serializada.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../ayudantes/app_prueba.dart';
@@ -22,7 +23,10 @@ Future<void> _abrirNuevaCapsula(WidgetTester tester) async {
 Finder _listaFormulario() => find
     .descendant(
       of: find
-          .descendant(of: find.byType(PageView), matching: find.byType(ListView))
+          .descendant(
+            of: find.byType(PageView),
+            matching: find.byType(ListView),
+          )
           .first,
       matching: find.byType(Scrollable),
     )
@@ -30,7 +34,11 @@ Finder _listaFormulario() => find
 
 /// Hace visible [objetivo] dentro del formulario y lo toca.
 Future<void> _tocar(WidgetTester tester, Finder objetivo) async {
-  await tester.scrollUntilVisible(objetivo, 200, scrollable: _listaFormulario());
+  await tester.scrollUntilVisible(
+    objetivo,
+    200,
+    scrollable: _listaFormulario(),
+  );
   await tester.ensureVisible(objetivo);
   await tester.pumpAndSettle();
   await tester.tap(objetivo);
@@ -51,8 +59,17 @@ Future<void> _agregarNota(WidgetTester tester, String texto) async {
     ),
   );
   await tester.pumpAndSettle();
-  await tester.enterText(find.byKey(const Key('campo-nota')), texto);
-  await tester.tap(find.text('Guardar nota'));
+  final editor = tester.widget<quill.QuillEditor>(
+    find.byKey(const Key('campo-nota')),
+  );
+  editor.controller.replaceText(
+    0,
+    0,
+    texto,
+    TextSelection.collapsed(offset: texto.length),
+  );
+  await tester.pump();
+  await tester.tap(find.byKey(const Key('guardar-nota')));
   await tester.pumpAndSettle();
   // Se guarda en el banco de recuerdos y vuelve a la cápsula.
   await tester.tap(find.text('Guardar'));
@@ -63,17 +80,25 @@ Future<void> _agregarNota(WidgetTester tester, String texto) async {
 }
 
 void main() {
-  testWidgets('el formulario permite elegir un amigo destinatario', (tester) async {
+  testWidgets('el formulario permite elegir un amigo destinatario', (
+    tester,
+  ) async {
     await montarAppCapsoul(
       tester,
-      autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
+      autenticacion: RepositorioAutenticacionFalso(
+        usuarioInicial: usuarioPrueba,
+      ),
     );
     await _abrirNuevaCapsula(tester);
 
     expect(find.text('Nueva cápsula'), findsOneWidget);
     await _siguiente(tester);
     await _siguiente(tester);
-    await tester.scrollUntilVisible(find.text('Destinatarios'), 200, scrollable: _listaFormulario());
+    await tester.scrollUntilVisible(
+      find.text('Destinatarios'),
+      200,
+      scrollable: _listaFormulario(),
+    );
     expect(find.text('Jacobo'), findsOneWidget);
     expect(find.byKey(const Key('destinatario-amigo-1')), findsOneWidget);
   });
@@ -81,7 +106,9 @@ void main() {
   testWidgets('no guarda sin fecha de apertura y lo explica', (tester) async {
     await montarAppCapsoul(
       tester,
-      autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
+      autenticacion: RepositorioAutenticacionFalso(
+        usuarioInicial: usuarioPrueba,
+      ),
     );
     await _abrirNuevaCapsula(tester);
     await _siguiente(tester);
@@ -89,14 +116,19 @@ void main() {
     await tester.tap(find.text('Guardar cápsula'));
     await tester.pump();
 
-    expect(find.text('Elige una fecha de apertura en el futuro.'), findsOneWidget);
+    expect(
+      find.text('Elige una fecha de apertura en el futuro.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('agrega una nota, la quita y guarda la cápsula', (tester) async {
     final capsulas = RepositorioCapsulasFalso();
     await montarAppCapsoul(
       tester,
-      autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
+      autenticacion: RepositorioAutenticacionFalso(
+        usuarioInicial: usuarioPrueba,
+      ),
       capsulas: capsulas,
     );
     await _abrirNuevaCapsula(tester);
@@ -119,8 +151,14 @@ void main() {
     );
 
     await _siguiente(tester);
-    await tester.enterText(find.byKey(const Key('campo-titulo')), 'Para Jacobo');
-    await tester.enterText(find.byKey(const Key('campo-mensaje')), 'Ábrela grande');
+    await tester.enterText(
+      find.byKey(const Key('campo-titulo')),
+      'Para Jacobo',
+    );
+    await tester.enterText(
+      find.byKey(const Key('campo-mensaje')),
+      'Ábrela grande',
+    );
     await _siguiente(tester);
     await _tocar(tester, find.byKey(const Key('destinatario-amigo-1')));
     await _tocar(tester, find.byKey(const Key('campo-fecha')));
@@ -154,7 +192,9 @@ void main() {
       ..siguienteFallo = const FalloCapsula.sinRed();
     await montarAppCapsoul(
       tester,
-      autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
+      autenticacion: RepositorioAutenticacionFalso(
+        usuarioInicial: usuarioPrueba,
+      ),
       capsulas: capsulas,
     );
     await _abrirNuevaCapsula(tester);
@@ -179,17 +219,22 @@ void main() {
     expect(find.text('Nueva cápsula'), findsOneWidget);
   });
 
-  testWidgets('elige recuerdos guardados sin repetir los ya agregados',
-      (tester) async {
+  testWidgets('elige recuerdos guardados sin repetir los ya agregados', (
+    tester,
+  ) async {
     final capsulas = RepositorioCapsulasFalso();
     await montarAppCapsoul(
       tester,
-      autenticacion: RepositorioAutenticacionFalso(usuarioInicial: usuarioPrueba),
+      autenticacion: RepositorioAutenticacionFalso(
+        usuarioInicial: usuarioPrueba,
+      ),
       capsulas: capsulas,
-      recuerdos: RepositorioRecuerdosFalso(iniciales: [
-        recuerdoPrueba('a', titulo: 'Playa'),
-        recuerdoPrueba('b', titulo: 'Cumpleaños'),
-      ]),
+      recuerdos: RepositorioRecuerdosFalso(
+        iniciales: [
+          recuerdoPrueba('a', titulo: 'Playa'),
+          recuerdoPrueba('b', titulo: 'Cumpleaños'),
+        ],
+      ),
     );
     await _abrirNuevaCapsula(tester);
 

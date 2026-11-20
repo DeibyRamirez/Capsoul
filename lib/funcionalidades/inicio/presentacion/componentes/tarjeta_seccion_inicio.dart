@@ -4,12 +4,11 @@ import 'package:flutter/services.dart';
 import '../../../../nucleo/componentes/tarjeta_capsoul.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 
-/// Tarjeta de la rejilla de Inicio (Recuerdos, Retos, Cápsulas, Pequeñas
-/// herencias) con conteo e ilustración.
+/// Fila de la lista de Inicio (Recuerdos, Diario, Cápsulas, Pequeñas
+/// herencias) con descripción, conteo e ilustración.
 class TarjetaSeccionInicio extends StatefulWidget {
   const TarjetaSeccionInicio({
     super.key,
-    required this.icono,
     required this.titulo,
     required this.descripcion,
     required this.conteo,
@@ -19,7 +18,6 @@ class TarjetaSeccionInicio extends StatefulWidget {
     this.heroTag,
   });
 
-  final IconData icono;
   final String titulo;
   final String descripcion;
   final int conteo;
@@ -28,8 +26,8 @@ class TarjetaSeccionInicio extends StatefulWidget {
   final VoidCallback alTocar;
   final String? heroTag;
 
-  /// Alto mínimo de la tarjeta; crece si el texto lo necesita.
-  static const double altoMinimo = 168;
+  /// Alto mínimo de la fila; crece si el texto lo necesita.
+  static const double altoMinimo = 88;
 
   @override
   State<TarjetaSeccionInicio> createState() => _EstadoTarjetaSeccionInicio();
@@ -61,45 +59,61 @@ class _EstadoTarjetaSeccionInicio extends State<TarjetaSeccionInicio> {
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeOut,
         child: TarjetaCapsoul(
-          icono: widget.icono,
-          titulo: widget.titulo,
           alTocar: _alTocar,
           altoMinimo: TarjetaSeccionInicio.altoMinimo,
-          child: Stack(
+          child: Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 68),
+              widget.ilustracion,
+              const SizedBox(width: 14),
+              Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text(
+                      widget.titulo,
+                      style: estilos.titleMedium?.copyWith(
+                        color: ColoresApp.textoPrincipal,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
                     Text(
                       widget.descripcion,
                       style: estilos.bodySmall?.copyWith(
                         color: ColoresApp.atenuado,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '${widget.conteo}',
-                      style: estilos.titleLarge?.copyWith(
-                        color: ColoresApp.primario,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      widget.etiquetaConteo,
-                      style: estilos.labelSmall?.copyWith(
-                        color: ColoresApp.atenuado,
-                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          '${widget.conteo}',
+                          style: estilos.labelLarge?.copyWith(
+                            color: ColoresApp.primario,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            widget.etiquetaConteo,
+                            style: estilos.labelSmall?.copyWith(
+                              color: ColoresApp.atenuado,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: IgnorePointer(child: widget.ilustracion),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.chevron_right,
+                color: ColoresApp.atenuado,
+                size: 22,
               ),
             ],
           ),
@@ -114,7 +128,7 @@ class _EstadoTarjetaSeccionInicio extends State<TarjetaSeccionInicio> {
   }
 }
 
-/// Ilustración PNG transparente en la esquina de la tarjeta.
+/// Ilustración PNG transparente al inicio de la fila.
 class IlustracionSeccion extends StatelessWidget {
   const IlustracionSeccion({super.key, required this.rutaAsset});
 
@@ -123,13 +137,13 @@ class IlustracionSeccion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 72,
-      height: 72,
+      width: 56,
+      height: 56,
       child: Image.asset(
         rutaAsset,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium,
-        cacheWidth: 216,
+        cacheWidth: 168,
         errorBuilder: (_, _, _) => const _FallbackIlustracionSeccion(),
       ),
     );

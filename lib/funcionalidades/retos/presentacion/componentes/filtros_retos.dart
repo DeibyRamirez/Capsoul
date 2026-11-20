@@ -15,10 +15,10 @@ class FiltrosRetos extends StatelessWidget {
   final ValueChanged<FiltroRetosTab> alCambiar;
 
   static String _etiqueta(FiltroRetosTab tab) => switch (tab) {
-        FiltroRetosTab.activos => 'Activos',
-        FiltroRetosTab.completados => 'Completados',
-        FiltroRetosTab.favoritos => 'Favoritos',
-      };
+    FiltroRetosTab.activos => 'Activos',
+    FiltroRetosTab.completados => 'Completados',
+    FiltroRetosTab.favoritos => 'Favoritos',
+  };
 
   @override
   Widget build(BuildContext context) {

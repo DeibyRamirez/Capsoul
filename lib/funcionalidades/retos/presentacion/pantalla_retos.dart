@@ -5,6 +5,7 @@ import '../../../nucleo/componentes/fondo_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/errores/fallo_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
+import '../../../nucleo/tema/tema_app.dart';
 import '../aplicacion/proveedores_retos.dart';
 import '../dominio/reto.dart';
 import 'clasificacion_retos_ui.dart';
@@ -41,55 +42,137 @@ class _PantallaRetosState extends ConsumerState<PantallaRetos> {
   }
 
   void _mostrarDetalleReto(Reto reto) {
-    final tema = Theme.of(context);
+    final estilos = Theme.of(context).textTheme;
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                reto.titulo,
-                style: tema.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: ColoresApp.textoPrincipal,
-                ),
-              ),
-              if (reto.descripcion != null && reto.descripcion!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  reto.descripcion!,
-                  style: tema.textTheme.bodyMedium?.copyWith(
-                    color: ColoresApp.textoSecundario,
-                  ),
-                ),
-              ],
-              if (reto.pasos.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  'Pasos',
-                  style: tema.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...reto.pasos.map(
-                  (paso) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Text(
-                      '• $paso',
-                      style: tema.textTheme.bodyMedium?.copyWith(
-                        color: ColoresApp.textoSecundario,
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      reto.completado
+                          ? Icons.check_circle_outline
+                          : Icons.auto_awesome_outlined,
+                      color: ColoresApp.primario,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      reto.completado
+                          ? 'Entrada completada'
+                          : 'Entrada del Diario',
+                      style: estilos.labelLarge?.copyWith(
+                        color: ColoresApp.primario,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  reto.titulo,
+                  style: estilos.headlineSmall?.copyWith(
+                    fontFamily: TemaApp.fuenteTitulos,
+                    fontWeight: FontWeight.w600,
+                    color: ColoresApp.textoPrincipal,
+                  ),
+                ),
+                if (reto.descripcion != null &&
+                    reto.descripcion!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    reto.descripcion!,
+                    style: estilos.bodyMedium?.copyWith(
+                      color: ColoresApp.textoSecundario,
+                    ),
+                  ),
+                ],
+                if (reto.pasos.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    'Pasos',
+                    style: estilos.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  for (var i = 0; i < reto.pasos.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: ColoresApp.primario.withValues(
+                                alpha: 0.10,
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '${i + 1}',
+                              style: estilos.labelSmall?.copyWith(
+                                color: ColoresApp.primario,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 3),
+                              child: Text(
+                                reto.pasos[i],
+                                style: estilos.bodyMedium?.copyWith(
+                                  color: ColoresApp.textoSecundario,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: ColoresApp.fondoInicio,
+                    borderRadius: BorderRadius.circular(TemaApp.radioMediano),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.verified_outlined,
+                        size: 18,
+                        color: ColoresApp.primario,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Esta entrada se marca automáticamente cuando '
+                          'completas la acción en la app.',
+                          style: estilos.bodySmall?.copyWith(
+                            color: ColoresApp.atenuado,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ],
+            ),
           ),
         );
       },
@@ -182,6 +265,11 @@ class _ContenidoRetos extends StatelessWidget {
               const SizedBox(height: 16),
               FiltrosRetos(seleccionado: tab, alCambiar: alCambiarTab),
               const SizedBox(height: 16),
+              _ResumenProgreso(
+                total: lista.length,
+                completados: clasificacion.totalCompletados,
+              ),
+              const SizedBox(height: 16),
             ]),
           ),
         ),
@@ -252,28 +340,31 @@ class _ContenidoRetos extends StatelessWidget {
             const SizedBox(height: 12),
             TarjetaRetoEspecial(
               reto: c.especial!,
-              diaActual: c.totalCompletados,
               alTocar: () => alTocarReto(c.especial!),
             ),
             const SizedBox(height: 24),
           ],
-          if (c.restoActivos.isNotEmpty) ...[
-            KeyedSubtree(
-              key: claveRestoActivos,
-              child: _EncabezadoSeccion(titulo: 'Más entradas'),
-            ),
-            const SizedBox(height: 12),
-            ...c.restoActivos.map(
-              (r) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: TarjetaRetoSemanal(
-                  reto: r,
-                  indice: 0,
-                  alTocar: () => alTocarReto(r),
+          if (c.restoActivos.isNotEmpty)
+            for (final (indice, grupo) in agruparRestoActivos(
+              c.restoActivos,
+            ).indexed) ...[
+              KeyedSubtree(
+                key: indice == 0 ? claveRestoActivos : null,
+                child: _EncabezadoSeccion(titulo: grupo.titulo),
+              ),
+              const SizedBox(height: 12),
+              ...grupo.retos.map(
+                (r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: TarjetaRetoSemanal(
+                    reto: r,
+                    indice: indice,
+                    alTocar: () => alTocarReto(r),
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 14),
+            ],
         ]),
       ),
     );
@@ -283,7 +374,9 @@ class _ContenidoRetos extends StatelessWidget {
     if (c.completados.isEmpty) {
       return const SliverFillRemaining(
         hasScrollBody: false,
-        child: EstadoVacioRetos(mensaje: 'Aún no has completado ninguna entrada.'),
+        child: EstadoVacioRetos(
+          mensaje: 'Aún no has completado ninguna entrada.',
+        ),
       );
     }
 
@@ -298,6 +391,97 @@ class _ContenidoRetos extends StatelessWidget {
             ),
           ),
         ]),
+      ),
+    );
+  }
+}
+
+class _ResumenProgreso extends StatelessWidget {
+  const _ResumenProgreso({required this.total, required this.completados});
+
+  final int total;
+  final int completados;
+
+  @override
+  Widget build(BuildContext context) {
+    final estilos = Theme.of(context).textTheme;
+    final pendientes = (total - completados).clamp(0, total).toInt();
+    final progreso = total == 0 ? 0.0 : (completados / total).clamp(0.0, 1.0);
+    final mensaje = total == 0
+        ? 'Aún no hay entradas disponibles.'
+        : pendientes == 0
+        ? 'Completaste todas las entradas.'
+        : 'Te ${pendientes == 1 ? 'falta' : 'faltan'} $pendientes '
+              '${pendientes == 1 ? 'entrada' : 'entradas'}.';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: ColoresApp.tarjeta,
+        borderRadius: BorderRadius.circular(TemaApp.radioGrande),
+        border: Border.all(color: ColoresApp.bordeTarjeta),
+        boxShadow: TemaApp.sombraTarjeta,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: ColoresApp.primario.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_outlined,
+                  size: 18,
+                  color: ColoresApp.primario,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Tu progreso',
+                      style: estilos.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: ColoresApp.textoPrincipal,
+                      ),
+                    ),
+                    Text(
+                      mensaje,
+                      style: estilos.bodySmall?.copyWith(
+                        color: ColoresApp.atenuado,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '$completados / $total',
+                style: estilos.titleMedium?.copyWith(
+                  color: ColoresApp.primario,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(TemaApp.radioPequeno),
+            child: LinearProgressIndicator(
+              value: progreso,
+              minHeight: 8,
+              backgroundColor: ColoresApp.fondoInicio,
+              color: ColoresApp.primario,
+            ),
+          ),
+        ],
       ),
     );
   }

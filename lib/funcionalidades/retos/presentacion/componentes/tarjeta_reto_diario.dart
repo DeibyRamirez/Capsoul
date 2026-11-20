@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../nucleo/tema/colores_app.dart';
 import '../../../../nucleo/tema/tema_app.dart';
 import '../../dominio/reto.dart';
-import '../clasificacion_retos_ui.dart';
 
 class TarjetaRetoDiario extends StatelessWidget {
   const TarjetaRetoDiario({
@@ -18,8 +17,8 @@ class TarjetaRetoDiario extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    final total = puntosDiariosTotal(reto);
-    final rellenos = puntosDiariosRellenos(reto);
+    final pasos = reto.pasos.length;
+    final completada = reto.completado;
 
     return Material(
       color: ColoresApp.tarjeta,
@@ -68,21 +67,67 @@ class TarjetaRetoDiario extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 14),
-              Row(
-                children: List.generate(total, (i) {
-                  final activo = i < rellenos;
-                  return Padding(
-                    padding: EdgeInsets.only(right: i < total - 1 ? 8 : 0),
-                    child: Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: activo ? ColoresApp.primario : ColoresApp.bordeTarjeta,
+              Wrap(
+                spacing: 10,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: completada
+                          ? ColoresApp.primario.withValues(alpha: 0.10)
+                          : ColoresApp.fondoInicio,
+                      borderRadius: BorderRadius.circular(TemaApp.radioPildora),
+                      border: Border.all(
+                        color: completada
+                            ? Colors.transparent
+                            : ColoresApp.bordeTarjeta,
                       ),
                     ),
-                  );
-                }),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          completada
+                              ? Icons.check_circle_outline
+                              : Icons.schedule_outlined,
+                          size: 13,
+                          color: ColoresApp.primario,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          completada ? 'Completada' : 'Pendiente',
+                          style: tema.textTheme.labelSmall?.copyWith(
+                            color: ColoresApp.primario,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (pasos > 0)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.checklist_rounded,
+                          size: 14,
+                          color: ColoresApp.atenuado,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$pasos ${pasos == 1 ? 'paso' : 'pasos'}',
+                          style: tema.textTheme.labelSmall?.copyWith(
+                            color: ColoresApp.atenuado,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
               ),
             ],
           ),

@@ -25,7 +25,9 @@ class EstadoVacioRetos extends StatelessWidget {
           Text(
             mensaje,
             textAlign: TextAlign.center,
-            style: estilos.bodyLarge?.copyWith(color: ColoresApp.textoSecundario),
+            style: estilos.bodyLarge?.copyWith(
+              color: ColoresApp.textoSecundario,
+            ),
           ),
         ],
       ),

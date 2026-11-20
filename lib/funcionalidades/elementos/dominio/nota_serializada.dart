@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import '../../../nucleo/tema/colores_app.dart';
+import 'nota_delta.dart';
 
 const _inicioFrontMatter = '---capsoul\n';
 const _finFrontMatter = '\n---\n';
@@ -36,19 +37,49 @@ class EstiloNota {
   }
 }
 
-/// Nota con cuerpo markdown y estilo embebido en `contenido_texto`.
+/// Nota con cuerpo visible, estilo y, si es enriquecida, un Delta de Quill.
+///
+/// `cuerpo` siempre es texto plano para las notas nuevas. Las notas antiguas
+/// pueden traer Markdown en el cuerpo; se siguen mostrando con el renderer
+/// anterior y se convierten a Delta cuando se editan.
 class NotaSerializada {
-  const NotaSerializada({required this.estilo, required this.cuerpo});
+  const NotaSerializada({
+    required this.estilo,
+    required this.cuerpo,
+    this.delta,
+  });
 
   final EstiloNota estilo;
   final String cuerpo;
+  final List<Map<String, dynamic>>? delta;
 
-  /// Texto listo para guardar en `contenido_texto`.
+  bool get esRica => delta != null;
+
+  /// Representación JSONB que se guarda en `elementos.contenido_rico`.
+  Map<String, dynamic>? get contenidoRico {
+    final delta = this.delta;
+    if (delta == null) return null;
+    return {'version': 1, 'estilo': estilo.aMapa(), 'delta': delta};
+  }
+
+  /// Columnas de `elementos` para persistir la nota.
+  Map<String, dynamic> aColumnas() => {
+    'contenido_texto': cuerpo,
+    if (contenidoRico != null) 'contenido_rico': contenidoRico,
+  };
+
+  /// Texto listo para guardar temporalmente en el flujo de crear/editar.
   String serializar() {
-    final meta = jsonEncode(estilo.aMapa());
+    final meta = jsonEncode({
+      'v': 2,
+      'fondo': estilo.fondo,
+      'fuente': estilo.fuente,
+      if (delta != null) 'delta': delta,
+    });
     return '$_inicioFrontMatter$meta$_finFrontMatter$cuerpo';
   }
 
+  /// Lee el payload temporal que devuelve la pantalla de nota.
   static NotaSerializada parse(String? almacenado) {
     final texto = almacenado ?? '';
     if (!texto.startsWith(_inicioFrontMatter)) {
@@ -62,10 +93,49 @@ class NotaSerializada {
     final cuerpo = texto.substring(fin + _finFrontMatter.length);
     try {
       final mapa = jsonDecode(jsonRaw) as Map<String, dynamic>;
-      return NotaSerializada(estilo: EstiloNota.desdeMapa(mapa), cuerpo: cuerpo);
+      final deltaRaw = mapa['delta'];
+      return NotaSerializada(
+        estilo: EstiloNota.desdeMapa(mapa),
+        cuerpo: cuerpo,
+        delta: deltaRaw is List && deltaRaw.isNotEmpty
+            ? deltaDesdeJson(deltaRaw)
+            : null,
+      );
     } catch (_) {
       return NotaSerializada(estilo: const EstiloNota(), cuerpo: cuerpo);
     }
+  }
+
+  /// Lee una fila de `elementos`: texto plano + JSONB enriquecido.
+  factory NotaSerializada.desdeColumnas({
+    String? contenidoTexto,
+    Object? contenidoRico,
+  }) {
+    if (contenidoRico is Map) {
+      final mapa = Map<String, dynamic>.from(contenidoRico);
+      final deltaRaw = mapa['delta'];
+      if (deltaRaw is List && deltaRaw.isNotEmpty) {
+        final estiloRaw = mapa['estilo'];
+        final estilo = estiloRaw is Map
+            ? EstiloNota.desdeMapa(Map<String, dynamic>.from(estiloRaw))
+            : const EstiloNota();
+        final delta = deltaDesdeJson(deltaRaw);
+        return NotaSerializada(
+          estilo: estilo,
+          cuerpo: contenidoTexto ?? textoPlanoDesdeDelta(delta),
+          delta: delta,
+        );
+      }
+    }
+    if (contenidoRico is List && contenidoRico.isNotEmpty) {
+      final delta = deltaDesdeJson(contenidoRico);
+      return NotaSerializada(
+        estilo: const EstiloNota(),
+        cuerpo: contenidoTexto ?? textoPlanoDesdeDelta(delta),
+        delta: delta,
+      );
+    }
+    return parse(contenidoTexto);
   }
 
   /// Longitud del cuerpo visible (límite SQL).

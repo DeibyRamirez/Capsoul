@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:capsoul/funcionalidades/elementos/dominio/nota_serializada.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/archivos_medio.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/enlace_medio.dart';
@@ -67,6 +68,9 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
     creados.add(nuevo);
     final id = 'recuerdo-${creados.length}';
     final titulo = nuevo.titulo?.trim();
+    final nota = nuevo.elemento.tipo == TipoElemento.texto
+        ? NotaSerializada.parse(nuevo.elemento.texto)
+        : null;
     final recuerdo = Recuerdo(
       id: id,
       propietarioId: 'uid-123',
@@ -74,7 +78,8 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
       fechaRecuerdo: nuevo.fechaRecuerdo,
       creadoEn: DateTime(2026, 10, 3),
       titulo: (titulo == null || titulo.isEmpty) ? null : titulo,
-      contenidoTexto: nuevo.elemento.texto,
+      contenidoTexto: nota?.cuerpo ?? nuevo.elemento.texto,
+      contenidoRico: nota?.contenidoRico,
       bytes: nuevo.elemento.bytes,
     );
     recuerdos[id] = recuerdo;
@@ -111,6 +116,7 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
       creadoEn: actual.creadoEn,
       titulo: titulo ?? actual.titulo,
       contenidoTexto: actual.contenidoTexto,
+      contenidoRico: actual.contenidoRico,
       bytes: actual.bytes,
       duracion: actual.duracion,
       ancho: actual.ancho,
@@ -136,6 +142,7 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
       creadoEn: actual.creadoEn,
       titulo: actual.titulo,
       contenidoTexto: actual.contenidoTexto,
+      contenidoRico: actual.contenidoRico,
       bytes: actual.bytes,
       duracion: actual.duracion,
       ancho: actual.ancho,
@@ -153,6 +160,7 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
   ) async {
     final actual = recuerdos[id];
     if (actual != null) {
+      final nota = NotaSerializada.parse(contenidoTexto);
       recuerdos[id] = Recuerdo(
         id: actual.id,
         propietarioId: actual.propietarioId,
@@ -160,7 +168,8 @@ class RepositorioRecuerdosFalso implements RepositorioRecuerdos {
         fechaRecuerdo: actual.fechaRecuerdo,
         creadoEn: actual.creadoEn,
         titulo: actual.titulo,
-        contenidoTexto: contenidoTexto,
+        contenidoTexto: nota.cuerpo,
+        contenidoRico: nota.contenidoRico,
         bytes: contenidoTexto.length,
         duracion: actual.duracion,
         ancho: actual.ancho,

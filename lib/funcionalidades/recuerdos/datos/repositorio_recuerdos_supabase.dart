@@ -10,6 +10,7 @@ import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
 import '../../musica/dominio/referencia_musica.dart';
 import '../../elementos/dominio/elemento_borrador.dart';
 import '../../elementos/dominio/fallo_medios.dart';
+import '../../elementos/dominio/nota_serializada.dart';
 import '../../elementos/dominio/repositorio_medios.dart';
 import '../../elementos/dominio/tipo_elemento.dart';
 import '../dominio/fallo_recuerdo.dart';
@@ -31,8 +32,8 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
     required this._uidActual,
     DateTime Function()? reloj,
     GeneradorIds? generarId,
-  })  : _reloj = reloj ?? DateTime.now,
-        _generarId = generarId ?? generarIdAleatorio;
+  }) : _reloj = reloj ?? DateTime.now,
+       _generarId = generarId ?? generarIdAleatorio;
 
   /// SQLSTATE propios (migraciones 000003 y 000004).
   static const String codigoCuotaExcedida = 'CAP01';
@@ -78,7 +79,8 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
       'fecha_recuerdo': fechaParaBd(nuevo.fechaRecuerdo),
     };
     if (elemento.tipo == TipoElemento.texto) {
-      return {...comunes, 'contenido_texto': elemento.texto};
+      final nota = NotaSerializada.parse(elemento.texto);
+      return {...comunes, ...nota.aColumnas()};
     }
     if (elemento.tipo == TipoElemento.musica) {
       final ref = elemento.referenciaMusica;
@@ -129,9 +131,7 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
         desde: desde == null ? null : fechaParaBd(desde),
         hasta: hasta == null ? null : fechaParaBd(hasta),
       );
-      return [
-        for (final fila in filas) ?recuerdoDesdeFila(fila),
-      ];
+      return [for (final fila in filas) ?recuerdoDesdeFila(fila)];
     } catch (error) {
       throw traducirError(error);
     }
@@ -158,12 +158,17 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
   }
 
   @override
-  Future<void> actualizarContenidoTexto(String id, String contenidoTexto) async {
+  Future<void> actualizarContenidoTexto(
+    String id,
+    String contenidoTexto,
+  ) async {
     _uid();
     try {
+      final nota = NotaSerializada.parse(contenidoTexto);
       await _acceso.actualizar(id, {
-        'contenido_texto': contenidoTexto,
-        'bytes': utf8.encode(contenidoTexto).length,
+        ...nota.aColumnas(),
+        'contenido_rico': nota.contenidoRico,
+        'bytes': utf8.encode(nota.cuerpo).length,
       });
     } catch (error) {
       throw traducirError(error);
@@ -171,7 +176,10 @@ class RepositorioRecuerdosSupabase implements RepositorioRecuerdos {
   }
 
   @override
-  Future<void> actualizarMusicaPreview(String id, ReferenciaMusica musica) async {
+  Future<void> actualizarMusicaPreview(
+    String id,
+    ReferenciaMusica musica,
+  ) async {
     _uid();
     try {
       await _acceso.actualizar(id, cambiosMusicaPreview(musica));

@@ -1,4 +1,5 @@
 import 'package:capsoul/funcionalidades/elementos/dominio/nota_serializada.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/recuerdos/dominio/recuerdo.dart';
 import 'package:capsoul/funcionalidades/recuerdos/presentacion/pantalla_elegir_recuerdos.dart';
@@ -43,10 +44,13 @@ void main() {
   });
 
   testWidgets('lista recuerdos y filtra por tipo', (tester) async {
-    await _montar(tester, iniciales: [
-      recuerdoPrueba('f1', titulo: 'Playa'),
-      recuerdoPrueba('n1', tipo: TipoElemento.texto, texto: 'Querida abuela'),
-    ]);
+    await _montar(
+      tester,
+      iniciales: [
+        recuerdoPrueba('f1', titulo: 'Playa'),
+        recuerdoPrueba('n1', tipo: TipoElemento.texto, texto: 'Querida abuela'),
+      ],
+    );
     await _abrirRecuerdos(tester);
 
     expect(find.text('Playa'), findsOneWidget);
@@ -69,8 +73,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Escribir'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('campo-nota')), 'Hola futuro');
-    await tester.tap(find.text('Guardar nota'));
+    final editor = tester.widget<quill.QuillEditor>(
+      find.byKey(const Key('campo-nota')),
+    );
+    editor.controller.replaceText(
+      0,
+      0,
+      'Hola futuro',
+      const TextSelection.collapsed(offset: 11),
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('guardar-nota')));
     await tester.pumpAndSettle();
 
     expect(find.text('Guardar recuerdo'), findsWidgets);
@@ -84,21 +97,27 @@ void main() {
     final creado = recuerdos.creados.single;
     expect(creado.titulo, 'Carta');
     expect(creado.fechaRecuerdo, DateTime(2026, 10, 3));
-    expect(
-      NotaSerializada.parse(creado.elemento.texto).cuerpo,
-      'Hola futuro',
-    );
+    expect(NotaSerializada.parse(creado.elemento.texto).cuerpo, 'Hola futuro');
     // Vuelve al banco, que ya muestra el recuerdo.
     expect(find.text('Recuerdos'), findsOneWidget);
     expect(find.text('Carta'), findsOneWidget);
   });
 
-  testWidgets('no deja borrar un recuerdo que está en una cápsula sellada',
-      (tester) async {
-    final recuerdos = await _montar(tester, iniciales: [
-      recuerdoPrueba('f1', titulo: 'Playa', propietarioId: usuarioPrueba.uid),
-    ])
-      ..selladas['f1'] = 1;
+  testWidgets('no deja borrar un recuerdo que está en una cápsula sellada', (
+    tester,
+  ) async {
+    final recuerdos =
+        await _montar(
+            tester,
+            iniciales: [
+              recuerdoPrueba(
+                'f1',
+                titulo: 'Playa',
+                propietarioId: usuarioPrueba.uid,
+              ),
+            ],
+          )
+          ..selladas['f1'] = 1;
     await _abrirRecuerdos(tester);
     await tester.tap(find.text('Playa'));
     await tester.pumpAndSettle();
@@ -115,9 +134,12 @@ void main() {
   });
 
   testWidgets('borra un recuerdo libre tras confirmar', (tester) async {
-    final recuerdos = await _montar(tester, iniciales: [
-      recuerdoPrueba('f1', titulo: 'Playa', propietarioId: usuarioPrueba.uid),
-    ]);
+    final recuerdos = await _montar(
+      tester,
+      iniciales: [
+        recuerdoPrueba('f1', titulo: 'Playa', propietarioId: usuarioPrueba.uid),
+      ],
+    );
     await _abrirRecuerdos(tester);
     await tester.tap(find.text('Playa'));
     await tester.pumpAndSettle();
@@ -134,9 +156,12 @@ void main() {
   });
 
   testWidgets('abrir visor desde el banco y cerrarlo', (tester) async {
-    await _montar(tester, iniciales: [
-      recuerdoPrueba('f1', titulo: 'Playa', propietarioId: usuarioPrueba.uid),
-    ]);
+    await _montar(
+      tester,
+      iniciales: [
+        recuerdoPrueba('f1', titulo: 'Playa', propietarioId: usuarioPrueba.uid),
+      ],
+    );
     await _abrirRecuerdos(tester);
     await tester.tap(find.text('Playa'));
     await tester.pumpAndSettle();
@@ -147,13 +172,17 @@ void main() {
     expect(find.byKey(const Key('menu-acciones-visor')), findsNothing);
   });
 
-  testWidgets('elegir recuerdos devuelve la selección sin los ya elegidos',
-      (tester) async {
-    await _montar(tester, iniciales: [
-      recuerdoPrueba('a', titulo: 'Uno'),
-      recuerdoPrueba('b', titulo: 'Dos'),
-      recuerdoPrueba('c', titulo: 'Tres'),
-    ]);
+  testWidgets('elegir recuerdos devuelve la selección sin los ya elegidos', (
+    tester,
+  ) async {
+    await _montar(
+      tester,
+      iniciales: [
+        recuerdoPrueba('a', titulo: 'Uno'),
+        recuerdoPrueba('b', titulo: 'Dos'),
+        recuerdoPrueba('c', titulo: 'Tres'),
+      ],
+    );
     List<Recuerdo>? elegidos;
     _enrutador(tester)
         .push<List<Recuerdo>>(

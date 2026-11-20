@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../nucleo/componentes/avatar_usuario.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
@@ -9,11 +10,10 @@ import '../../../nucleo/tema/colores_app.dart';
 import '../../../nucleo/tema/tema_app.dart';
 import '../../amistades/aplicacion/proveedores_amistades.dart';
 import '../../amistades/dominio/amigo.dart';
-import '../../../nucleo/componentes/avatar_usuario.dart';
 import '../aplicacion/proveedores_legado.dart';
 import '../dominio/grupo_legado_beneficiario.dart';
 import '../dominio/herencia.dart';
-import '../dominio/herencia_recibida.dart';
+import 'componentes/tarjeta_herencia_recibida.dart';
 import 'componentes/tarjeta_seguridad_legado.dart';
 import 'heroes_legado.dart';
 
@@ -105,30 +105,39 @@ class PantallaLegado extends ConsumerWidget {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          'Mi legado',
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: ColoresApp.primario,
-                              ),
+                        Expanded(
+                          child: Text(
+                            'Mi legado',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: ColoresApp.primario,
+                                ),
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.favorite_border,
-                          color: ColoresApp.primario,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: ColoresApp.primario.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.favorite_border,
+                            color: ColoresApp.primario,
+                            size: 20,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
-                      'Lo que quieres dejar, organizado y protegido.',
+                      'Tu historia, con calma y a tu manera.',
                       style: Theme.of(context).textTheme.bodyMedium
                           ?.copyWith(color: ColoresApp.atenuado),
                     ),
@@ -140,8 +149,21 @@ class PantallaLegado extends ConsumerWidget {
             const SliverToBoxAdapter(child: _BloquePorConfirmar()),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: SegmentedButton<BandejaLegado>(
+                  showSelectedIcon: false,
+                  expandedInsets: EdgeInsets.zero,
+                  style: SegmentedButton.styleFrom(
+                    backgroundColor: ColoresApp.tarjeta,
+                    foregroundColor: ColoresApp.primario,
+                    selectedBackgroundColor: ColoresApp.primario,
+                    selectedForegroundColor: ColoresApp.sobrePrimario,
+                    side: const BorderSide(color: ColoresApp.bordeTarjeta),
+                    minimumSize: const Size(0, 48),
+                    textStyle: Theme.of(context).textTheme.labelLarge
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                    shape: const StadiumBorder(),
+                  ),
                   segments: const [
                     ButtonSegment(
                       value: BandejaLegado.creadas,
@@ -164,7 +186,7 @@ class PantallaLegado extends ConsumerWidget {
             if (ref.watch(proveedorBandejaLegado) == BandejaLegado.creadas)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   child: Row(
                     children: [
                       Expanded(
@@ -174,65 +196,50 @@ class PantallaLegado extends ConsumerWidget {
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
+                      const SizedBox(width: 12),
                       const _BotonNuevaHerencia(),
                     ],
                   ),
                 ),
               ),
-            if (ref.watch(proveedorBandejaLegado) == BandejaLegado.recibidas)
-              const _ListaHerenciasRecibidas()
-            else
+            if (ref.watch(proveedorBandejaLegado) ==
+                BandejaLegado.recibidas) ...[
+              const SliverToBoxAdapter(child: _EncabezadoRecibidas()),
+              const _ListaHerenciasRecibidas(),
+            ] else
               grupos.when(
-              loading: () => const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
+                loading: () => const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
                 ),
-              ),
-              error: (_, _) => const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text('No pudimos cargar tu legado.'),
+                error: (_, _) => const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(24, 16, 24, 28),
+                    child: Text(
+                      'No pudimos cargar tus herencias.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
-              ),
-              data: (lista) {
-                if (lista.isEmpty) {
-                  return SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'Aún no has creado herencias. Toca «Nueva» para empezar.',
-                        style: TextStyle(color: ColoresApp.atenuado),
-                      ),
+                data: (lista) {
+                  if (lista.isEmpty) {
+                    return const SliverToBoxAdapter(
+                      child: _EstadoVacioCreadas(),
+                    );
+                  }
+                  return SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) => _FilaBeneficiario(grupo: lista[i]),
+                      childCount: lista.length,
                     ),
                   );
-                }
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, i) => _FilaBeneficiario(grupo: lista[i]),
-                    childCount: lista.length,
-                  ),
-                );
-              },
-            ),
-            // Internamente en la herencia esta las instrucciones
-            // SliverToBoxAdapter(
-            //   child: _TarjetaFilaLegado(
-            //     child: ListTile(
-            //       leading: const Icon(
-            //         Icons.description_outlined,
-            //         color: ColoresApp.primario,
-            //       ),
-            //       title: const Text('Mis instrucciones'),
-            //       subtitle: const Text('Lo que quiero que sepan'),
-            //       trailing: const Icon(Icons.chevron_right),
-            //       onTap: () => context.push(RutasApp.legadoInstrucciones),
-            //     ),
-            //   ),
-            // ),
+                },
+              ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: Text(
                   'Mi persona de confianza',
                   style: Theme.of(context).textTheme.titleMedium
@@ -244,6 +251,10 @@ class PantallaLegado extends ConsumerWidget {
               child: _TarjetaFilaLegado(
                 margenInferior: 24,
                 child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   leading: confianza != null
                       ? AvatarUsuario(
                           usuarioId: confianza.usuarioId,
@@ -254,10 +265,13 @@ class PantallaLegado extends ConsumerWidget {
                   title: Text(confianza?.nombreVisible ?? 'Elegir por @'),
                   subtitle: Text(
                     confianza != null
-                        ? 'Podrá confirmar tu legado si lo necesitas; no puede editarlo.'
+                        ? 'Podrá confirmar la entrega si lo necesitas; no puede editarlo.'
                         : 'Debe ser tu amigo en Capsoul.',
                   ),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                    color: ColoresApp.atenuado,
+                  ),
                   onTap: () => _elegirConfianza(context, ref),
                 ),
               ),
@@ -298,9 +312,7 @@ class _FilaBeneficiario extends ConsumerWidget {
             for (final h in lista)
               ListTile(
                 title: Text(h.titulo),
-                subtitle: Text(
-                  h.etiquetaEstado(ahora: DateTime.now()),
-                ),
+                subtitle: Text(h.etiquetaEstado(ahora: DateTime.now())),
                 onTap: () => Navigator.pop(ctx, h),
               ),
           ],
@@ -317,6 +329,7 @@ class _FilaBeneficiario extends ConsumerWidget {
     final uid = grupo.beneficiarioUsuarioId;
     return _TarjetaFilaLegado(
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         leading: uid != null
             ? AvatarUsuario(
                 usuarioId: uid,
@@ -329,7 +342,7 @@ class _FilaBeneficiario extends ConsumerWidget {
           '${grupo.nHerencias} herencia${grupo.nHerencias == 1 ? '' : 's'} · '
           '${grupo.nCapsulas} cápsula${grupo.nCapsulas == 1 ? '' : 's'}',
         ),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: const Icon(Icons.chevron_right, color: ColoresApp.atenuado),
         onTap: () => _abrir(context, ref),
       ),
     );
@@ -368,11 +381,11 @@ class _EstadoBotonNuevaHerencia extends State<_BotonNuevaHerencia> {
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
                 minimumSize: const Size(0, 48),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 shape: const StadiumBorder(),
               ),
               onPressed: () => context.push(RutasApp.legadoNuevaHerencia),
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.add, size: 18),
               label: const Text('Nueva'),
             ),
           ),
@@ -394,68 +407,77 @@ class _BloquePorConfirmar extends ConsumerWidget {
       data: (lista) {
         if (lista.isEmpty) return const SizedBox.shrink();
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Te piden confirmar un legado',
+                'Una llave en tus manos',
                 style: Theme.of(context).textTheme.titleMedium
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),
               Text(
-                'No verás el contenido. Al confirmar, se lo entregamos a quien lo recibe.',
+                'No verás el contenido. Tu aprobación lo entrega a la persona indicada.',
                 style: Theme.of(context).textTheme.bodySmall
                     ?.copyWith(color: ColoresApp.atenuado),
               ),
-              const SizedBox(height: 8),
-              for (final h in lista)
-                Card(
-                  key: ValueKey(h.id),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          h.titulo,
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${h.propietarioNombre} → ${h.beneficiarioNombre ?? 'alguien'}',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: ColoresApp.atenuado),
-                        ),
-                        const SizedBox(height: 12),
-                        FilledButton(
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
+              const SizedBox(height: 12),
+              for (var i = 0; i < lista.length; i++)
+                Padding(
+                  padding: EdgeInsets.only(top: i == 0 ? 0 : 10),
+                  child: Card(
+                    key: ValueKey(lista[i].id),
+                    elevation: 2,
+                    margin: EdgeInsets.zero,
+                    color: ColoresApp.tarjeta,
+                    surfaceTintColor: Colors.transparent,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            lista[i].titulo,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
                           ),
-                          onPressed: () async {
-                            try {
-                              await ref
-                                  .read(proveedorRepositorioLegado)
-                                  .confirmarHerencia(h.id);
-                              ref.invalidate(proveedorHerenciasPorConfirmar);
-                              ref.invalidate(proveedorHerenciasRecibidas);
-                              if (context.mounted) {
-                                mostrarAvisoInformativo(
-                                  context,
-                                  'Legado confirmado. El beneficiario ya puede verlo.',
-                                );
+                          const SizedBox(height: 4),
+                          Text(
+                            '${lista[i].propietarioNombre} → '
+                            '${lista[i].beneficiarioNombre ?? 'alguien'}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: ColoresApp.atenuado),
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                            ),
+                            onPressed: () async {
+                              try {
+                                await ref
+                                    .read(proveedorRepositorioLegado)
+                                    .confirmarHerencia(lista[i].id);
+                                ref.invalidate(proveedorHerenciasPorConfirmar);
+                                ref.invalidate(proveedorHerenciasRecibidas);
+                                if (context.mounted) {
+                                  mostrarAvisoInformativo(
+                                    context,
+                                    'Legado confirmado. El beneficiario ya puede verlo.',
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  mostrarAvisoError(context, e);
+                                }
                               }
-                            } catch (e) {
-                              if (context.mounted) {
-                                mostrarAvisoError(context, e);
-                              }
-                            }
-                          },
-                          child: const Text('Confirmar'),
-                        ),
-                      ],
+                            },
+                            icon: const Icon(Icons.key_outlined, size: 18),
+                            label: const Text('Confirmar entrega'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -463,6 +485,32 @@ class _BloquePorConfirmar extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _EncabezadoRecibidas extends StatelessWidget {
+  const _EncabezadoRecibidas();
+
+  @override
+  Widget build(BuildContext context) {
+    final estilos = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Para ti',
+            style: estilos.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Lo que otros dejaron a tu cuidado.',
+            style: estilos.bodySmall?.copyWith(color: ColoresApp.atenuado),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -476,31 +524,37 @@ class _ListaHerenciasRecibidas extends ConsumerWidget {
     return recibidas.when(
       loading: () => const SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: EdgeInsets.symmetric(vertical: 40),
           child: Center(child: CircularProgressIndicator()),
         ),
       ),
       error: (_, _) => const SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('No pudimos cargar las herencias recibidas.'),
+          padding: EdgeInsets.fromLTRB(24, 16, 24, 28),
+          child: Text(
+            'No pudimos cargar las herencias recibidas.',
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
       data: (lista) {
         if (lista.isEmpty) {
-          return const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Cuando alguien te asigne una pequeña herencia, aparecerá aquí.',
-              ),
-            ),
-          );
+          return const SliverToBoxAdapter(child: _EstadoVacioRecibidas());
         }
-        return SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (context, i) => _FilaHerenciaRecibida(herencia: lista[i]),
-            childCount: lista.length,
+        return SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+          sliver: SliverList.separated(
+            itemCount: lista.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (context, i) {
+              final herencia = lista[i];
+              return TarjetaHerenciaRecibida(
+                key: ValueKey(herencia.id),
+                herencia: herencia,
+                alTocar: () =>
+                    context.push(RutasApp.detalleHerenciaDe(herencia.id)),
+              );
+            },
           ),
         );
       },
@@ -508,29 +562,81 @@ class _ListaHerenciasRecibidas extends ConsumerWidget {
   }
 }
 
-class _FilaHerenciaRecibida extends StatelessWidget {
-  const _FilaHerenciaRecibida({required this.herencia});
-
-  final HerenciaRecibida herencia;
+class _EstadoVacioCreadas extends StatelessWidget {
+  const _EstadoVacioCreadas();
 
   @override
   Widget build(BuildContext context) {
-    return _TarjetaFilaLegado(
-      child: ListTile(
-        leading: Icon(
-          herencia.contenidoVisible
-              ? Icons.lock_open_outlined
-              : Icons.lock_outline,
-          color: ColoresApp.primario,
-        ),
-        title: Text(herencia.titulo),
-        subtitle: Text(
-          herencia.contenidoVisible
-              ? 'De ${herencia.propietarioNombre} · ya puedes verla'
-              : 'De ${herencia.propietarioNombre} · sellada',
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => context.push(RutasApp.detalleHerenciaDe(herencia.id)),
+    return const _EstadoVacioLegado(
+      icono: Icons.edit_note_outlined,
+      titulo: 'Aún no has creado herencias',
+      mensaje: 'Toca «Nueva» para dejar tu primera historia.',
+    );
+  }
+}
+
+class _EstadoVacioRecibidas extends StatelessWidget {
+  const _EstadoVacioRecibidas();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _EstadoVacioLegado(
+      icono: Icons.lock_clock_outlined,
+      titulo: 'Todavía no hay herencias',
+      mensaje:
+          'Cuando alguien te confíe parte de su historia, la encontrarás aquí.',
+    );
+  }
+}
+
+class _EstadoVacioLegado extends StatelessWidget {
+  const _EstadoVacioLegado({
+    required this.icono,
+    required this.titulo,
+    required this.mensaje,
+  });
+
+  final IconData icono;
+  final String titulo;
+  final String mensaje;
+
+  @override
+  Widget build(BuildContext context) {
+    final estilos = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+      child: Column(
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [ColoresApp.fondoInicio, ColoresApp.tarjeta],
+              ),
+              border: Border.all(color: ColoresApp.bordeTarjeta),
+            ),
+            child: Icon(icono, color: ColoresApp.primario, size: 28),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            titulo,
+            textAlign: TextAlign.center,
+            style: estilos.titleSmall?.copyWith(
+              color: ColoresApp.textoPrincipal,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            mensaje,
+            textAlign: TextAlign.center,
+            style: estilos.bodySmall?.copyWith(color: ColoresApp.atenuado),
+          ),
+        ],
       ),
     );
   }

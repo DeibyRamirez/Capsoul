@@ -5,7 +5,9 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('miniatura 56x56 con nota larga no hace overflow', (tester) async {
+  testWidgets('miniatura 56x56 con nota larga no hace overflow', (
+    tester,
+  ) async {
     final cuerpoLargo = List.filled(40, 'Línea de texto larga.').join('\n');
     final nota = NotaSerializada(
       estilo: const EstiloNota(fondo: 'pastelVerde'),
@@ -29,6 +31,43 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(MarkdownBody), findsNothing);
+  });
+
+  testWidgets('preview amplio pinta el Delta sin símbolos', (tester) async {
+    final nota = NotaSerializada(
+      estilo: const EstiloNota(fondo: 'pastelAzul'),
+      cuerpo: 'Hola mundo',
+      delta: [
+        {'insert': 'Hola '},
+        {
+          'insert': 'mundo',
+          'attributes': {'bold': true, 'underline': true},
+        },
+        {'insert': '\n'},
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AspectRatio(
+            aspectRatio: 4 / 3,
+            child: VistaNotaCompacta(
+              contenidoTexto: nota.cuerpo,
+              contenidoRico: nota.contenidoRico,
+              rellenar: false,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(MarkdownBody), findsNothing);
+    expect(find.textContaining('**'), findsNothing);
+    final textos = tester.widgetList<Text>(find.byType(Text));
+    expect(textos.any((texto) => texto.textSpan != null), isTrue);
   });
 
   testWidgets('preview amplio usa markdown con scroll', (tester) async {

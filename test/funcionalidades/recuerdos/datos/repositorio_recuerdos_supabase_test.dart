@@ -1,5 +1,6 @@
 import 'package:capsoul/funcionalidades/elementos/dominio/elemento_borrador.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/fallo_medios.dart';
+import 'package:capsoul/funcionalidades/elementos/dominio/nota_serializada.dart';
 import 'package:capsoul/funcionalidades/elementos/dominio/tipo_elemento.dart';
 import 'package:capsoul/funcionalidades/recuerdos/datos/acceso_tablas_recuerdos.dart';
 import 'package:capsoul/funcionalidades/recuerdos/datos/mapeo_recuerdos.dart';
@@ -68,8 +69,10 @@ class _AccesoFalso implements AccesoTablasRecuerdos {
   }
 
   @override
-  Future<Map<String, dynamic>?> leerUsoMedios() async =>
-      {'bytes_usados': 2048, 'bytes_limite': 4096};
+  Future<Map<String, dynamic>?> leerUsoMedios() async => {
+    'bytes_usados': 2048,
+    'bytes_limite': 4096,
+  };
 }
 
 void main() {
@@ -127,6 +130,58 @@ void main() {
     expect(recuerdo.id, 'id-1');
     expect(recuerdo.fechaRecuerdo, DateTime(2026, 9, 1));
     expect(recuerdo.nombre, 'Te quiero');
+  });
+
+  test('separa texto plano y Delta al guardar una nota enriquecida', () async {
+    final serializado = NotaSerializada(
+      estilo: const EstiloNota(fondo: 'pastelRosa', fuente: 'playfair'),
+      cuerpo: 'Te quiero',
+      delta: [
+        {'insert': 'Te '},
+        {
+          'insert': 'quiero',
+          'attributes': {'bold': true},
+        },
+        {'insert': '\n'},
+      ],
+    ).serializar();
+    final enriquecida = ElementoBorrador(
+      idLocal: 'n2',
+      tipo: TipoElemento.texto,
+      texto: serializado,
+    );
+
+    await repositorio.crear(
+      NuevoRecuerdo(elemento: enriquecida, fechaRecuerdo: ahora),
+    );
+
+    final fila = acceso.insertadas.single;
+    expect(fila['contenido_texto'], 'Te quiero');
+    expect(fila['contenido_rico'], isA<Map>());
+    final rico = fila['contenido_rico'] as Map;
+    expect(rico['estilo'], {'fondo': 'pastelRosa', 'fuente': 'playfair'});
+    expect(rico['delta'], contains(containsPair('insert', 'Te ')));
+  });
+
+  test('actualiza texto plano y contenido rico al editar una nota', () async {
+    final serializado = NotaSerializada(
+      estilo: const EstiloNota(fondo: 'pastelVerde', fuente: 'poppins'),
+      cuerpo: 'Hola',
+      delta: [
+        {
+          'insert': 'Hola',
+          'attributes': {'italic': true},
+        },
+        {'insert': '\n'},
+      ],
+    ).serializar();
+
+    await repositorio.actualizarContenidoTexto('id-nota', serializado);
+
+    expect(acceso.ultimosCambios?['contenido_texto'], 'Hola');
+    final rico = acceso.ultimosCambios?['contenido_rico'] as Map;
+    expect(rico['delta'], isA<List>());
+    expect(rico['estilo'], {'fondo': 'pastelVerde', 'fuente': 'poppins'});
   });
 
   test('guarda música de catálogo sin subir a Cloudinary', () async {
@@ -188,8 +243,13 @@ void main() {
       repositorio.crear(
         NuevoRecuerdo(elemento: foto, fechaRecuerdo: DateTime(2026, 10, 4)),
       ),
-      throwsA(isA<FalloRecuerdo>().having(
-          (f) => f.codigo, 'codigo', FalloRecuerdo.codigoFechaInvalida)),
+      throwsA(
+        isA<FalloRecuerdo>().having(
+          (f) => f.codigo,
+          'codigo',
+          FalloRecuerdo.codigoFechaInvalida,
+        ),
+      ),
     );
     expect(medios.subidos, isEmpty);
   });
@@ -210,8 +270,13 @@ void main() {
     );
     await expectLater(
       repositorio.eliminar('x'),
-      throwsA(isA<FalloRecuerdo>().having((f) => f.codigo, 'codigo',
-          FalloRecuerdo.codigoEnCapsulaSellada)),
+      throwsA(
+        isA<FalloRecuerdo>().having(
+          (f) => f.codigo,
+          'codigo',
+          FalloRecuerdo.codigoEnCapsulaSellada,
+        ),
+      ),
     );
 
     expect(
@@ -304,13 +369,15 @@ void main() {
     expect(recuerdoDesdeFila({'id': 'a', 'tipo': 'otro'}), isNull);
   });
 
-  test('actualizarMusicaPreview no envia columnas sin grant ni la URL de Deezer',
-      () async {
-    await repositorio.actualizarMusicaPreview('x', pistaDeezerPrueba());
-    final cambios = acceso.ultimosCambios!;
-    expect(cambios.containsKey('duracion_segundos'), isFalse);
-    expect(cambios.containsKey('musica_preview_proveedor'), isFalse);
-    expect(cambios['musica_preview_url'], isNull);
-    expect(cambios['musica_id_externo'], '3135556');
-  });
+  test(
+    'actualizarMusicaPreview no envia columnas sin grant ni la URL de Deezer',
+    () async {
+      await repositorio.actualizarMusicaPreview('x', pistaDeezerPrueba());
+      final cambios = acceso.ultimosCambios!;
+      expect(cambios.containsKey('duracion_segundos'), isFalse);
+      expect(cambios.containsKey('musica_preview_proveedor'), isFalse);
+      expect(cambios['musica_preview_url'], isNull);
+      expect(cambios['musica_id_externo'], '3135556');
+    },
+  );
 }

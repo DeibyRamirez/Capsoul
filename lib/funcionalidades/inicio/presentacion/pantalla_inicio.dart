@@ -96,7 +96,7 @@ class PantallaInicio extends ConsumerWidget {
               style: estilos.bodySmall?.copyWith(color: ColoresApp.atenuado),
             ),
             const SizedBox(height: 20),
-            _RejillaSecciones(resumen: resumen),
+            _ListaSecciones(resumen: resumen),
             const SizedBox(height: 16),
             const EntradaPresentacionInicio(
               direccion: DireccionEntradaInicio.abajo,
@@ -110,18 +110,17 @@ class PantallaInicio extends ConsumerWidget {
   }
 }
 
-class _RejillaSecciones extends StatelessWidget {
-  const _RejillaSecciones({required this.resumen});
+class _ListaSecciones extends StatelessWidget {
+  const _ListaSecciones({required this.resumen});
 
   final ResumenInicio resumen;
 
   @override
   Widget build(BuildContext context) {
-    final tarjetas = [
+    final filas = [
       EntradaPresentacionInicio(
         direccion: DireccionEntradaInicio.izquierda,
         child: TarjetaSeccionInicio(
-          icono: Icons.photo_camera_outlined,
           titulo: 'Recuerdos',
           descripcion: 'Tu banco de recuerdos.',
           conteo: resumen.recuerdos,
@@ -138,10 +137,9 @@ class _RejillaSecciones extends StatelessWidget {
         ),
       ),
       EntradaPresentacionInicio(
-        direccion: DireccionEntradaInicio.derecha,
+        direccion: DireccionEntradaInicio.izquierda,
         retraso: const Duration(milliseconds: 80),
         child: TarjetaSeccionInicio(
-          icono: Icons.flag_outlined,
           titulo: 'Diario',
           descripcion: 'Pequeños pasos, grandes cambios.',
           conteo: resumen.retosActivos,
@@ -161,14 +159,13 @@ class _RejillaSecciones extends StatelessWidget {
         direccion: DireccionEntradaInicio.izquierda,
         retraso: const Duration(milliseconds: 160),
         child: TarjetaSeccionInicio(
-          icono: Icons.lock_outline,
           titulo: 'Cápsulas',
           descripcion: 'Guarda hoy, abre en el futuro.',
           conteo: resumen.capsulas,
           etiquetaConteo: etiquetaConteo(
             resumen.capsulas,
-            'cápsula        creada',
-            'cápsulas       creadas',
+            'cápsula creada',
+            'cápsulas creadas',
           ),
           ilustracion: const IlustracionSeccion(
             rutaAsset: IlustracionesInicio.capsulas,
@@ -178,17 +175,16 @@ class _RejillaSecciones extends StatelessWidget {
         ),
       ),
       EntradaPresentacionInicio(
-        direccion: DireccionEntradaInicio.derecha,
+        direccion: DireccionEntradaInicio.izquierda,
         retraso: const Duration(milliseconds: 240),
         child: TarjetaSeccionInicio(
-          icono: Icons.card_giftcard_outlined,
           titulo: 'Pequeñas herencias',
           descripcion: 'Deja algo de ti para quien más amas.',
           conteo: resumen.herencias,
           etiquetaConteo: etiquetaConteo(
             resumen.herencias,
-            'herencia        creada',
-            'herencias       creadas',
+            'herencia creada',
+            'herencias creadas',
           ),
           ilustracion: const IlustracionSeccion(
             rutaAsset: IlustracionesInicio.herencias,
@@ -198,13 +194,17 @@ class _RejillaSecciones extends StatelessWidget {
         ),
       ),
     ];
-    // Rejilla 2×2 de alto natural: con letra grande las tarjetas crecen en
+    // Lista vertical de alto natural: con letra grande las filas crecen en
     // vez de desbordarse.
     return Column(
       children: [
-        _FilaTarjetas(izquierda: tarjetas[0], derecha: tarjetas[1]),
-        const SizedBox(height: 16),
-        _FilaTarjetas(izquierda: tarjetas[2], derecha: tarjetas[3]),
+        filas[0],
+        const SizedBox(height: 12),
+        filas[1],
+        const SizedBox(height: 12),
+        filas[2],
+        const SizedBox(height: 12),
+        filas[3],
       ],
     );
   }
@@ -213,24 +213,3 @@ class _RejillaSecciones extends StatelessWidget {
 /// "1 cápsula creada" / "5 cápsulas creadas".
 String etiquetaConteo(int conteo, String singular, String plural) =>
     conteo == 1 ? singular : plural;
-
-class _FilaTarjetas extends StatelessWidget {
-  const _FilaTarjetas({required this.izquierda, required this.derecha});
-
-  final Widget izquierda;
-  final Widget derecha;
-
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: izquierda),
-          const SizedBox(width: 16),
-          Expanded(child: derecha),
-        ],
-      ),
-    );
-  }
-}

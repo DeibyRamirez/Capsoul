@@ -98,7 +98,7 @@ class _EstadoContenidoEditar extends ConsumerState<_ContenidoEditar> {
     final serializado = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (_) => PantallaEscribirNota(
-          contenidoInicial: recuerdo.contenidoTexto,
+          contenidoInicial: recuerdo.nota.serializar(),
           modoEdicion: true,
         ),
       ),
@@ -121,7 +121,9 @@ class _EstadoContenidoEditar extends ConsumerState<_ContenidoEditar> {
     final recuerdo = widget.recuerdo;
     final titulo = _titulo.text.trim();
     try {
-      await ref.read(proveedorRepositorioRecuerdos).actualizarMetadatos(
+      await ref
+          .read(proveedorRepositorioRecuerdos)
+          .actualizarMetadatos(
             recuerdo.id,
             titulo: titulo.isEmpty ? null : titulo,
             fechaRecuerdo: _fecha,
@@ -149,7 +151,8 @@ class _EstadoContenidoEditar extends ConsumerState<_ContenidoEditar> {
 
   @override
   Widget build(BuildContext context) {
-    final recuerdo = ref.watch(proveedorRecuerdo(widget.recuerdo.id)).value ??
+    final recuerdo =
+        ref.watch(proveedorRecuerdo(widget.recuerdo.id)).value ??
         widget.recuerdo;
     if (!_cargado) {
       _cargado = true;
@@ -250,9 +253,9 @@ class _Mensaje extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text(texto, textAlign: TextAlign.center),
-        ),
-      );
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Text(texto, textAlign: TextAlign.center),
+    ),
+  );
 }

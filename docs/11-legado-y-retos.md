@@ -70,18 +70,32 @@ Contrato HTTP/RPC: [`contrato-api-legado.md`](contrato-api-legado.md) · SQL: `2
 
 **Código:** `lib/funcionalidades/legado/` · pantallas `pantalla_nueva_herencia`, `pantalla_legado` (Creadas / Recibidas), `pantalla_editar_herencia`, `pantalla_seguridad_legado`.
 
-## Retos globales
+## Diario (retos globales)
+
+### Catálogo y validación
+
+El catálogo global vive en `public.retos` (creador `null`) y el progreso en `reto_participantes`.
+La migración `20261120000028_capsoul_diario_25_retos.sql` dejó **25 entradas** y amplió el motor de criterios:
+
+- Primeros pasos: nombre de usuario, primer amigo, foto de perfil.
+- Recuerdos: foto, video, audio, nota, música, cantidades y tipos distintos.
+- Cápsulas: creación, programación, cantidad, elementos y destinatarios.
+- Momentos: creación, cantidad y cantidad de recuerdos.
+- Legado: herencia, cápsula vinculada y persona de confianza.
+
+La validación se ejecuta en Postgres mediante `privado.cumple_criterio_reto` y triggers sobre
+`elementos`, `capsulas`, `capsula_elementos`, `capsula_destinatarios`, `momentos`,
+`momento_elementos`, `herencias`, `herencia_capsulas`, `amistades` y `usuarios`.
+La app no marca entradas manualmente: al completar la acción, el trigger registra el avance.
 
 ### Tablas
 
 | Tabla | Rol |
 |-------|-----|
-| `retos` | Catálogo (diario, semanal, especial); puede ser global (`creador_id` null) |
-| `reto_participantes` | Progreso por usuario; enum `completado` |
+| `retos` | Catálogo global (título, descripción, pasos, criterio y orden) |
+| `reto_participantes` | Progreso por usuario (`estado`, `completado_en`) |
 
-Migraciones: `20261011000011` (enum), `20261011000012` (semillas y RLS).
-
-**Código:** `lib/funcionalidades/retos/presentacion/pantalla_retos.dart` · contrato JSON: [`contrato-retos.json`](contrato-retos.json).
+**Código:** `lib/funcionalidades/retos/presentacion/pantalla_retos.dart` · contrato JSON: [`contrato-retos.json`](contrato-retos.json)
 
 ## Pruebas SQL
 

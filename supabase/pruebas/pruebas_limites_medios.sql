@@ -1,6 +1,6 @@
 -- Capsoul · Pruebas de la migración 000003 (límites de medios, máximo 10 elementos, cuota 200 MB).
 -- Ejecutar como postgres en una base LOCAL desechable con esquema auth simulado y las migraciones
--- 000001 y 000003 aplicadas. Cada línea "OK ..." es una verificación superada; un ERROR "FALLO" detiene el script.
+-- 000001, 000003 y 20261120000027 aplicadas. Cada línea "OK ..." es una verificación superada; un ERROR "FALLO" detiene el script.
 \set ON_ERROR_STOP 1
 insert into auth.users (id, email, email_confirmed_at) values
   ('11111111-1111-1111-1111-111111111111', 'ana@capsoul.app', now()),
@@ -25,7 +25,15 @@ insert into public.elementos (propietario_id, tipo, cloudinary_public_id, cloudi
   values (auth.uid(), 'foto', 'capsoul/f1', 'image', 2097152, 1600, 1200);
 insert into public.elementos (propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, bytes, duracion_segundos)
   values (auth.uid(), 'audio', 'capsoul/a1', 'video', 2400000, 300.4);
-select 'OK válidos insertados' as r;
+-- nota enriquecida: texto plano en contenido_texto y Delta en contenido_rico
+insert into public.elementos (propietario_id, tipo, contenido_texto, contenido_rico)
+  values (
+    auth.uid(),
+    'texto',
+    'Hola mundo',
+    '{"version":1,"estilo":{"fondo":"pastelAzul","fuente":"poppins"},"delta":[{"insert":"Hola "},{"insert":"mundo","attributes":{"bold":true}},{"insert":"\n"}]}'::jsonb
+  );
+select 'OK nota rica insertada' as r;
 
 -- inválidos (23514)
 select pg_temp.espera_error($q$insert into public.elementos (propietario_id, tipo, contenido_texto) values (auth.uid(), 'texto', repeat('a', 5001))$q$, '23514');
@@ -39,6 +47,8 @@ select pg_temp.espera_error($q$insert into public.elementos (propietario_id, tip
 select pg_temp.espera_error($q$insert into public.elementos (propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, bytes) values (auth.uid(), 'video', 'capsoul/v3', 'video', 1000)$q$, '23514');
 select pg_temp.espera_error($q$insert into public.elementos (propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, bytes, duracion_segundos) values (auth.uid(), 'audio', 'capsoul/a2', 'video', 3145729, 100)$q$, '23514');
 select pg_temp.espera_error($q$insert into public.elementos (propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, bytes, duracion_segundos) values (auth.uid(), 'audio', 'capsoul/a3', 'video', 1000, 302)$q$, '23514');
+select pg_temp.espera_error($q$insert into public.elementos (propietario_id, tipo, cloudinary_public_id, cloudinary_tipo_recurso, contenido_rico) values (auth.uid(), 'foto', 'capsoul/fr1', 'image', '{"version":1}'::jsonb)$q$, '23514');
+select pg_temp.espera_error($q$insert into public.elementos (propietario_id, tipo, contenido_texto, contenido_rico) values (auth.uid(), 'texto', 'Hola', '[]'::jsonb)$q$, '23514');
 
 -- flujo de la app: borrador -> enlaces -> programada, máximo 10 (CAP02)
 insert into public.capsulas (id, autor_id, titulo, fecha_apertura, estado)
