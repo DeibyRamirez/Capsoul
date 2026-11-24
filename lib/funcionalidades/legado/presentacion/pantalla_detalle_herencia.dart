@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../nucleo/componentes/avisos_emergentes.dart';
 import '../../../nucleo/componentes/cabecera_detalle_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
+import '../../../nucleo/componentes/tarjeta_capsoul.dart';
 import '../../../nucleo/enrutador/rutas_app.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
@@ -40,10 +41,13 @@ class PantallaDetalleHerencia extends ConsumerWidget {
                 final h = d.herencia;
                 final meta = h.metadatos;
                 final esDueno = uid != null && uid == h.propietarioId;
-                final verContenido =
-                    meta.tipoActivo != null ||
-                    meta.titular != null ||
-                    meta.valorAproximado != null;
+                final esConfianza = d.esConfianza;
+                final requiereCodigo = esConfianza && !d.accesoActivo;
+                final verContenido = !requiereCodigo &&
+                    (meta.tipoActivo != null ||
+                        meta.titular != null ||
+                        meta.valorAproximado != null ||
+                        meta.instrucciones != null);
                 final editable = esDueno && h.sePuedeEditar(ahora: ahora);
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
@@ -70,51 +74,101 @@ class PantallaDetalleHerencia extends ConsumerWidget {
                           ),
                           child: Text(h.etiquetaEstado(ahora: ahora)),
                         ),
+                        if (esConfianza && d.accesoActivo) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: ColoresApp.primario.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text('Desbloqueada'),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 16),
-                    if (!verContenido && h.estado != EstadoHerencia.liberada)
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          'Esta herencia sigue sellada. Verás el contenido cuando se active.',
+                    if (requiereCodigo) ...[
+                      TarjetaCapsoul(
+                        icono: Icons.lock_outline,
+                        titulo: h.estado == EstadoHerencia.liberada
+                            ? 'Ingresa tu código para ver el contenido'
+                            : 'Esta herencia todavía está sellada',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              h.estado == EstadoHerencia.liberada
+                                  ? 'La herencia ya se abrió. Pide o ingresa '
+                                      'el código que llega al correo de tu cuenta '
+                                      'Capsoul para ver el contenido y ayudar.'
+                                  : 'Se abrirá cuando llegue la fecha indicada. '
+                                      'Ese día recibirás un código en tu correo.',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: ColoresApp.atenuado),
+                            ),
+                            if (h.estado == EstadoHerencia.liberada) ...[
+                              const SizedBox(height: 16),
+                              FilledButton.icon(
+                                onPressed: () => context.push(
+                                  RutasApp.desbloquearHerenciaDe(herenciaId),
+                                ),
+                                icon: const Icon(Icons.key_outlined, size: 18),
+                                label: const Text('Desbloquear con código'),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                    _fila('Activo', meta.tipoActivo),
-                    _fila('Titular', meta.titular),
-                    _fila(
-                      'Valor aproximado',
-                      meta.valorAproximado == null
-                          ? null
-                          : '${meta.valorFormateado} ${meta.moneda}',
-                    ),
-                    _fila('Instrucciones', meta.instrucciones),
-                    if (h.descripcion != null)
-                      _fila('Descripción', h.descripcion),
-                    const SizedBox(height: 16),
-                    Text('Cápsulas vinculadas (${d.capsulas.length})'),
-                    for (final c in d.capsulas)
-                      ListTile(
-                        key: ValueKey(c.capsulaId),
-                        contentPadding: EdgeInsets.zero,
-                        isThreeLine: true,
-                        leading: MiniaturaImagenCapsula(
-                          imagenClave: c.imagenClave,
-                          ancho: 48,
-                          conCandado: c.estado != 'liberada',
-                          heroTag: HeroesCapsula.imagen(c.capsulaId),
+                      const SizedBox(height: 16),
+                    ] else ...[
+                      if (!verContenido &&
+                          h.estado != EstadoHerencia.liberada)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 16),
+                          child: Text(
+                            'Esta herencia sigue sellada. Verás el contenido cuando se active.',
+                          ),
                         ),
-                        title: Text(c.titulo),
-                        subtitle: Text(
-                          c.estado == 'liberada'
-                              ? 'Lista para abrir'
-                              : 'Respeta su fecha de apertura',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push(
-                          RutasApp.detalleCapsulaDe(c.capsulaId),
-                        ),
+                      _fila('Activo', meta.tipoActivo),
+                      _fila('Titular', meta.titular),
+                      _fila(
+                        'Valor aproximado',
+                        meta.valorAproximado == null
+                            ? null
+                            : '${meta.valorFormateado} ${meta.moneda}',
                       ),
+                      _fila('Instrucciones', meta.instrucciones),
+                      if (h.descripcion != null)
+                        _fila('Descripción', h.descripcion),
+                      const SizedBox(height: 16),
+                      Text('Cápsulas vinculadas (${d.capsulas.length})'),
+                      for (final c in d.capsulas)
+                        ListTile(
+                          key: ValueKey(c.capsulaId),
+                          contentPadding: EdgeInsets.zero,
+                          isThreeLine: true,
+                          leading: MiniaturaImagenCapsula(
+                            imagenClave: c.imagenClave,
+                            ancho: 48,
+                            conCandado: c.estado != 'liberada',
+                            heroTag: HeroesCapsula.imagen(c.capsulaId),
+                          ),
+                          title: Text(c.titulo),
+                          subtitle: Text(
+                            c.estado == 'liberada'
+                                ? 'Lista para abrir'
+                                : 'Respeta su fecha de apertura',
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => context.push(
+                            RutasApp.detalleCapsulaDe(c.capsulaId),
+                          ),
+                        ),
+                    ],
                     const SizedBox(height: 24),
                     if (editable)
                       FilledButton(
@@ -126,21 +180,23 @@ class PantallaDetalleHerencia extends ConsumerWidget {
                       const Text(
                         'Ya no se puede editar: fue abierta o llegó la fecha.',
                       ),
-                    const SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: () async {
-                        await ref
-                            .read(proveedorRepositorioLegado)
-                            .solicitarRespaldoLegal(herenciaId);
-                        if (context.mounted) {
-                          mostrarAvisoInformativo(
-                            context,
-                            'Solicitud registrada. Capsoul Legal te contactará.',
-                          );
-                        }
-                      },
-                      child: const Text('Consultar con Capsoul Legal'),
-                    ),
+                    if (esDueno) ...[
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: () async {
+                          await ref
+                              .read(proveedorRepositorioLegado)
+                              .solicitarRespaldoLegal(herenciaId);
+                          if (context.mounted) {
+                            mostrarAvisoInformativo(
+                              context,
+                              'Solicitud registrada. Capsoul Legal te contactará.',
+                            );
+                          }
+                        },
+                        child: const Text('Consultar con Capsoul Legal'),
+                      ),
+                    ],
                   ],
                 );
               },

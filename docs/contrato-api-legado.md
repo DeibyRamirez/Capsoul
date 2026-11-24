@@ -19,5 +19,10 @@ Implementación actual: **Supabase** (PostgREST + RPC). `RepositorioLegadoHttp` 
 | DELETE | `/legado/persona-confianza` | `rpc quitar_persona_confianza_legado` |
 | POST | `/herencias/{id}/confirmar` | `rpc confirmar_herencia` |
 | POST | `/herencias/{id}/solicitud-legal` | `rpc solicitar_respaldo_legal_herencia` |
+| PUT | `/herencias/{id}/persona-confianza` | `rpc actualizar_persona_confianza_herencia` |
+| GET | `/legado/a-cuidado` | `rpc herencias_a_mi_cuidado` |
+| GET | `/herencias/{id}/acceso` | `rpc estado_acceso_herencia` |
+| POST | `/herencias/{id}/codigo` | `rpc solicitar_codigo_herencia` |
+| POST | `/herencias/{id}/desbloquear` | `rpc validar_codigo_herencia` |
 
 Ver metadatos JSON en [`contrato-legado.json`](contrato-legado.json).

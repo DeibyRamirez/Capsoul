@@ -28,7 +28,9 @@ function mundo(opciones?: {
   const entregas: EntregaMemoria[] = [];
   const envios: string[] = [];
   const borrados: string[] = [];
+  const correosHtml: { destino: string; asunto: string; html: string }[] = [];
   let correos = 0;
+  let codigosGenerados = 0;
 
   const reclamar = (lote: number): Promise<FilaAviso[]> => {
     const libres = avisos
@@ -98,9 +100,32 @@ function mundo(opciones?: {
       correos++;
       return Promise.resolve();
     },
+    enviarCorreoHtml: (destino, asunto, html) => {
+      correosHtml.push({ destino, asunto, html });
+      return Promise.resolve();
+    },
+    generarCodigoHerencia: () => {
+      codigosGenerados++;
+      return Promise.resolve({
+        codigo: "123456",
+        expiraEn: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
+        tituloHerencia: "Reloj de familia",
+        propietarioNombre: "Ana Pérez",
+      });
+    },
   };
 
-  return { avisos, tokens, entregas, envios, borrados, deps, get correos() { return correos; } };
+  return {
+    avisos,
+    tokens,
+    entregas,
+    envios,
+    borrados,
+    correosHtml,
+    deps,
+    get correos() { return correos; },
+    get codigosGenerados() { return codigosGenerados; },
+  };
 }
 
 function avisoPush(id: string, extra?: Partial<AvisoMemoria>): AvisoMemoria {
@@ -271,6 +296,29 @@ Deno.test("el correo sigue saliendo por Resend y no por FCM", async () => {
   const resumen = await procesarLote(estado.deps);
   assertEquals(resumen.enviadas, 1);
   assertEquals(estado.correos, 1);
+  assertEquals(estado.envios.length, 0);
+  assertEquals(aviso.estado, "enviada");
+});
+
+Deno.test("el código de herencia genera el código y envía HTML", async () => {
+  const aviso = avisoPush("codigo-1", {
+    canal: "correo",
+    tipo: "herencia_codigo_acceso",
+    usuario_id: USUARIO,
+    correo_destino: "confianza@capsoul.app",
+    referencia_id: CAPSULA,
+    titulo: "Tu código para abrir el legado",
+    cuerpo: "La herencia se abrió.",
+  });
+  const estado = mundo({ avisos: [aviso], tokens: ["token-ok"] });
+  const resumen = await procesarLote(estado.deps);
+
+  assertEquals(resumen.enviadas, 1);
+  assertEquals(estado.codigosGenerados, 1);
+  assertEquals(estado.correosHtml.length, 1);
+  assertEquals(estado.correosHtml[0].destino, "confianza@capsoul.app");
+  assertEquals(estado.correosHtml[0].html.includes("123456"), true);
+  assertEquals(estado.correosHtml[0].html.includes("Reloj de familia"), true);
   assertEquals(estado.envios.length, 0);
   assertEquals(aviso.estado, "enviada");
 });

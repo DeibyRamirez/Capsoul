@@ -33,6 +33,12 @@ Las migraciones SQL viven en [`supabase/migrations/`](../supabase/migrations/). 
 | `20261102000024` | Enum `tipo_notificacion`: `herencia_asignada`, `herencia_por_confirmar`, `capsula_compartida` |
 | `20261102000025` | Permisos de herencias: destinatarios por `origen_herencia_id`, no forzar cápsulas `liberada`, RLS de contenido, RPC recibidas/por confirmar/editar sellada, avisos FCM, backfill de destinatarios existentes |
 | `20261103000026` | `herencia_detalle` incluye `imagen_clave` de cada cápsula vinculada (catálogo local) |
+| `20261120000027` | Notas ricas (Delta + texto plano) |
+| `20261120000028` | Diario de 25 retos globales |
+| `20261120000029` | `search_path` vacío en funciones del diario |
+| `20261123000030` | Enum `tipo_notificacion`: `herencia_codigo_acceso` |
+| `20261123000031` | Código de la persona de confianza: tablas `herencia_codigos` y `herencia_accesos`, RPCs de generación/validación/reenvío, aviso por correo al liberar y permiso de contenido con acceso vigente (requiere `20261026000018`) |
+| `20261124000032` | Cápsulas vinculadas: la herencia libera sus cápsulas `programada` y sus destinatarios no las ven antes; solo se vinculan cápsulas propias `programada`/`liberada` |
 
 El estado **aplicado en remoto** puede ir por detrás del repo; usar `supabase migration list` antes de cada release.
 

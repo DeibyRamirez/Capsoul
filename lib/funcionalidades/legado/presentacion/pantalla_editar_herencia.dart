@@ -7,6 +7,8 @@ import '../../../nucleo/componentes/cabecera_detalle_capsoul.dart';
 import '../../../nucleo/componentes/pantalla_capsoul.dart';
 import '../../../nucleo/formato/fechas.dart';
 import '../../../nucleo/formato/valor_monetario.dart';
+import '../../amistades/aplicacion/proveedores_amistades.dart';
+import '../../amistades/dominio/amigo.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../aplicacion/proveedores_legado.dart';
 import '../dominio/condicion_herencia.dart';
@@ -31,6 +33,8 @@ class _PantallaEditarHerenciaState extends ConsumerState<PantallaEditarHerencia>
   final _valorCtrl = TextEditingController();
   final _instruccionesCtrl = TextEditingController();
   DateTime? _fecha;
+  String? _personaConfianzaId;
+  String? _personaConfianzaOriginal;
   bool _cargado = false;
   bool _guardando = false;
 
@@ -57,6 +61,8 @@ class _PantallaEditarHerenciaState extends ConsumerState<PantallaEditarHerencia>
     _valorCtrl.text = h.metadatos.valorFormateado;
     _instruccionesCtrl.text = h.metadatos.instrucciones ?? '';
     _fecha = h.fechaActivacion;
+    _personaConfianzaId = h.personaConfianzaId;
+    _personaConfianzaOriginal = h.personaConfianzaId;
     _cargado = true;
   }
 
@@ -75,20 +81,32 @@ class _PantallaEditarHerenciaState extends ConsumerState<PantallaEditarHerencia>
     }
     setState(() => _guardando = true);
     try {
-      await ref.read(proveedorRepositorioLegado).actualizarHerenciaSellada(
-            herenciaId: widget.herenciaId,
-            titulo: _tituloCtrl.text.trim(),
-            descripcion: _descripcionCtrl.text.trim(),
-            metadatos: MetadatosHerencia(
-              tipoActivo: _tipoCtrl.text.trim(),
-              titular: _titularCtrl.text.trim(),
-              valorAproximado: valor,
-              instrucciones: _instruccionesCtrl.text.trim(),
-            ),
-            fechaActivacion: _fecha,
-          );
+      final repo = ref.read(proveedorRepositorioLegado);
+      await repo.actualizarHerenciaSellada(
+        herenciaId: widget.herenciaId,
+        titulo: _tituloCtrl.text.trim(),
+        descripcion: _descripcionCtrl.text.trim(),
+        metadatos: MetadatosHerencia(
+          tipoActivo: _tipoCtrl.text.trim(),
+          titular: _titularCtrl.text.trim(),
+          valorAproximado: valor,
+          instrucciones: _instruccionesCtrl.text.trim(),
+        ),
+        fechaActivacion: _fecha,
+      );
+      final confianza = _personaConfianzaId;
+      if (confianza != null &&
+          confianza.isNotEmpty &&
+          confianza != _personaConfianzaOriginal) {
+        await repo.actualizarPersonaConfianzaHerencia(
+          widget.herenciaId,
+          confianza,
+        );
+      }
       ref.invalidate(proveedorDetalleHerencia(widget.herenciaId));
       ref.invalidate(proveedorGruposLegadoBeneficiario);
+      ref.invalidate(proveedorHerenciasPorConfirmar);
+      ref.invalidate(proveedorHerenciasACuidado);
       if (mounted) {
         mostrarAvisoInformativo(context, 'Herencia actualizada.');
         context.pop();
@@ -100,9 +118,68 @@ class _PantallaEditarHerenciaState extends ConsumerState<PantallaEditarHerencia>
     }
   }
 
+  String _nombreConfianza(List<Amigo> amigos) {
+    final id = _personaConfianzaId;
+    if (id == null || id.isEmpty) return 'Sin persona de confianza';
+    for (final a in amigos) {
+      if (a.usuarioId == id) {
+        final arroba = a.nombreUsuario;
+        return arroba == null || arroba.isEmpty
+            ? a.nombreVisible
+            : '${a.nombreVisible} (@$arroba)';
+      }
+    }
+    return 'Persona de confianza';
+  }
+
+  Future<void> _elegirConfianza(List<Amigo> amigos) async {
+    if (amigos.isEmpty) {
+      mostrarAvisoInformativo(
+        context,
+        'Primero agrega amigos para elegir persona de confianza.',
+      );
+      return;
+    }
+    final elegido = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Text('Persona de confianza de esta herencia'),
+            ),
+            for (final a in amigos)
+              ListTile(
+                leading: CircleAvatar(
+                  child: Text(
+                    a.nombreVisible.trim().isEmpty
+                        ? '?'
+                        : a.nombreVisible.trim().substring(0, 1).toUpperCase(),
+                  ),
+                ),
+                title: Text(a.nombreVisible),
+                subtitle: a.nombreUsuario != null
+                    ? Text('@${a.nombreUsuario}')
+                    : null,
+                trailing: _personaConfianzaId == a.usuarioId
+                    ? const Icon(Icons.check)
+                    : null,
+                onTap: () => Navigator.pop(ctx, a.usuarioId),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (elegido == null || !mounted) return;
+    setState(() => _personaConfianzaId = elegido);
+  }
+
   @override
   Widget build(BuildContext context) {
     final detalle = ref.watch(proveedorDetalleHerencia(widget.herenciaId));
+    final amigos = ref.watch(proveedorMisAmigos).value ?? const <Amigo>[];
     _rellenarSiHaceFalta();
     return PantallaCapsoul(
       cuerpo: Column(
@@ -190,6 +267,16 @@ class _PantallaEditarHerenciaState extends ConsumerState<PantallaEditarHerencia>
                           }
                         },
                       ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.shield_outlined),
+                      title: const Text('Persona de confianza'),
+                      subtitle: Text(
+                        _nombreConfianza(amigos),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _elegirConfianza(amigos),
+                    ),
                     const SizedBox(height: 24),
                     FilledButton(
                       onPressed: _guardando ? null : _guardar,

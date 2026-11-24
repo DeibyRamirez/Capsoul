@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../nucleo/infraestructura/cliente_postgrest.dart';
 import '../../../nucleo/infraestructura/traductor_errores_backend.dart';
+import '../dominio/acceso_herencia.dart';
 import '../dominio/condicion_herencia.dart';
 import '../dominio/fallo_legado.dart';
 import '../dominio/grupo_legado_beneficiario.dart';
@@ -91,6 +92,7 @@ class RepositorioLegadoSupabase implements RepositorioLegado {
     MetadatosHerencia metadatos = const MetadatosHerencia(),
     DateTime? fechaActivacion,
     int? diasInactividad,
+    String? personaConfianzaUsuarioId,
     bool activar = false,
   }) async {
     _exigirSesion();
@@ -108,6 +110,7 @@ class RepositorioLegadoSupabase implements RepositorioLegado {
         if (fechaActivacion != null)
           'fecha_activacion': fechaActivacion.toUtc().toIso8601String(),
         'dias_inactividad': ?diasInactividad,
+        'persona_confianza_id': ?personaConfianzaUsuarioId,
         'estado': activar ? 'activa' : 'borrador',
       });
       return id;
@@ -286,6 +289,91 @@ class RepositorioLegadoSupabase implements RepositorioLegado {
         },
       );
     } catch (e) {
+      throw _traducir(e);
+    }
+  }
+
+  @override
+  Future<void> actualizarPersonaConfianzaHerencia(
+    String herenciaId,
+    String personaConfianzaUsuarioId,
+  ) async {
+    _exigirSesion();
+    try {
+      await _cliente.rpc(
+        'actualizar_persona_confianza_herencia',
+        parametros: {
+          'p_herencia': herenciaId,
+          'p_persona_confianza': personaConfianzaUsuarioId,
+        },
+      );
+    } catch (e) {
+      throw _traducir(e);
+    }
+  }
+
+  @override
+  Future<List<HerenciaACuidado>> listarACuidado() async {
+    _exigirSesion();
+    final filas = await _cliente.rpc('herencias_a_mi_cuidado');
+    return [
+      for (final fila in filas)
+        if (fila is Map)
+          HerenciaACuidado.desdeFila(Map<String, dynamic>.from(fila)),
+    ];
+  }
+
+  @override
+  Future<EstadoAccesoHerencia> obtenerEstadoAcceso(String herenciaId) async {
+    _exigirSesion();
+    final filas = await _cliente.rpc(
+      'estado_acceso_herencia',
+      parametros: {'p_herencia': herenciaId},
+    );
+    return EstadoAccesoHerencia.desdeJson(_primerMapa(filas));
+  }
+
+  @override
+  Future<ResultadoValidacionCodigo> validarCodigoHerencia(
+    String herenciaId,
+    String codigo,
+  ) async {
+    _exigirSesion();
+    try {
+      final filas = await _cliente.rpc(
+        'validar_codigo_herencia',
+        parametros: {'p_herencia': herenciaId, 'p_codigo': codigo.trim()},
+      );
+      return ResultadoValidacionCodigo.desdeJson(_primerMapa(filas));
+    } catch (e) {
+      throw _traducir(e);
+    }
+  }
+
+  @override
+  Future<void> solicitarCodigoHerencia(String herenciaId) async {
+    _exigirSesion();
+    try {
+      final filas = await _cliente.rpc(
+        'solicitar_codigo_herencia',
+        parametros: {'p_herencia': herenciaId},
+      );
+      final mapa = _primerMapa(filas);
+      if (mapa == null || mapa['ok'] != true) {
+        final codigo = mapa?['codigo'] as String?;
+        switch (codigo) {
+          case 'espera_reenvio':
+            throw FalloLegado.esperaReenvio;
+          case 'sin_permiso':
+            throw FalloLegado.sinPermiso;
+          case 'sin_sesion':
+            throw FalloLegado.sinSesion;
+          default:
+            throw FalloLegado.codigoNoVigente;
+        }
+      }
+    } catch (e) {
+      if (e is FalloLegado) rethrow;
       throw _traducir(e);
     }
   }

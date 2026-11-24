@@ -28,8 +28,9 @@ class PantallaSeguridadLegado extends StatelessWidget {
       icono: Icons.people_outline,
       titulo: 'Persona de confianza',
       cuerpo:
-          'La persona de confianza no puede modificar tu legado; solo confirmar '
-          'cuando corresponda y ver el contenido tras la liberación.',
+          'La persona de confianza no puede modificar tu legado. Cuando la '
+          'herencia se abre, recibe un código por correo para ver el contenido '
+          'y ayudar.',
     ),
     _PuntoSeguridad(
       icono: Icons.gavel_outlined,

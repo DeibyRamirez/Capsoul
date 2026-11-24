@@ -63,4 +63,27 @@ void main() {
     final herencia = h(fecha: DateTime(2026, 10, 1));
     expect(herencia.sePuedeEditar(ahora: ahora), isFalse);
   });
+
+  test('el detalle lee el acceso de la persona de confianza', () {
+    final detalle = DetalleHerencia.desdeJson({
+      'herencia': {
+        'id': 'h1',
+        'titulo': 'Reloj',
+        'estado': 'liberada',
+        'condicion_activacion': 'fecha',
+        'propietario_id': 'u1',
+        'beneficiario_usuario_id': 'u2',
+        'persona_confianza_id': 'u3',
+      },
+      'acceso': {
+        'es_confianza': true,
+        'activo': true,
+        'expira_en': '2026-11-24T12:00:00Z',
+      },
+    });
+
+    expect(detalle.esConfianza, isTrue);
+    expect(detalle.accesoActivo, isTrue);
+    expect(detalle.accesoExpiraEn, isNotNull);
+  });
 }

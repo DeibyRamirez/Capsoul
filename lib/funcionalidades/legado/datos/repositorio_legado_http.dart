@@ -1,3 +1,4 @@
+import '../dominio/acceso_herencia.dart';
 import '../dominio/condicion_herencia.dart';
 import '../dominio/fallo_legado.dart';
 import '../dominio/grupo_legado_beneficiario.dart';
@@ -38,6 +39,7 @@ class RepositorioLegadoHttp implements RepositorioLegado {
     MetadatosHerencia metadatos = const MetadatosHerencia(),
     DateTime? fechaActivacion,
     int? diasInactividad,
+    String? personaConfianzaUsuarioId,
     bool activar = false,
   }) async =>
       _noDisponible();
@@ -96,5 +98,30 @@ class RepositorioLegadoHttp implements RepositorioLegado {
     required MetadatosHerencia metadatos,
     DateTime? fechaActivacion,
   }) async =>
+      _noDisponible();
+
+  @override
+  Future<void> actualizarPersonaConfianzaHerencia(
+    String herenciaId,
+    String personaConfianzaUsuarioId,
+  ) async =>
+      _noDisponible();
+
+  @override
+  Future<List<HerenciaACuidado>> listarACuidado() async => _noDisponible();
+
+  @override
+  Future<EstadoAccesoHerencia> obtenerEstadoAcceso(String herenciaId) async =>
+      _noDisponible();
+
+  @override
+  Future<ResultadoValidacionCodigo> validarCodigoHerencia(
+    String herenciaId,
+    String codigo,
+  ) async =>
+      _noDisponible();
+
+  @override
+  Future<void> solicitarCodigoHerencia(String herenciaId) async =>
       _noDisponible();
 }

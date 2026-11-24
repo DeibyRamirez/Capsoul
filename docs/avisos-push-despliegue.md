@@ -110,3 +110,5 @@ Si FCM dice `UNREGISTERED` o `INVALID_ARGUMENT`, esa fila desaparece de `disposi
 - Al tocar, se abre la cápsula. El token nuevo (rotación de FCM) se vuelve a guardar en `dispositivos_push`.
 
 Los tipos `solicitud_amistad`, `herencia_liberada`, `herencia_en_verificacion` y `reto` ya tienen plantilla y ruta `capsoul://`. Cuando esos eventos inserten la fila, el mismo cron los envía.
+
+El tipo `herencia_codigo_acceso` (migración `20261123000030`) se envía por **correo HTML** con el código de 6 dígitos. La Edge Function llama a la RPC `generar_codigo_herencia` con la service role; el código se guarda con hash bcrypt y nunca se escribe en `notificaciones`. Requiere `20261026000018` aplicada (`notificaciones.reclamado_en`).

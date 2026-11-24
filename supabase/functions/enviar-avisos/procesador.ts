@@ -8,6 +8,7 @@ import {
   type FilaNotificacion,
 } from "./despacho.ts";
 import { tokenInvalido, type ResultadoEnvioFcm } from "./fcm.ts";
+import { armarCorreoCodigoHerencia } from "./plantilla_codigo.ts";
 import { armarContenido } from "./plantillas.ts";
 
 export const LOTE_AVISOS = 25;
@@ -28,6 +29,13 @@ export type EntregaConocida = {
   token: string;
   estado: "pendiente" | "enviada" | "fallida" | "invalida";
   intentos: number;
+};
+
+export type CodigoHerencia = {
+  codigo: string;
+  expiraEn: string;
+  tituloHerencia: string;
+  propietarioNombre: string;
 };
 
 export type CierrePedido = {
@@ -60,6 +68,16 @@ export type DependenciasAvisos = {
     data: Record<string, string>;
   }) => Promise<ResultadoEnvioFcm>;
   enviarCorreo: (destino: string, titulo: string, cuerpo: string) => Promise<void>;
+  enviarCorreoHtml: (
+    destino: string,
+    asunto: string,
+    html: string,
+    texto: string,
+  ) => Promise<void>;
+  generarCodigoHerencia: (
+    herenciaId: string,
+    usuarioId: string,
+  ) => Promise<CodigoHerencia | null>;
 };
 
 export type ResumenLote = {
@@ -143,6 +161,70 @@ export async function procesarLote(deps: DependenciasAvisos): Promise<ResumenLot
   return { procesadas: vistas.size, enviadas, fallidas };
 }
 
+async function despacharCodigoHerencia(
+  fila: FilaAviso,
+  deps: DependenciasAvisos,
+): Promise<"enviada" | "pendiente" | "fallida"> {
+  if (
+    fila.canal !== "correo" ||
+    !fila.correo_destino ||
+    !fila.usuario_id
+  ) {
+    await deps.cerrar({
+      id: fila.id,
+      estado: "fallida",
+      intentos: fila.intentos + 1,
+      ultimoError: "El código de herencia necesita correo y usuario",
+      liberarReclamo: false,
+    });
+    return "fallida";
+  }
+
+  try {
+    const datos = await deps.generarCodigoHerencia(
+      fila.referencia_id,
+      fila.usuario_id,
+    );
+    if (!datos) {
+      await deps.cerrar({
+        id: fila.id,
+        estado: "fallida",
+        intentos: fila.intentos + 1,
+        ultimoError: "La herencia no permite generar el código",
+        liberarReclamo: false,
+      });
+      return "fallida";
+    }
+
+    const correo = armarCorreoCodigoHerencia(datos);
+    await deps.enviarCorreoHtml(
+      fila.correo_destino.trim(),
+      correo.asunto,
+      correo.html,
+      correo.texto,
+    );
+    await deps.cerrar({
+      id: fila.id,
+      estado: "enviada",
+      intentos: fila.intentos,
+      ultimoError: null,
+      liberarReclamo: false,
+    });
+    return "enviada";
+  } catch (error) {
+    const cierre = decidirCierre({
+      intentos: fila.intentos,
+      enviados: 0,
+      invalidos: 0,
+      fallos: 1,
+      sinTokens: false,
+      error: mensajeDe(error),
+    });
+    await deps.cerrar({ id: fila.id, ...cierre });
+    return cierre.estado;
+  }
+}
+
 async function despacharFila(
   fila: FilaAviso,
   deps: DependenciasAvisos,
@@ -156,6 +238,10 @@ async function despacharFila(
       liberarReclamo: false,
     });
     return "fallida";
+  }
+
+  if (fila.tipo === "herencia_codigo_acceso") {
+    return await despacharCodigoHerencia(fila, deps);
   }
 
   const tituloReferencia = await deps.tituloReferencia(fila);

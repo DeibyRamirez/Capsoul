@@ -14,12 +14,34 @@
 | `capsula_destinatarios.origen_herencia_id` | Destinatario añadido porque la cápsula está en esa herencia |
 | `usuarios.persona_confianza_legado_id` | Amigo global que puede confirmar |
 
-### Activación (solo dos caminos en la app)
+### Activación
 
-- **Fecha programada:** el cron `activar_herencias` libera cuando `fecha_activacion <= now()`.
-- **Confirmación de persona de confianza:** un amigo distinto del beneficiario pulsa Confirmar (`rpc confirmar_herencia`). No es un certificado legal: es una llave humana. No ve valor ni medios sellados.
+- **Fecha programada (único camino para herencias nuevas):** el cron
+  `activar_herencias` libera cuando `fecha_activacion <= now()`. Ese día el
+  beneficiario recibe el aviso y la persona de confianza recibe el código.
+- **Confirmación de persona de confianza (solo herencias antiguas):** un amigo
+  distinto del beneficiario pulsa Confirmar (`rpc confirmar_herencia`). El
+  wizard ya no ofrece esta opción para no mezclar dos formas de apertura.
 
-La inactividad sigue en el enum de Postgres por filas antiguas; el wizard ya no la ofrece.
+La inactividad sigue en el enum de Postgres por filas antiguas; tampoco se
+ofrece en el wizard.
+
+### Acceso de la persona de confianza con código
+
+- La persona de confianza se puede elegir por herencia; si no se elige, se copia la
+  persona global de `usuarios.persona_confianza_legado_id`.
+- Al liberarse la herencia, el servidor encola un correo (`herencia_codigo_acceso`)
+  para esa persona. El código se genera en la Edge Function y se guarda **solo con
+  hash bcrypt** en `herencia_codigos`; nunca viaja al cliente ni se guarda en
+  `notificaciones`.
+- El código vence a los 20 minutos, admite 5 intentos y se bloquea 15 minutos.
+- Al validarlo (`rpc validar_codigo_herencia`) se crea un acceso temporal de 24 h
+  en `herencia_accesos`. Solo entonces `privado.puede_ver_contenido_herencia`
+  deja ver el contenido y los medios, y la persona de confianza puede abrir las
+  cápsulas vinculadas que ya estén liberadas.
+- La persona de confianza espera la misma fecha de apertura de la herencia.
+- Pantallas: `pantalla_herencias_a_cuidado` (lista) y
+  `pantalla_desbloquear_herencia` (código). Ruta: `/legado/a-cuidado`.
 
 ```mermaid
 sequenceDiagram
@@ -39,12 +61,26 @@ sequenceDiagram
     PG->>PG: liberar_herencia
   end
   PG->>FCM: herencia_liberada a Benef
-  Note over PG: capsulas siguen con fecha_apertura
+  PG->>FCM: herencia_codigo_acceso a Conf
+  FCM->>Conf: correo con código (20 min)
+  Conf->>PG: rpc validar_codigo_herencia
+  PG->>PG: crea herencia_accesos (24 h)
+  Note over PG: al liberar la herencia también se liberan sus cápsulas
 ```
 
 ### Cápsulas dentro de una herencia
 
-U1 crea una cápsula para U2. Luego crea una herencia para U3 y vincula esa cápsula. U3 entra en `capsula_destinatarios` con `origen_herencia_id`. U2 no pierde su fila. El contenido del medio exige cápsula `liberada` (cron de `fecha_apertura`).
+U1 crea una cápsula para U2. Luego crea una herencia para U3 y vincula esa cápsula. U3 entra en `capsula_destinatarios` con `origen_herencia_id`. U2 no pierde su fila.
+
+- La fecha de la **herencia** es la que manda para el contenido vinculado: U3 no
+  ve la cápsula hasta que la herencia está `liberada`, aunque la cápsula ya
+  estuviera abierta antes de vincularse.
+- Al liberar la herencia, sus cápsulas `programada` pasan a `liberada`; la
+  fecha propia de la cápsula deja de ser la puerta para los destinatarios de
+  la herencia.
+- Solo se pueden vincular cápsulas **propias** en estado `programada` o
+  `liberada`; no borradores ni cápsulas recibidas de otra persona.
+- El dueño sigue viendo sus propias cápsulas como autor.
 
 ```mermaid
 flowchart TD
@@ -63,8 +99,12 @@ Quién ve qué:
 
 - **Propietario:** siempre su herencia y sus medios.
 - **Beneficiario:** sabe que llegó (`herencias_recibidas`) desde el alta; contenido solo si `liberada`.
-- **Persona de confianza:** lista `herencias_por_confirmar` sin metadatos sensibles.
-- **Cápsulas:** acceso = lista de `usuario_id` en `capsula_destinatarios`.
+- **Persona de confianza:** ve la lista `herencias_a_mi_cuidado`; el contenido
+  solo después de la fecha de apertura y de validar el código del correo.
+- **Cápsulas:** acceso directo = `usuario_id` en `capsula_destinatarios` sin
+  herencia. Si el destinatario se agregó por una herencia, solo ve la cápsula
+  cuando esa herencia está `liberada`. La persona de confianza necesita además
+  su acceso vigente por código.
 
 Contrato HTTP/RPC: [`contrato-api-legado.md`](contrato-api-legado.md) · SQL: `20261016000014` + `20261102000024` + `20261102000025`.
 

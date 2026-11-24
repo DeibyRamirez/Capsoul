@@ -8,10 +8,12 @@ import '../../../nucleo/formato/valor_monetario.dart';
 import '../../../nucleo/tema/colores_app.dart';
 import '../../amistades/aplicacion/proveedores_amistades.dart';
 import '../../amistades/dominio/amigo.dart';
+import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../../capsulas/aplicacion/proveedores_capsulas.dart';
 import '../../capsulas/dominio/capsula.dart';
+import '../../capsulas/dominio/estado_capsula.dart';
 import '../aplicacion/controlador_nueva_herencia.dart';
-import '../dominio/condicion_herencia.dart';
+import '../aplicacion/proveedores_legado.dart';
 import 'heroes_legado.dart';
 
 class PantallaNuevaHerencia extends ConsumerStatefulWidget {
@@ -103,9 +105,12 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
       if (mounted) mostrarAvisoError(context, e);
       return;
     }
-    if (b.paso < BorradorNuevaHerencia.totalPasos - 1) {
+    // Se relee el borrador: _persistirPasoActual acaba de guardar los campos
+    // del paso. Usar `b` (lectura anterior) los borraría al avanzar.
+    final actualizado = ref.read(proveedorControladorNuevaHerencia);
+    if (actualizado.paso < BorradorNuevaHerencia.totalPasos - 1) {
       _pasoSincronizado = null;
-      ctrl.actualizar(b.copiar(paso: b.paso + 1));
+      ctrl.actualizar(actualizado.copiar(paso: actualizado.paso + 1));
     }
   }
 
@@ -137,9 +142,101 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
     final b = ref.read(proveedorControladorNuevaHerencia);
     _persistirPasoActual(b);
     _cerrarTeclado();
-    if (b.paso > 0) {
+    final actualizado = ref.read(proveedorControladorNuevaHerencia);
+    if (actualizado.paso > 0) {
       _pasoSincronizado = null;
-      ctrl.actualizar(b.copiar(paso: b.paso - 1));
+      ctrl.actualizar(actualizado.copiar(paso: actualizado.paso - 1));
+    }
+  }
+
+  String _nombreConfianza(
+    BorradorNuevaHerencia b,
+    List<Amigo> amigos,
+    String? confianzaGlobalId,
+  ) {
+    final id = b.personaConfianzaUsuarioId ?? confianzaGlobalId;
+    if (id == null || id.isEmpty) return 'Elige una persona de confianza';
+    for (final a in amigos) {
+      if (a.usuarioId == id) {
+        final arroba = a.nombreUsuario;
+        return arroba == null || arroba.isEmpty
+            ? a.nombreVisible
+            : '${a.nombreVisible} (@$arroba)';
+      }
+    }
+    return 'Persona de confianza';
+  }
+
+  Future<void> _elegirConfianzaHerencia(
+    BorradorNuevaHerencia b,
+    List<Amigo> amigos,
+    String? confianzaGlobalId,
+  ) async {
+    if (amigos.isEmpty) {
+      mostrarAvisoInformativo(
+        context,
+        'Primero agrega amigos para elegir persona de confianza.',
+      );
+      return;
+    }
+    final global = _nombreConfianza(
+      b.copiar(usarConfianzaGlobal: true),
+      amigos,
+      confianzaGlobalId,
+    );
+    final elegido = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Text('Persona de confianza de esta herencia'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.people_outline),
+              title: const Text('La misma de Mi legado'),
+              subtitle: Text(global),
+              trailing: b.personaConfianzaUsuarioId == null
+                  ? const Icon(Icons.check)
+                  : null,
+              onTap: () => Navigator.pop(ctx, ''),
+            ),
+            const Divider(),
+            for (final a in amigos)
+              ListTile(
+                leading: CircleAvatar(
+                  child: Text(
+                    a.nombreVisible.trim().isEmpty
+                        ? '?'
+                        : a.nombreVisible.trim().substring(0, 1).toUpperCase(),
+                  ),
+                ),
+                title: Text(a.nombreVisible),
+                subtitle: a.nombreUsuario != null
+                    ? Text('@${a.nombreUsuario}')
+                    : null,
+                trailing: b.personaConfianzaUsuarioId == a.usuarioId
+                    ? const Icon(Icons.check)
+                    : null,
+                onTap: () => Navigator.pop(ctx, a.usuarioId),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (elegido == null || !mounted) return;
+    final ctrl = ref.read(proveedorControladorNuevaHerencia.notifier);
+    final actual = ref.read(proveedorControladorNuevaHerencia);
+    if (elegido.isEmpty) {
+      ctrl.actualizar(actual.copiar(usarConfianzaGlobal: true));
+    } else {
+      ctrl.actualizar(
+        actual.copiar(personaConfianzaUsuarioId: elegido),
+      );
     }
   }
 
@@ -172,7 +269,19 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
     final paso = borrador.paso + 1;
     final progreso = paso / BorradorNuevaHerencia.totalPasos;
     final amigos = ref.watch(proveedorMisAmigos).value ?? const <Amigo>[];
-    final capsulas = ref.watch(proveedorMisCapsulas).value ?? const <Capsula>[];
+    final uid = ref.watch(proveedorEstadoAutenticacion).value?.uid;
+    final capsulas = (ref.watch(proveedorMisCapsulas).value ??
+            const <Capsula>[])
+        .where(
+          (c) =>
+              uid != null &&
+              c.autorId == uid &&
+              (c.estado == EstadoCapsula.programada ||
+                  c.estado == EstadoCapsula.liberada),
+        )
+        .toList();
+    final confianzaGlobalId =
+        ref.watch(proveedorPersonaConfianzaLegadoId).value;
 
     _sincronizarControladoresConBorrador(borrador);
 
@@ -204,7 +313,14 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
                 color: ColoresApp.primario,
               ),
               const SizedBox(height: 24),
-              Expanded(child: _contenidoPaso(borrador, amigos, capsulas)),
+              Expanded(
+                child: _contenidoPaso(
+                  borrador,
+                  amigos,
+                  capsulas,
+                  confianzaGlobalId,
+                ),
+              ),
               const SizedBox(height: 16),
               if (borrador.paso > 0)
                 OutlinedButton(onPressed: _atras, child: const Text('Atrás')),
@@ -252,6 +368,7 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
     BorradorNuevaHerencia b,
     List<Amigo> amigos,
     List<Capsula> capsulas,
+    String? confianzaGlobalId,
   ) {
     final ctrl = ref.read(proveedorControladorNuevaHerencia.notifier);
     switch (b.paso) {
@@ -381,47 +498,44 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
           ],
         );
       case 4:
-        return RadioGroup<CondicionHerencia>(
-          groupValue: b.condicion,
-          onChanged: (v) => ctrl.actualizar(b.copiar(condicion: v)),
-          child: _pasoDesplazable(
-            pasoKey: const ValueKey('paso_condicion'),
-            children: [
-              const Text('Condición de activación'),
-              const SizedBox(height: 8),
-              const RadioListTile<CondicionHerencia>(
-                value: CondicionHerencia.fecha,
-                title: Text('Fecha programada'),
-                subtitle: Text(
-                  'El beneficiario verá que le llegó, pero el contenido '
-                  'solo se abre el día que elijas.',
-                ),
+        return _pasoDesplazable(
+          pasoKey: const ValueKey('paso_fecha_apertura'),
+          children: [
+            const Text('Fecha de apertura'),
+            const SizedBox(height: 8),
+            const Text(
+              'La herencia se abre automáticamente el día que elijas. '
+              'Ese día el beneficiario recibe el aviso y la persona de '
+              'confianza recibe un código por correo para ver el contenido '
+              'y ayudar.',
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Fecha de activación'),
+              subtitle: Text(
+                b.fechaActivacion == null
+                    ? 'Elige un día a partir de mañana'
+                    : formatearFechaCorta(b.fechaActivacion!),
               ),
-              const RadioListTile<CondicionHerencia>(
-                value: CondicionHerencia.confirmacionConfianza,
-                title: Text('Confirmación de persona de confianza'),
-                subtitle: Text(
-                  'Un amigo distinto del beneficiario (el de Seguridad) '
-                  'pulsa Confirmar cuando llegue el momento. No ve el '
-                  'contenido sellado. No es un certificado legal: es tu llave humana.',
-                ),
+              trailing: const Icon(Icons.calendar_today_outlined),
+              onTap: () => _elegirFechaActivacion(b),
+            ),
+            const SizedBox(height: 12),
+            ListTile(
+              key: const ValueKey('campo_persona_confianza_herencia'),
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.shield_outlined),
+              title: const Text('Persona de confianza de esta herencia'),
+              subtitle: Text(
+                '${_nombreConfianza(b, amigos, confianzaGlobalId)}. '
+                'Recibirá un código por correo cuando la herencia se abra.',
               ),
-              if (b.condicion == CondicionHerencia.fecha) ...[
-                const SizedBox(height: 12),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Fecha de activación'),
-                  subtitle: Text(
-                    b.fechaActivacion == null
-                        ? 'Elige un día a partir de mañana'
-                        : formatearFechaCorta(b.fechaActivacion!),
-                  ),
-                  trailing: const Icon(Icons.calendar_today_outlined),
-                  onTap: () => _elegirFechaActivacion(b),
-                ),
-              ],
-            ],
-          ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () =>
+                  _elegirConfianzaHerencia(b, amigos, confianzaGlobalId),
+            ),
+          ],
         );
       default:
         return Column(
@@ -432,6 +546,15 @@ class _PantallaNuevaHerenciaState extends ConsumerState<PantallaNuevaHerencia> {
             Expanded(
               child: ListView(
                 children: [
+                  if (capsulas.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'No tienes cápsulas propias programadas o abiertas '
+                        'para vincular. Las cápsulas que te enviaron otras '
+                        'personas no se pueden vincular.',
+                      ),
+                    ),
                   for (final c in capsulas)
                     CheckboxListTile(
                       value: b.capsulaIds.contains(c.id),
