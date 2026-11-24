@@ -1,3 +1,4 @@
+import 'package:capsoul/funcionalidades/legado/dominio/acceso_herencia.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/condicion_herencia.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/grupo_legado_beneficiario.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/herencia.dart';
@@ -9,6 +10,15 @@ class RepositorioLegadoFalso implements RepositorioLegado {
   final grupos = <GrupoLegadoBeneficiario>[];
   final recibidas = <HerenciaRecibida>[];
   final porConfirmar = <HerenciaPorConfirmar>[];
+  final aCuidado = <HerenciaACuidado>[];
+  DetalleHerencia? detalle;
+  EstadoAccesoHerencia estadoAcceso = const EstadoAccesoHerencia(
+    esConfianza: true,
+  );
+  ResultadoValidacionCodigo resultadoValidacion =
+      const ResultadoValidacionCodigo(ok: true);
+  int codigosSolicitados = 0;
+  String? confianzaActualizada;
 
   @override
   Future<ResumenLegado> obtenerResumen() async =>
@@ -23,6 +33,8 @@ class RepositorioLegadoFalso implements RepositorioLegado {
 
   @override
   Future<DetalleHerencia> obtenerDetalle(String id) async {
+    final actual = detalle;
+    if (actual != null) return actual;
     throw const FormatException('herencia_invalida');
   }
 
@@ -35,6 +47,7 @@ class RepositorioLegadoFalso implements RepositorioLegado {
     MetadatosHerencia metadatos = const MetadatosHerencia(),
     DateTime? fechaActivacion,
     int? diasInactividad,
+    String? personaConfianzaUsuarioId,
     bool activar = false,
   }) async =>
       'h-falso';
@@ -90,4 +103,31 @@ class RepositorioLegadoFalso implements RepositorioLegado {
     required MetadatosHerencia metadatos,
     DateTime? fechaActivacion,
   }) async {}
+
+  @override
+  Future<void> actualizarPersonaConfianzaHerencia(
+    String herenciaId,
+    String personaConfianzaUsuarioId,
+  ) async {
+    confianzaActualizada = personaConfianzaUsuarioId;
+  }
+
+  @override
+  Future<List<HerenciaACuidado>> listarACuidado() async => List.of(aCuidado);
+
+  @override
+  Future<EstadoAccesoHerencia> obtenerEstadoAcceso(String herenciaId) async =>
+      estadoAcceso;
+
+  @override
+  Future<ResultadoValidacionCodigo> validarCodigoHerencia(
+    String herenciaId,
+    String codigo,
+  ) async =>
+      resultadoValidacion;
+
+  @override
+  Future<void> solicitarCodigoHerencia(String herenciaId) async {
+    codigosSolicitados++;
+  }
 }

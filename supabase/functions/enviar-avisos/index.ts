@@ -154,25 +154,56 @@ Deno.serve((solicitud: Request) => {
         ...args,
       }),
     enviarCorreo: async (destino, titulo, cuerpo) => {
-      const apiKey = leerEntorno("RESEND_API_KEY");
-      const desde = Deno.env.get("RESEND_FROM") ?? "Capsoul <avisos@capsoul.app>";
-      const respuesta = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: desde,
-          to: [destino],
-          subject: titulo,
-          text: cuerpo,
-        }),
+      await enviarCorreoResend(destino, {
+        subject: titulo,
+        text: cuerpo,
       });
-      if (!respuesta.ok) {
-        const texto = await respuesta.text();
-        throw new Error(`Resend ${respuesta.status}: ${texto.slice(0, 300)}`);
-      }
+    },
+    enviarCorreoHtml: async (destino, asunto, html, texto) => {
+      await enviarCorreoResend(destino, {
+        subject: asunto,
+        html,
+        text: texto,
+      });
+    },
+    generarCodigoHerencia: async (herenciaId, usuarioId) => {
+      const resultado = await cliente().rpc("generar_codigo_herencia", {
+        p_herencia: herenciaId,
+        p_usuario: usuarioId,
+      });
+      const filas = exigir(resultado) as Record<string, unknown>[] | null;
+      const fila = filas?.[0];
+      if (!fila) return null;
+      return {
+        codigo: String(fila.codigo ?? ""),
+        expiraEn: String(fila.expira_en ?? ""),
+        tituloHerencia: String(fila.titulo ?? "tu legado"),
+        propietarioNombre: String(fila.propietario_nombre ?? "Alguien"),
+      };
     },
   });
 });
+
+async function enviarCorreoResend(
+  destino: string,
+  cuerpo: { subject: string; html?: string; text?: string },
+): Promise<void> {
+  const apiKey = leerEntorno("RESEND_API_KEY");
+  const desde = Deno.env.get("RESEND_FROM") ?? "Capsoul <avisos@capsoul.app>";
+  const respuesta = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: desde,
+      to: [destino],
+      ...cuerpo,
+    }),
+  });
+  if (!respuesta.ok) {
+    const texto = await respuesta.text();
+    throw new Error(`Resend ${respuesta.status}: ${texto.slice(0, 300)}`);
+  }
+}

@@ -1,3 +1,4 @@
+import 'acceso_herencia.dart';
 import 'condicion_herencia.dart';
 import 'grupo_legado_beneficiario.dart';
 import 'herencia.dart';
@@ -22,6 +23,7 @@ abstract interface class RepositorioLegado {
     MetadatosHerencia metadatos = const MetadatosHerencia(),
     DateTime? fechaActivacion,
     int? diasInactividad,
+    String? personaConfianzaUsuarioId,
     bool activar = false,
   });
 
@@ -62,4 +64,20 @@ abstract interface class RepositorioLegado {
     required MetadatosHerencia metadatos,
     DateTime? fechaActivacion,
   });
+
+  Future<void> actualizarPersonaConfianzaHerencia(
+    String herenciaId,
+    String personaConfianzaUsuarioId,
+  );
+
+  Future<List<HerenciaACuidado>> listarACuidado();
+
+  Future<EstadoAccesoHerencia> obtenerEstadoAcceso(String herenciaId);
+
+  Future<ResultadoValidacionCodigo> validarCodigoHerencia(
+    String herenciaId,
+    String codigo,
+  );
+
+  Future<void> solicitarCodigoHerencia(String herenciaId);
 }

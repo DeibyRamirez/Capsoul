@@ -20,6 +20,7 @@ class BorradorNuevaHerencia {
     this.instrucciones = '',
     this.condicion = CondicionHerencia.fecha,
     this.fechaActivacion,
+    this.personaConfianzaUsuarioId,
   });
 
   final int paso;
@@ -34,6 +35,9 @@ class BorradorNuevaHerencia {
   final String instrucciones;
   final CondicionHerencia condicion;
   final DateTime? fechaActivacion;
+
+  /// Persona de confianza de esta herencia. Si es null se usa la global.
+  final String? personaConfianzaUsuarioId;
 
   static const int totalPasos = 6;
 
@@ -50,6 +54,8 @@ class BorradorNuevaHerencia {
     String? instrucciones,
     CondicionHerencia? condicion,
     DateTime? fechaActivacion,
+    String? personaConfianzaUsuarioId,
+    bool usarConfianzaGlobal = false,
   }) {
     return BorradorNuevaHerencia(
       paso: paso ?? this.paso,
@@ -64,6 +70,9 @@ class BorradorNuevaHerencia {
       instrucciones: instrucciones ?? this.instrucciones,
       condicion: condicion ?? this.condicion,
       fechaActivacion: fechaActivacion ?? this.fechaActivacion,
+      personaConfianzaUsuarioId: usarConfianzaGlobal
+          ? null
+          : personaConfianzaUsuarioId ?? this.personaConfianzaUsuarioId,
     );
   }
 }
@@ -78,17 +87,30 @@ class ControladorNuevaHerencia extends Notifier<BorradorNuevaHerencia> {
     final b = state;
     switch (b.paso) {
       case 0:
-        if (b.descripcion.trim().isEmpty) throw FalloLegado.campoObligatorio;
+        if (b.descripcion.trim().isEmpty) {
+          throw const FalloLegado(
+            FalloLegado.codigoCampoObligatorio,
+            'Escribe qué quieres dejar en la herencia.',
+          );
+        }
       case 1:
         final id = b.beneficiarioUsuarioId?.trim();
         if (id == null || id.isEmpty) throw FalloLegado.beneficiarioRequerido;
       case 2:
-        if (b.mensajePersonal.trim().isEmpty) throw FalloLegado.campoObligatorio;
+        if (b.mensajePersonal.trim().isEmpty) {
+          throw const FalloLegado(
+            FalloLegado.codigoCampoObligatorio,
+            'Escribe el mensaje personal para quien recibe la herencia.',
+          );
+        }
       case 3:
         if (b.tipoActivo.trim().isEmpty ||
             b.titular.trim().isEmpty ||
             b.instrucciones.trim().isEmpty) {
-          throw FalloLegado.campoObligatorio;
+          throw const FalloLegado(
+            FalloLegado.codigoCampoObligatorio,
+            'Completa el tipo de activo, el titular, el valor y las instrucciones.',
+          );
         }
         final valor = parsearEnteroMiles(b.valorAproximado);
         if (valor == null || valor <= 0) throw FalloLegado.valorInvalido;
@@ -100,6 +122,11 @@ class ControladorNuevaHerencia extends Notifier<BorradorNuevaHerencia> {
   /// Valida la condición de activación antes de guardar o avanzar del paso 4.
   Future<void> validarCondicionActivacion() async {
     final b = state;
+    final confianza = b.personaConfianzaUsuarioId?.trim();
+    final confianzaEfectiva = confianza != null && confianza.isNotEmpty
+        ? confianza
+        : await ref.read(proveedorRepositorioLegado).leerPersonaConfianzaId();
+
     switch (b.condicion) {
       case CondicionHerencia.fecha:
         final fecha = b.fechaActivacion;
@@ -113,29 +140,36 @@ class ControladorNuevaHerencia extends Notifier<BorradorNuevaHerencia> {
       case CondicionHerencia.inactividad:
         throw FalloLegado.condicionCoherente;
       case CondicionHerencia.confirmacionConfianza:
-        final confianzaId =
-            await ref.read(proveedorRepositorioLegado).leerPersonaConfianzaId();
-        if (confianzaId == null || confianzaId.trim().isEmpty) {
+        if (confianzaEfectiva == null || confianzaEfectiva.trim().isEmpty) {
           throw FalloLegado.personaConfianzaRequerida;
         }
-        final benef = b.beneficiarioUsuarioId?.trim();
-        if (benef != null && benef == confianzaId) {
-          throw const FalloLegado(
-            FalloLegado.codigoCondicionCoherente,
-            'La persona de confianza no puede ser quien recibe la herencia.',
-          );
-        }
+    }
+
+    final benef = b.beneficiarioUsuarioId?.trim();
+    if (benef != null &&
+        benef.isNotEmpty &&
+        confianzaEfectiva != null &&
+        benef == confianzaEfectiva) {
+      throw FalloLegado.confianzaNoBeneficiario;
     }
   }
 
   Future<String?> guardarYActivar() async {
+    // El wizard nuevo solo crea herencias por fecha. Se conserva el resto
+    // del dominio para las herencias antiguas que usaban confirmación.
+    if (state.condicion != CondicionHerencia.fecha) {
+      state = state.copiar(condicion: CondicionHerencia.fecha);
+    }
     final b = state;
     if (b.descripcion.trim().isEmpty ||
         b.mensajePersonal.trim().isEmpty ||
         b.tipoActivo.trim().isEmpty ||
         b.titular.trim().isEmpty ||
         b.instrucciones.trim().isEmpty) {
-      throw FalloLegado.campoObligatorio;
+      throw const FalloLegado(
+        FalloLegado.codigoCampoObligatorio,
+        'Faltan campos obligatorios. Revisa los pasos anteriores antes de activar.',
+      );
     }
     final beneficiario = b.beneficiarioUsuarioId?.trim();
     if (beneficiario == null || beneficiario.isEmpty) {
@@ -160,6 +194,10 @@ class ControladorNuevaHerencia extends Notifier<BorradorNuevaHerencia> {
         instrucciones: b.instrucciones.trim(),
         mensajePersonal: b.mensajePersonal.trim(),
       ),
+      personaConfianzaUsuarioId:
+          b.personaConfianzaUsuarioId?.trim().isEmpty ?? true
+              ? null
+              : b.personaConfianzaUsuarioId!.trim(),
       activar: true,
     );
     if (b.elementoIds.isNotEmpty) {

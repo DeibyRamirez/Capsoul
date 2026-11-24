@@ -5,6 +5,7 @@ import '../../../nucleo/infraestructura/proveedores_infraestructura.dart';
 import '../../autenticacion/aplicacion/proveedores_autenticacion.dart';
 import '../datos/repositorio_legado_http.dart';
 import '../datos/repositorio_legado_supabase.dart';
+import '../dominio/acceso_herencia.dart';
 import '../dominio/grupo_legado_beneficiario.dart';
 import '../dominio/herencia.dart';
 import '../dominio/herencia_recibida.dart';
@@ -54,6 +55,16 @@ final proveedorHerenciasRecibidas =
 final proveedorHerenciasPorConfirmar =
     FutureProvider.autoDispose<List<HerenciaPorConfirmar>>((ref) {
   return ref.watch(proveedorRepositorioLegado).listarPorConfirmar();
+});
+
+final proveedorHerenciasACuidado =
+    FutureProvider.autoDispose<List<HerenciaACuidado>>((ref) {
+  return ref.watch(proveedorRepositorioLegado).listarACuidado();
+});
+
+final proveedorEstadoAccesoHerencia =
+    FutureProvider.autoDispose.family<EstadoAccesoHerencia, String>((ref, id) {
+  return ref.watch(proveedorRepositorioLegado).obtenerEstadoAcceso(id);
 });
 
 enum BandejaLegado { creadas, recibidas }

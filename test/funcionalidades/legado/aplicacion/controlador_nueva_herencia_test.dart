@@ -1,5 +1,6 @@
 import 'package:capsoul/funcionalidades/legado/aplicacion/controlador_nueva_herencia.dart';
 import 'package:capsoul/funcionalidades/legado/aplicacion/proveedores_legado.dart';
+import 'package:capsoul/funcionalidades/legado/dominio/acceso_herencia.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/condicion_herencia.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/fallo_legado.dart';
 import 'package:capsoul/funcionalidades/legado/dominio/grupo_legado_beneficiario.dart';
@@ -40,6 +41,7 @@ class _RepoFalso implements RepositorioLegado {
     MetadatosHerencia metadatos = const MetadatosHerencia(),
     DateTime? fechaActivacion,
     int? diasInactividad,
+    String? personaConfianzaUsuarioId,
     bool activar = false,
   }) async =>
       'h1';
@@ -91,6 +93,29 @@ class _RepoFalso implements RepositorioLegado {
     required MetadatosHerencia metadatos,
     DateTime? fechaActivacion,
   }) async {}
+
+  @override
+  Future<void> actualizarPersonaConfianzaHerencia(
+    String herenciaId,
+    String personaConfianzaUsuarioId,
+  ) async {}
+
+  @override
+  Future<List<HerenciaACuidado>> listarACuidado() async => const [];
+
+  @override
+  Future<EstadoAccesoHerencia> obtenerEstadoAcceso(String herenciaId) async =>
+      const EstadoAccesoHerencia();
+
+  @override
+  Future<ResultadoValidacionCodigo> validarCodigoHerencia(
+    String herenciaId,
+    String codigo,
+  ) async =>
+      const ResultadoValidacionCodigo(ok: true);
+
+  @override
+  Future<void> solicitarCodigoHerencia(String herenciaId) async {}
 }
 
 void main() {
@@ -143,6 +168,43 @@ void main() {
     expect(
       () => ctrl.validarPasoActual(),
       throwsA(isA<FalloLegado>()),
+    );
+  });
+
+  test('confirmación acepta la persona de confianza elegida para la herencia',
+      () async {
+    repo.confianzaId = null;
+    final ctrl = contenedor.read(proveedorControladorNuevaHerencia.notifier);
+    ctrl.actualizar(
+      const BorradorNuevaHerencia(
+        paso: 4,
+        condicion: CondicionHerencia.confirmacionConfianza,
+        beneficiarioUsuarioId: 'benef-1',
+        personaConfianzaUsuarioId: 'confianza-1',
+      ),
+    );
+    await ctrl.validarCondicionActivacion();
+  });
+
+  test('la persona de confianza no puede ser el beneficiario', () async {
+    final ctrl = contenedor.read(proveedorControladorNuevaHerencia.notifier);
+    ctrl.actualizar(
+      const BorradorNuevaHerencia(
+        paso: 4,
+        condicion: CondicionHerencia.confirmacionConfianza,
+        beneficiarioUsuarioId: 'misma-persona',
+        personaConfianzaUsuarioId: 'misma-persona',
+      ),
+    );
+    expect(
+      () => ctrl.validarCondicionActivacion(),
+      throwsA(
+        isA<FalloLegado>().having(
+          (e) => e.codigo,
+          'codigo',
+          FalloLegado.codigoConfianzaNoBeneficiario,
+        ),
+      ),
     );
   });
 }

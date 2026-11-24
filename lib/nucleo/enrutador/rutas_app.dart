@@ -11,9 +11,13 @@ abstract final class RutasApp {
   static const String legadoNuevaHerencia = '/legado/nueva';
   static const String legadoInstrucciones = '/legado/instrucciones';
   static const String legadoSeguridad = '/legado/seguridad';
+  static const String legadoACuidado = '/legado/a-cuidado';
 
   static String detalleHerenciaDe(String id) =>
       '$legado/herencia/${Uri.encodeComponent(id)}';
+
+  static String desbloquearHerenciaDe(String id) =>
+      '${detalleHerenciaDe(id)}/desbloquear';
 
   static String editarHerenciaDe(String id) =>
       '${detalleHerenciaDe(id)}/editar';

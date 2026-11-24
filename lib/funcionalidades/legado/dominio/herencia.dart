@@ -135,11 +135,22 @@ class DetalleHerencia {
     required this.herencia,
     this.elementoIds = const [],
     this.capsulas = const [],
+    this.esConfianza = false,
+    this.accesoActivo = false,
+    this.accesoExpiraEn,
   });
 
   final Herencia herencia;
   final List<String> elementoIds;
   final List<CapsulaVinculadaHerencia> capsulas;
+
+  /// El usuario autenticado es la persona de confianza de esta herencia.
+  final bool esConfianza;
+
+  /// La persona de confianza ya ingresó un código válido.
+  final bool accesoActivo;
+
+  final DateTime? accesoExpiraEn;
 
   factory DetalleHerencia.desdeJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -151,6 +162,10 @@ class DetalleHerencia {
     }
     final elementos = json['elementos'];
     final capsulas = json['capsulas'];
+    final accesoRaw = json['acceso'];
+    final acceso = accesoRaw is Map
+        ? Map<String, dynamic>.from(accesoRaw)
+        : const <String, dynamic>{};
     return DetalleHerencia(
       herencia: Herencia.desdeFila(Map<String, dynamic>.from(herenciaRaw)),
       elementoIds: elementos is List
@@ -168,6 +183,11 @@ class DetalleHerencia {
                   ),
             ]
           : const [],
+      esConfianza: acceso['es_confianza'] as bool? ?? false,
+      accesoActivo: acceso['activo'] as bool? ?? false,
+      accesoExpiraEn: acceso['expira_en'] is String
+          ? DateTime.tryParse(acceso['expira_en'] as String)
+          : null,
     );
   }
 }

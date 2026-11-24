@@ -64,6 +64,22 @@ insert into public.amistades (solicitante_id, receptor_id) values ('00000000-000
 update public.amistades set estado='aceptada';
 set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
 update public.amistades set estado='aceptada';
+
+-- Amistades para la persona de confianza: A-C y B-C.
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+insert into public.amistades (solicitante_id, receptor_id) values ('00000000-0000-0000-0000-00000000000a','00000000-0000-0000-0000-00000000000c');
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
+update public.amistades set estado='aceptada'
+ where solicitante_id='00000000-0000-0000-0000-00000000000a'
+   and receptor_id='00000000-0000-0000-0000-00000000000c';
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
+insert into public.amistades (solicitante_id, receptor_id) values ('00000000-0000-0000-0000-00000000000b','00000000-0000-0000-0000-00000000000c');
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
+update public.amistades set estado='aceptada'
+ where solicitante_id='00000000-0000-0000-0000-00000000000b'
+   and receptor_id='00000000-0000-0000-0000-00000000000c';
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
+
 \echo '--- Amigo B: ve el perfil de A sin correo por la vista -> 1 fila (Ana M)'
 select nombre_visible from public.perfiles_visibles where id='00000000-0000-0000-0000-00000000000a';
 \echo '--- Amigo B NO puede leer el correo de A -> 0 filas'

@@ -95,10 +95,12 @@ class PantallaLegado extends ConsumerWidget {
           ref.invalidate(proveedorInstruccionesLegado);
           ref.invalidate(proveedorHerenciasRecibidas);
           ref.invalidate(proveedorHerenciasPorConfirmar);
+          ref.invalidate(proveedorHerenciasACuidado);
           await Future.wait([
             ref.read(proveedorGruposLegadoBeneficiario.future),
             ref.read(proveedorHerenciasRecibidas.future),
             ref.read(proveedorHerenciasPorConfirmar.future),
+            ref.read(proveedorHerenciasACuidado.future),
           ]);
         },
         child: CustomScrollView(
@@ -147,6 +149,7 @@ class PantallaLegado extends ConsumerWidget {
             ),
             const SliverToBoxAdapter(child: TarjetaSeguridadLegado()),
             const SliverToBoxAdapter(child: _BloquePorConfirmar()),
+            const SliverToBoxAdapter(child: _AccesoACuidado()),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -265,7 +268,8 @@ class PantallaLegado extends ConsumerWidget {
                   title: Text(confianza?.nombreVisible ?? 'Elegir por @'),
                   subtitle: Text(
                     confianza != null
-                        ? 'Podrá confirmar la entrega si lo necesitas; no puede editarlo.'
+                        ? 'Cuando la herencia se abra, recibirá un código para '
+                            'desbloquear y ver el contenido. No puede editarlo.'
                         : 'Debe ser tu amigo en Capsoul.',
                   ),
                   trailing: const Icon(
@@ -482,6 +486,48 @@ class _BloquePorConfirmar extends ConsumerWidget {
                   ),
                 ),
             ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AccesoACuidado extends ConsumerWidget {
+  const _AccesoACuidado();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cuidado = ref.watch(proveedorHerenciasACuidado);
+    return cuidado.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (lista) {
+        if (lista.isEmpty) return const SizedBox.shrink();
+        final pendientes =
+            lista.where((h) => h.estado.estaLiberada && !h.accesoActivo).length;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: _TarjetaFilaLegado(
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 6,
+              ),
+              leading: const CircleAvatar(
+                child: Icon(Icons.shield_outlined),
+              ),
+              title: const Text('Legados a mi cuidado'),
+              subtitle: Text(
+                '${lista.length} herencia${lista.length == 1 ? '' : 's'}'
+                '${pendientes > 0 ? ' · $pendientes esperando tu código' : ''}',
+              ),
+              trailing: const Icon(
+                Icons.chevron_right,
+                color: ColoresApp.atenuado,
+              ),
+              onTap: () => context.push(RutasApp.legadoACuidado),
+            ),
           ),
         );
       },
